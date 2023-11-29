@@ -3,7 +3,6 @@ package org.tron.program;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
 import com.beust.jcommander.JCommander;
-import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
@@ -15,7 +14,6 @@ import org.tron.common.prometheus.Metrics;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.net.P2pEventHandlerImpl;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.http.FullNodeHttpApiService;
 import org.tron.core.services.interfaceJsonRpcOnPBFT.JsonRpcServiceOnPBFT;
@@ -25,6 +23,11 @@ import org.tron.core.services.interfaceOnPBFT.http.PBFT.HttpApiOnPBFTService;
 import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
 import org.tron.core.services.interfaceOnSolidity.http.solidity.HttpApiOnSolidityService;
 import org.tron.core.services.jsonrpc.FullNodeJsonRpcHttpService;
+import org.tron.core.store.AccountStore;
+import org.tron.core.store.DynamicPropertiesStore;
+
+import java.io.File;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j(topic = "app")
 public class FullNode {
@@ -129,6 +132,39 @@ public class FullNode {
       JsonRpcServiceOnPBFT jsonRpcServiceOnPBFT = context.getBean(JsonRpcServiceOnPBFT.class);
       appT.addService(jsonRpcServiceOnPBFT);
     }
+
+    // Init stake2.0
+    AccountStore accountStore = appT.getChainBaseManager().getAccountStore();
+    DynamicPropertiesStore dynamicPropertiesStore = appT.getDbManager().getDynamicPropertiesStore();
+    try {
+      dynamicPropertiesStore.getTotalNetWeight2();
+    } catch (Exception ignored) {
+      dynamicPropertiesStore.saveTotalNetWeight2(0);
+      dynamicPropertiesStore.saveTotalEnergyWeight2(0);
+      System.out.println("Init stake2.0, start");
+      final AtomicLong count = new AtomicLong(0);
+      accountStore.forEach(e -> {
+        long bandwidth = e.getValue().getFrozenV2BalanceForBandwidth()
+                + e.getValue().getDelegatedFrozenV2BalanceForBandwidth();
+        long energy = e.getValue().getFrozenV2BalanceForEnergy()
+                + e.getValue().getDelegatedFrozenV2BalanceForEnergy();
+        if (bandwidth > 0) {
+          dynamicPropertiesStore.addTotalNetWeight2(bandwidth / 1_000_000);
+        }
+        if (energy > 0) {
+          dynamicPropertiesStore.addTotalEnergyWeight2(energy / 1_000_000);
+        }
+        if (count.incrementAndGet() % 1_000_000 == 0) {
+          System.out.println("Init stake2.0, processed " + count.get());
+        }
+      });
+      System.out.println("Init stake2.0, end");
+      System.out.println("Stake for bandwidth: " + dynamicPropertiesStore.getTotalNetWeight2());
+      System.out.println("Stake for energy: " + dynamicPropertiesStore.getTotalEnergyWeight2());
+    }
+
+    appT.initServices(parameter);
+    appT.startServices();
     appT.startup();
     appT.blockUntilShutdown();
   }

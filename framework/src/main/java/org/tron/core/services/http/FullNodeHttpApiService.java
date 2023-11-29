@@ -1,8 +1,5 @@
 package org.tron.core.services.http;
 
-import java.util.EnumSet;
-import javax.servlet.DispatcherType;
-import javax.servlet.Filter;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.server.ConnectionLimit;
 import org.eclipse.jetty.server.Server;
@@ -19,11 +16,17 @@ import org.tron.core.services.filter.HttpApiAccessFilter;
 import org.tron.core.services.filter.HttpInterceptor;
 import org.tron.core.services.filter.LiteFnQueryHttpFilter;
 
+import javax.servlet.DispatcherType;
+import javax.servlet.Filter;
+import java.util.EnumSet;
+
 
 @Component("fullNodeHttpApiService")
 @Slf4j(topic = "API")
 public class FullNodeHttpApiService extends HttpService {
 
+  @Autowired
+  private GetStakeInfoServlet getStakeInfoServlet;
   @Autowired
   private GetAccountServlet getAccountServlet;
   @Autowired
@@ -311,6 +314,7 @@ public class FullNodeHttpApiService extends HttpService {
       context.setContextPath("/");
       apiServer.setHandler(context);
 
+      context.addServlet(new ServletHolder(getStakeInfoServlet), "/wallet/getstakeinfo");
       context.addServlet(new ServletHolder(getAccountServlet), "/wallet/getaccount");
       context.addServlet(new ServletHolder(transferServlet), "/wallet/createtransaction");
       context.addServlet(new ServletHolder(broadcastServlet), "/wallet/broadcasttransaction");

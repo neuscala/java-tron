@@ -1,12 +1,6 @@
 package org.tron.core.store;
 
-import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
-import static org.tron.core.config.Parameter.ChainConstant.DELEGATE_PERIOD;
-
 import com.google.protobuf.ByteString;
-import java.util.Arrays;
-import java.util.Optional;
-import java.util.stream.IntStream;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
@@ -21,6 +15,13 @@ import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
+
+import java.util.Arrays;
+import java.util.Optional;
+import java.util.stream.IntStream;
+
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+import static org.tron.core.config.Parameter.ChainConstant.DELEGATE_PERIOD;
 
 @Slf4j(topic = "DB")
 @Component
@@ -1245,6 +1246,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public void saveTotalNetWeight(long totalNetWeight) {
     this.put(DynamicResourceProperties.TOTAL_NET_WEIGHT,
         new BytesCapsule(ByteArray.fromLong(totalNetWeight)));
+    this.put(("TOTAL_NET_WEIGHT_" + getCurrentCycleNumber()).getBytes(),
+            new BytesCapsule(ByteArray.fromLong(totalNetWeight)));
   }
 
   public long getTotalNetWeight() {
@@ -1255,9 +1258,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found TOTAL_NET_WEIGHT"));
   }
 
+  public long getTotalNetWeight(long cycleNumber) {
+      return Optional.ofNullable(getUnchecked(("TOTAL_NET_WEIGHT_" + cycleNumber).getBytes()))
+              .map(BytesCapsule::getData)
+              .map(ByteArray::toLong)
+              .orElseThrow(
+                      () -> new IllegalArgumentException("not found TOTAL_NET_WEIGHT"));
+  }
+
   public void saveTotalEnergyWeight(long totalEnergyWeight) {
     this.put(DynamicResourceProperties.TOTAL_ENERGY_WEIGHT,
         new BytesCapsule(ByteArray.fromLong(totalEnergyWeight)));
+    this.put(("TOTAL_ENERGY_WEIGHT_" + getCurrentCycleNumber()).getBytes(),
+            new BytesCapsule(ByteArray.fromLong(totalEnergyWeight)));
   }
 
   public long getTotalEnergyWeight() {
@@ -1266,6 +1279,60 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found TOTAL_ENERGY_WEIGHT"));
+  }
+
+  public long getTotalEnergyWeight(long cycleNumber) {
+      return Optional.ofNullable(getUnchecked(("TOTAL_ENERGY_WEIGHT_" + cycleNumber).getBytes()))
+              .map(BytesCapsule::getData)
+              .map(ByteArray::toLong)
+              .orElseThrow(
+                      () -> new IllegalArgumentException("not found TOTAL_ENERGY_WEIGHT"));
+  }
+
+  public void saveTotalNetWeight2(long totalNetWeight) {
+    this.put(DynamicResourceProperties.TOTAL_NET_WEIGHT2,
+            new BytesCapsule(ByteArray.fromLong(totalNetWeight)));
+    this.put(("TOTAL_NET_WEIGHT2_" + getCurrentCycleNumber()).getBytes(),
+            new BytesCapsule(ByteArray.fromLong(totalNetWeight)));
+  }
+
+  public long getTotalNetWeight2() {
+    return Optional.ofNullable(getUnchecked(DynamicResourceProperties.TOTAL_NET_WEIGHT2))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElseThrow(
+                    () -> new IllegalArgumentException("not found TOTAL_NET_WEIGHT2"));
+  }
+
+  public long getTotalNetWeight2(long cycleNumber) {
+    return Optional.ofNullable(getUnchecked(("TOTAL_NET_WEIGHT2_" + cycleNumber).getBytes()))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElseThrow(
+                    () -> new IllegalArgumentException("not found TOTAL_NET_WEIGHT2"));
+  }
+
+  public void saveTotalEnergyWeight2(long totalEnergyWeight) {
+    this.put(DynamicResourceProperties.TOTAL_ENERGY_WEIGHT2,
+            new BytesCapsule(ByteArray.fromLong(totalEnergyWeight)));
+    this.put(("TOTAL_ENERGY_WEIGHT2_" + getCurrentCycleNumber()).getBytes(),
+            new BytesCapsule(ByteArray.fromLong(totalEnergyWeight)));
+  }
+
+  public long getTotalEnergyWeight2() {
+    return Optional.ofNullable(getUnchecked(DynamicResourceProperties.TOTAL_ENERGY_WEIGHT2))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElseThrow(
+                    () -> new IllegalArgumentException("not found TOTAL_ENERGY_WEIGHT"));
+  }
+
+  public long getTotalEnergyWeight2(long cycleNumber) {
+      return Optional.ofNullable(getUnchecked(("TOTAL_ENERGY_WEIGHT2_" + cycleNumber).getBytes()))
+              .map(BytesCapsule::getData)
+              .map(ByteArray::toLong)
+              .orElseThrow(
+                      () -> new IllegalArgumentException("not found TOTAL_ENERGY_WEIGHT"));
   }
 
   public void saveTotalTronPowerWeight(long totalEnergyWeight) {
@@ -2238,6 +2305,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     saveTotalNetWeight(totalNetWeight);
   }
 
+  public void addTotalNetWeight2(long amount) {
+    if (amount == 0) {
+      return;
+    }
+    long totalNetWeight = getTotalNetWeight2();
+    totalNetWeight += amount;
+    if (allowNewReward()) {
+      totalNetWeight = Math.max(0, totalNetWeight);
+    }
+    saveTotalNetWeight2(totalNetWeight);
+  }
+
   //The unit is trx
   public void addTotalEnergyWeight(long amount) {
     if (amount == 0) {
@@ -2249,6 +2328,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       totalEnergyWeight = Math.max(0, totalEnergyWeight);
     }
     saveTotalEnergyWeight(totalEnergyWeight);
+  }
+
+  public void addTotalEnergyWeight2(long amount) {
+    if (amount == 0) {
+      return;
+    }
+    long totalEnergyWeight = getTotalEnergyWeight2();
+    totalEnergyWeight += amount;
+    if (allowNewReward()) {
+      totalEnergyWeight = Math.max(0, totalEnergyWeight);
+    }
+    saveTotalEnergyWeight2(totalEnergyWeight);
   }
 
   //The unit is trx
@@ -2357,6 +2448,28 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public void saveCurrentCycleNumber(long number) {
     this.put(CURRENT_CYCLE_NUMBER, new BytesCapsule(ByteArray.fromLong(number)));
+  }
+
+  public long getCycleStartBlockNumber(long cycle) {
+    return Optional.ofNullable(getUnchecked(("CYCLE_START_" + cycle).getBytes()))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElse(0L);
+  }
+
+  public void saveCycleStartBlockNumber(long cycle, long number) {
+    this.put(("CYCLE_START_" + cycle).getBytes(), new BytesCapsule(ByteArray.fromLong(number)));
+  }
+
+  public long getCycleEndBlockNumber(long cycle) {
+    return Optional.ofNullable(getUnchecked(("CYCLE_END_" + cycle).getBytes()))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(0L);
+  }
+
+  public void saveCycleEndBlockNumber(long cycle, long number) {
+    this.put(("CYCLE_END_" + cycle).getBytes(), new BytesCapsule(ByteArray.fromLong(number)));
   }
 
   public void saveChangeDelegation(long number) {
@@ -2843,6 +2956,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     private static final byte[] PUBLIC_NET_TIME = "PUBLIC_NET_TIME".getBytes();
     private static final byte[] FREE_NET_LIMIT = "FREE_NET_LIMIT".getBytes();
     private static final byte[] TOTAL_NET_WEIGHT = "TOTAL_NET_WEIGHT".getBytes();
+    private static final byte[] TOTAL_NET_WEIGHT2 = "TOTAL_NET_WEIGHT2".getBytes();
     //ONE_DAY_NET_LIMIT - PUBLIC_NET_LIMIT，current TOTAL_NET_LIMIT
     private static final byte[] TOTAL_NET_LIMIT = "TOTAL_NET_LIMIT".getBytes();
     private static final byte[] TOTAL_ENERGY_TARGET_LIMIT = "TOTAL_ENERGY_TARGET_LIMIT".getBytes();
@@ -2852,6 +2966,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .getBytes();
     private static final byte[] TOTAL_ENERGY_AVERAGE_TIME = "TOTAL_ENERGY_AVERAGE_TIME".getBytes();
     private static final byte[] TOTAL_ENERGY_WEIGHT = "TOTAL_ENERGY_WEIGHT".getBytes();
+    private static final byte[] TOTAL_ENERGY_WEIGHT2 = "TOTAL_ENERGY_WEIGHT2".getBytes();
     private static final byte[] TOTAL_TRON_POWER_WEIGHT = "TOTAL_TRON_POWER_WEIGHT".getBytes();
     private static final byte[] TOTAL_ENERGY_LIMIT = "TOTAL_ENERGY_LIMIT".getBytes();
     private static final byte[] BLOCK_ENERGY_USAGE = "BLOCK_ENERGY_USAGE".getBytes();
