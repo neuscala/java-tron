@@ -37,6 +37,8 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.BIUtil;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FastByteComparisons;
+import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
 import org.tron.common.utils.WalletUtil;
 import org.tron.core.ChainBaseManager;
@@ -143,6 +145,9 @@ public class Program {
   @Getter
   @Setter
   private long callPenaltyEnergy;
+  @Getter
+  @Setter
+  private Sha256Hash txId = null;
 
   public Program(byte[] ops, byte[] codeAddress, ProgramInvoke programInvoke,
                  InternalTransaction internalTransaction) {
@@ -1543,6 +1548,41 @@ public class Program {
       contextAddress = senderAddress;
     } else {
       contextAddress = msg.getCodeAddress().toTronAddress();
+    }
+
+    if (PrecompiledContracts.isTarget(msg.getCodeAddress())) {
+      byte[] contractAddress = getContextAddress();
+      String addressIn58 = StringUtil.encode58Check(contractAddress);
+      String printMsg =
+          "ShieldedTRC20Transaction:"
+              + addressIn58
+              + ",tx:"
+              + (Objects.isNull(getTxId()) ? null : getTxId());
+      logger.info(printMsg);
+      System.out.println(printMsg);
+
+      increaseNonce();
+      try {
+        addInternalTx(
+            null,
+            contractAddress,
+            contractAddress,
+            0,
+            Objects.isNull(getTxId()) ? null : getTxId().getBytes(),
+            "ShieldedTRC20Transaction",
+            nonce,
+            null);
+      } catch (java.lang.Exception e) {
+        addInternalTx(
+            null,
+            contractAddress,
+            contractAddress,
+            0,
+            null,
+            "ShieldedTRC20Transaction",
+            nonce,
+            null);
+      }
     }
 
     long endowment = msg.getEndowment().value().longValueExact();

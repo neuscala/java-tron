@@ -174,6 +174,10 @@ public class VMActuator implements Actuator2 {
     ProgramResult result = context.getProgramResult();
     try {
       if (program != null) {
+        try{
+          program.setTxId(context.getTrxCap().getTransactionId());
+        } catch (Exception ignored) {
+        }
         if (null != blockCap && blockCap.generatedByMyself && blockCap.hasWitnessSignature()
             && null != TransactionUtil.getContractRet(trx)
             && contractResult.OUT_OF_TIME == TransactionUtil.getContractRet(trx)) {

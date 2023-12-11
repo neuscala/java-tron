@@ -194,6 +194,15 @@ public class PrecompiledContracts {
   private static final DataWord blake2FAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000020009");
 
+  public static boolean isTarget(DataWord address) {
+    if (VMConfig.allowShieldedTRC20Transaction()) {
+      return address.equals(verifyMintProofAddr)
+          || address.equals(verifyTransferProofAddr)
+          || address.equals(verifyBurnProofAddr)
+          || address.equals(merkleHashAddr);
+    }
+    return false;
+  }
 
   public static PrecompiledContract getContractForAddress(DataWord address) {
 
