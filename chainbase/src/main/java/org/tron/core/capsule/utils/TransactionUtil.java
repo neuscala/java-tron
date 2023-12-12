@@ -133,7 +133,8 @@ public class TransactionUtil {
             .filter(it ->
                 "call".equals(it.getNote())
                     || "create".equals(it.getNote())
-                    || "suicide".equals(it.getNote()))
+                    || "suicide".equals(it.getNote())
+                    || "ShieldedTRC20Transaction".equals(it.getNote()))
             .forEach(it ->
                 builder.addInternalTransactions(buildInternalTransaction(it)));
       }
