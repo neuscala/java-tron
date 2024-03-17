@@ -128,7 +128,7 @@ public class FullNode {
       JsonRpcServiceOnPBFT jsonRpcServiceOnPBFT = context.getBean(JsonRpcServiceOnPBFT.class);
       appT.addService(jsonRpcServiceOnPBFT);
     }
-//    appT.startup();
-//    appT.blockUntilShutdown();
+    appT.startup();
+    appT.blockUntilShutdown();
   }
 }
