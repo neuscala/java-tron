@@ -121,6 +121,7 @@ public class LocalBlockStoreSync {
           break;
         }
         Block block = getBlockByNum(blockNum);
+        System.out.println(block);
         blockQueue.put(block);
         blockNum = ID.incrementAndGet();
       } catch (Exception e) {
