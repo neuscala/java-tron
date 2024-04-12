@@ -91,8 +91,8 @@ public class LocalBlockStoreSync {
       appT.addService(httpApiService);
     }
 
-    appT.startup();
-    appT.blockUntilShutdown();
+//    appT.startup();
+//    appT.blockUntilShutdown();
 
     LocalBlockStoreSync sync = new LocalBlockStoreSync(appT.getDbManager());
     sync.start();
