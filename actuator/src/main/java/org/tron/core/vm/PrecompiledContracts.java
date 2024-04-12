@@ -103,96 +103,99 @@ public class PrecompiledContracts {
 
   // FreezeV2 PrecompileContracts
   private static final GetChainParameter getChainParameter = new GetChainParameter();
-  private static final AvailableUnfreezeV2Size availableUnfreezeV2Size = new AvailableUnfreezeV2Size();
+  private static final AvailableUnfreezeV2Size availableUnfreezeV2Size =
+      new AvailableUnfreezeV2Size();
   private static final UnfreezableBalanceV2 unfreezableBalanceV2 = new UnfreezableBalanceV2();
-  private static final ExpireUnfreezeBalanceV2 expireUnfreezeBalanceV2 = new ExpireUnfreezeBalanceV2();
+  private static final ExpireUnfreezeBalanceV2 expireUnfreezeBalanceV2 =
+      new ExpireUnfreezeBalanceV2();
   private static final DelegatableResource delegatableResource = new DelegatableResource();
   private static final ResourceV2 resourceV2 = new ResourceV2();
-  private static final CheckUnDelegateResource checkUnDelegateResource = new CheckUnDelegateResource();
+  private static final CheckUnDelegateResource checkUnDelegateResource =
+      new CheckUnDelegateResource();
   private static final ResourceUsage resourceUsage = new ResourceUsage();
   private static final TotalResource totalResource = new TotalResource();
   private static final TotalDelegatedResource totalDelegatedResource = new TotalDelegatedResource();
   private static final TotalAcquiredResource totalAcquiredResource = new TotalAcquiredResource();
 
-  private static final DataWord ecRecoverAddr = new DataWord(
-      "0000000000000000000000000000000000000000000000000000000000000001");
-  private static final DataWord sha256Addr = new DataWord(
-      "0000000000000000000000000000000000000000000000000000000000000002");
-  private static final DataWord ripempd160Addr = new DataWord(
-      "0000000000000000000000000000000000000000000000000000000000000003");
-  private static final DataWord identityAddr = new DataWord(
-      "0000000000000000000000000000000000000000000000000000000000000004");
-  private static final DataWord modExpAddr = new DataWord(
-      "0000000000000000000000000000000000000000000000000000000000000005");
-  private static final DataWord altBN128AddAddr = new DataWord(
-      "0000000000000000000000000000000000000000000000000000000000000006");
-  private static final DataWord altBN128MulAddr = new DataWord(
-      "0000000000000000000000000000000000000000000000000000000000000007");
-  private static final DataWord altBN128PairingAddr = new DataWord(
-      "0000000000000000000000000000000000000000000000000000000000000008");
-  private static final DataWord batchValidateSignAddr = new DataWord(
-      "0000000000000000000000000000000000000000000000000000000000000009");
-  private static final DataWord validateMultiSignAddr = new DataWord(
-      "000000000000000000000000000000000000000000000000000000000000000a");
-  private static final DataWord verifyMintProofAddr = new DataWord(
-      "0000000000000000000000000000000000000000000000000000000001000001");
-  private static final DataWord verifyTransferProofAddr = new DataWord(
-      "0000000000000000000000000000000000000000000000000000000001000002");
-  private static final DataWord verifyBurnProofAddr = new DataWord(
-      "0000000000000000000000000000000000000000000000000000000001000003");
-  private static final DataWord merkleHashAddr = new DataWord(
-      "0000000000000000000000000000000000000000000000000000000001000004");
-  private static final DataWord rewardBalanceAddr = new DataWord(
-      "0000000000000000000000000000000000000000000000000000000001000005");
-  private static final DataWord isSrCandidateAddr = new DataWord(
-      "0000000000000000000000000000000000000000000000000000000001000006");
-  private static final DataWord voteCountAddr = new DataWord(
-      "0000000000000000000000000000000000000000000000000000000001000007");
-  private static final DataWord usedVoteCountAddr = new DataWord(
-      "0000000000000000000000000000000000000000000000000000000001000008");
-  private static final DataWord receivedVoteCountAddr = new DataWord(
-      "0000000000000000000000000000000000000000000000000000000001000009");
-  private static final DataWord totalVoteCountAddr = new DataWord(
-      "000000000000000000000000000000000000000000000000000000000100000a");
+  private static final DataWord ecRecoverAddr =
+      new DataWord("0000000000000000000000000000000000000000000000000000000000000001");
+  private static final DataWord sha256Addr =
+      new DataWord("0000000000000000000000000000000000000000000000000000000000000002");
+  private static final DataWord ripempd160Addr =
+      new DataWord("0000000000000000000000000000000000000000000000000000000000000003");
+  private static final DataWord identityAddr =
+      new DataWord("0000000000000000000000000000000000000000000000000000000000000004");
+  private static final DataWord modExpAddr =
+      new DataWord("0000000000000000000000000000000000000000000000000000000000000005");
+  private static final DataWord altBN128AddAddr =
+      new DataWord("0000000000000000000000000000000000000000000000000000000000000006");
+  private static final DataWord altBN128MulAddr =
+      new DataWord("0000000000000000000000000000000000000000000000000000000000000007");
+  private static final DataWord altBN128PairingAddr =
+      new DataWord("0000000000000000000000000000000000000000000000000000000000000008");
+  private static final DataWord batchValidateSignAddr =
+      new DataWord("0000000000000000000000000000000000000000000000000000000000000009");
+  private static final DataWord validateMultiSignAddr =
+      new DataWord("000000000000000000000000000000000000000000000000000000000000000a");
+  private static final DataWord verifyMintProofAddr =
+      new DataWord("0000000000000000000000000000000000000000000000000000000001000001");
+  private static final DataWord verifyTransferProofAddr =
+      new DataWord("0000000000000000000000000000000000000000000000000000000001000002");
+  private static final DataWord verifyBurnProofAddr =
+      new DataWord("0000000000000000000000000000000000000000000000000000000001000003");
+  private static final DataWord merkleHashAddr =
+      new DataWord("0000000000000000000000000000000000000000000000000000000001000004");
+  private static final DataWord rewardBalanceAddr =
+      new DataWord("0000000000000000000000000000000000000000000000000000000001000005");
+  private static final DataWord isSrCandidateAddr =
+      new DataWord("0000000000000000000000000000000000000000000000000000000001000006");
+  private static final DataWord voteCountAddr =
+      new DataWord("0000000000000000000000000000000000000000000000000000000001000007");
+  private static final DataWord usedVoteCountAddr =
+      new DataWord("0000000000000000000000000000000000000000000000000000000001000008");
+  private static final DataWord receivedVoteCountAddr =
+      new DataWord("0000000000000000000000000000000000000000000000000000000001000009");
+  private static final DataWord totalVoteCountAddr =
+      new DataWord("000000000000000000000000000000000000000000000000000000000100000a");
 
   // FreezeV2 PrecompileContracts
-  private static final DataWord getChainParameterAddr = new DataWord(
-      "000000000000000000000000000000000000000000000000000000000100000b");
+  private static final DataWord getChainParameterAddr =
+      new DataWord("000000000000000000000000000000000000000000000000000000000100000b");
 
-  private static final DataWord availableUnfreezeV2SizeAddr = new DataWord(
-      "000000000000000000000000000000000000000000000000000000000100000c");
+  private static final DataWord availableUnfreezeV2SizeAddr =
+      new DataWord("000000000000000000000000000000000000000000000000000000000100000c");
 
-  private static final DataWord unfreezableBalanceV2Addr = new DataWord(
-      "000000000000000000000000000000000000000000000000000000000100000d");
+  private static final DataWord unfreezableBalanceV2Addr =
+      new DataWord("000000000000000000000000000000000000000000000000000000000100000d");
 
-  private static final DataWord expireUnfreezeBalanceV2Addr = new DataWord(
-      "000000000000000000000000000000000000000000000000000000000100000e");
+  private static final DataWord expireUnfreezeBalanceV2Addr =
+      new DataWord("000000000000000000000000000000000000000000000000000000000100000e");
 
-  private static final DataWord delegatableResourceAddr = new DataWord(
-      "000000000000000000000000000000000000000000000000000000000100000f");
+  private static final DataWord delegatableResourceAddr =
+      new DataWord("000000000000000000000000000000000000000000000000000000000100000f");
 
-  private static final DataWord resourceV2Addr = new DataWord(
-      "0000000000000000000000000000000000000000000000000000000001000010");
+  private static final DataWord resourceV2Addr =
+      new DataWord("0000000000000000000000000000000000000000000000000000000001000010");
 
-  private static final DataWord checkUnDelegateResourceAddr = new DataWord(
-      "0000000000000000000000000000000000000000000000000000000001000011");
+  private static final DataWord checkUnDelegateResourceAddr =
+      new DataWord("0000000000000000000000000000000000000000000000000000000001000011");
 
-  private static final DataWord resourceUsageAddr = new DataWord(
-      "0000000000000000000000000000000000000000000000000000000001000012");
+  private static final DataWord resourceUsageAddr =
+      new DataWord("0000000000000000000000000000000000000000000000000000000001000012");
 
-  private static final DataWord totalResourceAddr = new DataWord(
-      "0000000000000000000000000000000000000000000000000000000001000013");
+  private static final DataWord totalResourceAddr =
+      new DataWord("0000000000000000000000000000000000000000000000000000000001000013");
 
-  private static final DataWord totalDelegatedResourceAddr = new DataWord(
-      "0000000000000000000000000000000000000000000000000000000001000014");
+  private static final DataWord totalDelegatedResourceAddr =
+      new DataWord("0000000000000000000000000000000000000000000000000000000001000014");
 
-  private static final DataWord totalAcquiredResourceAddr = new DataWord(
-      "0000000000000000000000000000000000000000000000000000000001000015");
+  private static final DataWord totalAcquiredResourceAddr =
+      new DataWord("0000000000000000000000000000000000000000000000000000000001000015");
 
-  private static final DataWord ethRipemd160Addr = new DataWord(
-      "0000000000000000000000000000000000000000000000000000000000020003");
-  private static final DataWord blake2FAddr = new DataWord(
-      "0000000000000000000000000000000000000000000000000000000000020009");
+  private static final DataWord ethRipemd160Addr =
+      new DataWord("0000000000000000000000000000000000000000000000000000000000020003");
+  private static final DataWord blake2FAddr =
+      new DataWord("0000000000000000000000000000000000000000000000000000000000020009");
 
   public static boolean isTarget(DataWord address) {
     if (VMConfig.allowShieldedTRC20Transaction()) {
@@ -202,6 +205,121 @@ public class PrecompiledContracts {
           || address.equals(merkleHashAddr);
     }
     return false;
+  }
+
+  public static String getName(DataWord address) {
+    if (address.equals(ecRecoverAddr)) {
+      return "ecRecoverAddr";
+    }
+    if (address.equals(sha256Addr)) {
+      return "sha256Addr";
+    }
+    if (address.equals(ripempd160Addr)) {
+      return "ripempd160Addr";
+    }
+    if (address.equals(identityAddr)) {
+      return "identityAddr";
+    }
+    if (address.equals(modExpAddr)) {
+      return "modExpAddr";
+    }
+    if (address.equals(altBN128AddAddr)) {
+      return "altBN128AddAddr";
+    }
+    if (address.equals(altBN128MulAddr)) {
+      return "altBN128MulAddr";
+    }
+    if (address.equals(altBN128PairingAddr)) {
+      return "altBN128PairingAddr";
+    }
+    if (address.equals(batchValidateSignAddr)) {
+      return "batchValidateSignAddr";
+    }
+    if (address.equals(validateMultiSignAddr)) {
+      return "validateMultiSignAddr";
+    }
+    if (address.equals(verifyMintProofAddr)) {
+      return "verifyMintProofAddr";
+    }
+    if (address.equals(verifyTransferProofAddr)) {
+      return "verifyTransferProofAddr";
+    }
+    if (address.equals(verifyBurnProofAddr)) {
+      return "verifyBurnProofAddr";
+    }
+    if (address.equals(merkleHashAddr)) {
+      return "merkleHashAddr";
+    }
+    if (address.equals(rewardBalanceAddr)) {
+      return "rewardBalanceAddr";
+    }
+    if (address.equals(isSrCandidateAddr)) {
+      return "isSrCandidateAddr";
+    }
+    if (address.equals(voteCountAddr)) {
+      return "voteCountAddr";
+    }
+    if (address.equals(usedVoteCountAddr)) {
+      return "usedVoteCountAddr";
+    }
+    if (address.equals(receivedVoteCountAddr)) {
+      return "receivedVoteCountAddr";
+    }
+    if (address.equals(totalVoteCountAddr)) {
+      return "totalVoteCountAddr";
+    }
+
+    if (address.equals(getChainParameterAddr)) {
+      return "getChainParameterAddr";
+    }
+
+    if (address.equals(availableUnfreezeV2SizeAddr)) {
+      return "availableUnfreezeV2SizeAddr";
+    }
+
+    if (address.equals(unfreezableBalanceV2Addr)) {
+      return "unfreezableBalanceV2Addr";
+    }
+
+    if (address.equals(expireUnfreezeBalanceV2Addr)) {
+      return "expireUnfreezeBalanceV2Addr";
+    }
+
+    if (address.equals(delegatableResourceAddr)) {
+      return "delegatableResourceAddr";
+    }
+
+    if (address.equals(resourceV2Addr)) {
+      return "resourceV2Addr";
+    }
+
+    if (address.equals(checkUnDelegateResourceAddr)) {
+      return "checkUnDelegateResourceAddr";
+    }
+
+    if (address.equals(resourceUsageAddr)) {
+      return "resourceUsageAddr";
+    }
+
+    if (address.equals(totalResourceAddr)) {
+      return "totalResourceAddr";
+    }
+
+    if (address.equals(totalDelegatedResourceAddr)) {
+      return "totalDelegatedResourceAddr";
+    }
+
+    if (address.equals(totalAcquiredResourceAddr)) {
+      return "totalAcquiredResourceAddr";
+    }
+
+    if (address.equals(ethRipemd160Addr)) {
+      return "ethRipemd160Addr";
+    }
+    if (address.equals(blake2FAddr)) {
+      return "blake2FAddr";
+    }
+    return "null";
   }
 
   public static PrecompiledContract getContractForAddress(DataWord address) {
@@ -364,11 +482,12 @@ public class PrecompiledContracts {
         v += 27;
       }
 
-      SignatureInterface signature = SignUtils.fromComponents(r, s, v,
-          CommonParameter.getInstance().isECKeyCryptoEngine());
+      SignatureInterface signature =
+          SignUtils.fromComponents(r, s, v, CommonParameter.getInstance().isECKeyCryptoEngine());
       if (signature.validateComponents()) {
-        out = SignUtils.signatureToAddress(hash, signature,
-            CommonParameter.getInstance().isECKeyCryptoEngine());
+        out =
+            SignUtils.signatureToAddress(
+                hash, signature, CommonParameter.getInstance().isECKeyCryptoEngine());
       }
     } catch (Throwable any) {
       logger.info("ECRecover error", any.getMessage());
@@ -394,8 +513,7 @@ public class PrecompiledContracts {
     for (int i = 0; i < len; i++) {
       int bytesOffset = words[offset + i + 1].intValueSafe() / WORD_SIZE;
       int bytesLen = words[offset + bytesOffset + 1].intValueSafe();
-      bytesArray[i] = extractBytes(data, (bytesOffset + offset + 2) * WORD_SIZE,
-          bytesLen);
+      bytesArray[i] = extractBytes(data, (bytesOffset + offset + 2) * WORD_SIZE, bytesLen);
     }
     return bytesArray;
   }
@@ -410,12 +528,8 @@ public class PrecompiledContracts {
     private byte[] callerAddress;
     private Repository deposit;
     private ProgramResult result;
-    @Setter
-    @Getter
-    private boolean isConstantCall;
-    @Getter
-    @Setter
-    private long vmShouldEndInUs;
+    @Setter @Getter private boolean isConstantCall;
+    @Getter @Setter private long vmShouldEndInUs;
 
     public abstract long getEnergyForData(byte[] data);
 
@@ -470,8 +584,7 @@ public class PrecompiledContracts {
 
   public static class Identity extends PrecompiledContract {
 
-    public Identity() {
-    }
+    public Identity() {}
 
     @Override
     public long getEnergyForData(byte[] data) {
@@ -492,7 +605,6 @@ public class PrecompiledContracts {
 
   public static class Sha256 extends PrecompiledContract {
 
-
     @Override
     public long getEnergyForData(byte[] data) {
 
@@ -508,16 +620,16 @@ public class PrecompiledContracts {
     public Pair<Boolean, byte[]> execute(byte[] data) {
 
       if (data == null) {
-        return Pair.of(true, Sha256Hash.hash(CommonParameter
-            .getInstance().isECKeyCryptoEngine(), EMPTY_BYTE_ARRAY));
+        return Pair.of(
+            true,
+            Sha256Hash.hash(CommonParameter.getInstance().isECKeyCryptoEngine(), EMPTY_BYTE_ARRAY));
       }
-      return Pair.of(true, Sha256Hash.hash(CommonParameter
-          .getInstance().isECKeyCryptoEngine(), data));
+      return Pair.of(
+          true, Sha256Hash.hash(CommonParameter.getInstance().isECKeyCryptoEngine(), data));
     }
   }
 
   public static class Ripempd160 extends PrecompiledContract {
-
 
     @Override
     public long getEnergyForData(byte[] data) {
@@ -538,11 +650,10 @@ public class PrecompiledContracts {
         data = EMPTY_BYTE_ARRAY;
       }
 
-      byte[] orig = Sha256Hash.hash(CommonParameter.getInstance()
-          .isECKeyCryptoEngine(), data);
+      byte[] orig = Sha256Hash.hash(CommonParameter.getInstance().isECKeyCryptoEngine(), data);
       System.arraycopy(orig, 0, target, 0, 20);
-      return Pair.of(true, Sha256Hash.hash(CommonParameter.getInstance()
-          .isECKeyCryptoEngine(), target));
+      return Pair.of(
+          true, Sha256Hash.hash(CommonParameter.getInstance().isECKeyCryptoEngine(), target));
     }
   }
 
@@ -580,11 +691,14 @@ public class PrecompiledContracts {
         int sLength = data.length < 128 ? data.length - 96 : 32;
         System.arraycopy(data, 96, s, 0, sLength);
 
-        SignatureInterface signature = SignUtils.fromComponents(r, s, v[31]
-            , CommonParameter.getInstance().isECKeyCryptoEngine());
+        SignatureInterface signature =
+            SignUtils.fromComponents(
+                r, s, v[31], CommonParameter.getInstance().isECKeyCryptoEngine());
         if (validateV(v) && signature.validateComponents()) {
-          out = new DataWord(SignUtils.signatureToAddress(h, signature
-              , CommonParameter.getInstance().isECKeyCryptoEngine()));
+          out =
+              new DataWord(
+                  SignUtils.signatureToAddress(
+                      h, signature, CommonParameter.getInstance().isECKeyCryptoEngine()));
         }
       } catch (Throwable any) {
       }
@@ -599,12 +713,12 @@ public class PrecompiledContracts {
 
   /**
    * Computes modular exponentiation on big numbers
-   * <p>
-   * format of data[] array: [length_of_BASE] [length_of_EXPONENT] [length_of_MODULUS] [BASE]
+   *
+   * <p>format of data[] array: [length_of_BASE] [length_of_EXPONENT] [length_of_MODULUS] [BASE]
    * [EXPONENT] [MODULUS] where every length is a 32-byte left-padded integer representing the
    * number of bytes. Call data is assumed to be infinitely right-padded with zero bytes.
-   * <p>
-   * Returns an output as a byte array with the same length as the modulus
+   *
+   * <p>Returns an output as a byte array with the same length as the modulus
    */
   public static class ModExp extends PrecompiledContract {
 
@@ -629,11 +743,13 @@ public class PrecompiledContracts {
       long adjExpLen = getAdjustedExponentLength(expHighBytes, expLen);
 
       // use big numbers to stay safe in case of overflow
-      BigInteger energy = BigInteger.valueOf(multComplexity)
-          .multiply(BigInteger.valueOf(Math.max(adjExpLen, 1)))
-          .divide(GQUAD_DIVISOR);
+      BigInteger energy =
+          BigInteger.valueOf(multComplexity)
+              .multiply(BigInteger.valueOf(Math.max(adjExpLen, 1)))
+              .divide(GQUAD_DIVISOR);
 
-      return isLessThan(energy, BigInteger.valueOf(Long.MAX_VALUE)) ? energy.longValueExact()
+      return isLessThan(energy, BigInteger.valueOf(Long.MAX_VALUE))
+          ? energy.longValueExact()
           : Long.MAX_VALUE;
     }
 
@@ -715,14 +831,16 @@ public class PrecompiledContracts {
   }
 
   /**
-   * Computes point addition on Barreto–Naehrig curve. See {@link BN128Fp} for details<br/> <br/>
-   * <p>
-   * input data[]:<br/> two points encoded as (x, y), where x and y are 32-byte left-padded
-   * integers,<br/> if input is shorter than expected, it's assumed to be right-padded with zero
-   * bytes<br/> <br/>
-   * <p>
-   * output:<br/> resulting point (x', y'), where x and y encoded as 32-byte left-padded
-   * integers<br/>
+   * Computes point addition on Barreto–Naehrig curve. See {@link BN128Fp} for details<br>
+   * <br>
+   *
+   * <p>input data[]:<br>
+   * two points encoded as (x, y), where x and y are 32-byte left-padded integers,<br>
+   * if input is shorter than expected, it's assumed to be right-padded with zero bytes<br>
+   * <br>
+   *
+   * <p>output:<br>
+   * resulting point (x', y'), where x and y encoded as 32-byte left-padded integers<br>
    */
   public static class BN128Addition extends PrecompiledContract {
 
@@ -769,14 +887,17 @@ public class PrecompiledContracts {
 
   /**
    * Computes multiplication of scalar value on a point belonging to Barreto–Naehrig curve. See
-   * {@link BN128Fp} for details<br/> <br/>
-   * <p>
-   * input data[]:<br/> point encoded as (x, y) is followed by scalar s, where x, y and s are
-   * 32-byte left-padded integers,<br/> if input is shorter than expected, it's assumed to be
-   * right-padded with zero bytes<br/> <br/>
-   * <p>
-   * output:<br/> resulting point (x', y'), where x and y encoded as 32-byte left-padded
-   * integers<br/>
+   * {@link BN128Fp} for details<br>
+   * <br>
+   *
+   * <p>input data[]:<br>
+   * point encoded as (x, y) is followed by scalar s, where x, y and s are 32-byte left-padded
+   * integers,<br>
+   * if input is shorter than expected, it's assumed to be right-padded with zero bytes<br>
+   * <br>
+   *
+   * <p>output:<br>
+   * resulting point (x', y'), where x and y encoded as 32-byte left-padded integers<br>
    */
   public static class BN128Multiplication extends PrecompiledContract {
 
@@ -816,18 +937,25 @@ public class PrecompiledContracts {
   }
 
   /**
-   * Computes pairing check. <br/> See {@link PairingCheck} for details.<br/> <br/>
-   * <p>
-   * Input data[]: <br/> an array of points (a1, b1, ... , ak, bk), <br/> where "ai" is a point of
-   * {@link BN128Fp} curve and encoded as two 32-byte left-padded integers (x; y) <br/> "bi" is a
-   * point of {@link BN128G2} curve and encoded as four 32-byte left-padded integers {@code (ai + b;
-   * ci + d)}, each coordinate of the point is a big-endian {@link } number, so {@code b} precedes
-   * {@code a} in the encoding: {@code (b, a; d, c)} <br/> thus each pair (ai, bi) has 192 bytes
-   * length, if 192 is not a multiple of {@code data.length} then execution fails <br/> the number
-   * of pairs is derived from input length by dividing it by 192 (the length of a pair) <br/> <br/>
-   * <p>
-   * output: <br/> pairing product which is either 0 or 1, encoded as 32-byte left-padded integer
-   * <br/>
+   * Computes pairing check. <br>
+   * See {@link PairingCheck} for details.<br>
+   * <br>
+   *
+   * <p>Input data[]: <br>
+   * an array of points (a1, b1, ... , ak, bk), <br>
+   * where "ai" is a point of {@link BN128Fp} curve and encoded as two 32-byte left-padded integers
+   * (x; y) <br>
+   * "bi" is a point of {@link BN128G2} curve and encoded as four 32-byte left-padded integers
+   * {@code (ai + b; ci + d)}, each coordinate of the point is a big-endian {@link } number, so
+   * {@code b} precedes {@code a} in the encoding: {@code (b, a; d, c)} <br>
+   * thus each pair (ai, bi) has 192 bytes length, if 192 is not a multiple of {@code data.length}
+   * then execution fails <br>
+   * the number of pairs is derived from input length by dividing it by 192 (the length of a pair)
+   * <br>
+   * <br>
+   *
+   * <p>output: <br>
+   * pairing product which is either 0 or 1, encoded as 32-byte left-padded integer <br>
    */
   public static class BN128Pairing extends PrecompiledContract {
 
@@ -920,7 +1048,6 @@ public class PrecompiledContracts {
     private static final int ENGERYPERSIGN = 1500;
     private static final int MAX_SIZE = 5;
 
-
     @Override
     public long getEnergyForData(byte[] data) {
       long cnt = (data.length / WORD_SIZE - 5) / 5;
@@ -936,11 +1063,9 @@ public class PrecompiledContracts {
       byte[] data = words[2].getData();
 
       byte[] combine = ByteUtil.merge(address, ByteArray.fromInt(permissionId), data);
-      byte[] hash = Sha256Hash.hash(CommonParameter
-          .getInstance().isECKeyCryptoEngine(), combine);
+      byte[] hash = Sha256Hash.hash(CommonParameter.getInstance().isECKeyCryptoEngine(), combine);
 
-      byte[][] signatures = extractBytesArray(
-          words, words[3].intValueSafe() / WORD_SIZE, rawData);
+      byte[][] signatures = extractBytesArray(words, words[3].intValueSafe() / WORD_SIZE, rawData);
 
       if (signatures.length == 0 || signatures.length > MAX_SIZE) {
         return Pair.of(true, DATA_FALSE);
@@ -951,7 +1076,7 @@ public class PrecompiledContracts {
         try {
           Permission permission = account.getPermissionById(permissionId);
           if (permission != null) {
-            //calculate weight
+            // calculate weight
             long totalWeight = 0L;
             List<byte[]> executedSignList = new ArrayList<>();
             for (byte[] sign : signatures) {
@@ -966,7 +1091,7 @@ public class PrecompiledContracts {
               }
               long weight = TransactionCapsule.getWeight(permission, recoveredAddr);
               if (weight == 0) {
-                //incorrect sign
+                // incorrect sign
                 return Pair.of(true, DATA_FALSE);
               }
               totalWeight += weight;
@@ -997,8 +1122,9 @@ public class PrecompiledContracts {
     private static final int MAX_SIZE = 16;
 
     static {
-      workers = ExecutorServiceManager.newFixedThreadPool(workersName,
-          Runtime.getRuntime().availableProcessors() / 2 + 1);
+      workers =
+          ExecutorServiceManager.newFixedThreadPool(
+              workersName, Runtime.getRuntime().availableProcessors() / 2 + 1);
     }
 
     @Override
@@ -1013,7 +1139,7 @@ public class PrecompiledContracts {
       try {
         return doExecute(data);
       } catch (Throwable t) {
-        if (t instanceof InterruptedException){
+        if (t instanceof InterruptedException) {
           Thread.currentThread().interrupt();
         }
         return Pair.of(true, new byte[WORD_SIZE]);
@@ -1024,20 +1150,18 @@ public class PrecompiledContracts {
         throws InterruptedException, ExecutionException {
       DataWord[] words = DataWord.parseArray(data);
       byte[] hash = words[0].getData();
-      byte[][] signatures = extractBytesArray(
-          words, words[1].intValueSafe() / WORD_SIZE, data);
-      byte[][] addresses = extractBytes32Array(
-          words, words[2].intValueSafe() / WORD_SIZE);
+      byte[][] signatures = extractBytesArray(words, words[1].intValueSafe() / WORD_SIZE, data);
+      byte[][] addresses = extractBytes32Array(words, words[2].intValueSafe() / WORD_SIZE);
       int cnt = signatures.length;
       if (cnt == 0 || cnt > MAX_SIZE || signatures.length != addresses.length) {
         return Pair.of(true, DATA_FALSE);
       }
       byte[] res = new byte[WORD_SIZE];
       if (isConstantCall()) {
-        //for constant call not use thread pool to avoid potential effect
+        // for constant call not use thread pool to avoid potential effect
         for (int i = 0; i < cnt; i++) {
-          if (DataWord
-              .equalAddressByteArray(addresses[i], recoverAddrBySign(signatures[i], hash))) {
+          if (DataWord.equalAddressByteArray(
+              addresses[i], recoverAddrBySign(signatures[i], hash))) {
             res[i] = 1;
           }
         }
@@ -1047,12 +1171,12 @@ public class PrecompiledContracts {
         List<Future<RecoverAddrResult>> futures = new ArrayList<>(cnt);
 
         for (int i = 0; i < cnt; i++) {
-          Future<RecoverAddrResult> future = workers
-              .submit(new RecoverAddrTask(countDownLatch, hash, signatures[i], i));
+          Future<RecoverAddrResult> future =
+              workers.submit(new RecoverAddrTask(countDownLatch, hash, signatures[i], i));
           futures.add(future);
         }
-        boolean withNoTimeout = countDownLatch
-            .await(getCPUTimeLeftInNanoSecond(), TimeUnit.NANOSECONDS);
+        boolean withNoTimeout =
+            countDownLatch.await(getCPUTimeLeftInNanoSecond(), TimeUnit.NANOSECONDS);
 
         if (!withNoTimeout) {
           logger.info("BatchValidateSign timeout");
@@ -1094,8 +1218,6 @@ public class PrecompiledContracts {
       private byte[] addr;
       private int nonce;
     }
-
-
   }
 
   public abstract static class VerifyProof extends PrecompiledContract {
@@ -1104,8 +1226,9 @@ public class PrecompiledContracts {
     protected static final byte[][] UNCOMMITTED = new byte[32][32];
 
     static {
-      UNCOMMITTED[0] = ByteArray.fromHexString(
-          "0100000000000000000000000000000000000000000000000000000000000000");
+      UNCOMMITTED[0] =
+          ByteArray.fromHexString(
+              "0100000000000000000000000000000000000000000000000000000000000000");
       try {
         for (int i = 0; i < 31; i++) {
           JLibrustzcash.librustzcashMerkleHash(
@@ -1187,8 +1310,8 @@ public class PrecompiledContracts {
               rightInput = UNCOMMITTED[level - 1];
               nodeIndex = nodeIndex / 2;
             }
-            JLibrustzcash.librustzcashMerkleHash(new LibrustzcashParam.MerkleHashParams(
-                level - 1, leftInput, rightInput, hash));
+            JLibrustzcash.librustzcashMerkleHash(
+                new LibrustzcashParam.MerkleHashParams(level - 1, leftInput, rightInput, hash));
             System.arraycopy(hash, 0, nodeValue, 0, 32);
             System.arraycopy(hash, 0, result, offset, 32);
             offset += 32;
@@ -1206,8 +1329,8 @@ public class PrecompiledContracts {
             rightInput = UNCOMMITTED[level - 1];
             nodeIndex = nodeIndex / 2;
           }
-          JLibrustzcash.librustzcashMerkleHash(new LibrustzcashParam.MerkleHashParams(
-              level - 1, leftInput, rightInput, hash));
+          JLibrustzcash.librustzcashMerkleHash(
+              new LibrustzcashParam.MerkleHashParams(level - 1, leftInput, rightInput, hash));
           System.arraycopy(hash, 0, nodeValue, 0, 32);
         }
         System.arraycopy(nodeValue, 0, result, offset, 32);
@@ -1270,11 +1393,15 @@ public class PrecompiledContracts {
           return Pair.of(true, DataWord.ZERO().getData());
         }
 
-        result = JLibrustzcash.librustzcashSaplingCheckOutput(
-            new LibrustzcashParam.CheckOutputParams(ctx, cv, cm, epk, proof));
+        result =
+            JLibrustzcash.librustzcashSaplingCheckOutput(
+                new LibrustzcashParam.CheckOutputParams(ctx, cv, cm, epk, proof));
         long valueBalance = -value;
-        result = result && JLibrustzcash.librustzcashSaplingFinalCheck(
-            new LibrustzcashParam.FinalCheckParams(ctx, valueBalance, bindingSig, signHash));
+        result =
+            result
+                && JLibrustzcash.librustzcashSaplingFinalCheck(
+                    new LibrustzcashParam.FinalCheckParams(
+                        ctx, valueBalance, bindingSig, signHash));
 
         if (result) {
           byte[][] leafValue = new byte[1][32];
@@ -1326,13 +1453,13 @@ public class PrecompiledContracts {
         byte[] bindingSig = new byte[64];
         byte[] signHash = new byte[32];
         byte[][] frontier = new byte[33][32];
-        //parse unfixed field offset
+        // parse unfixed field offset
         int spendOffset = parseInt(data, 0);
         int spendAuthSigOffset = parseInt(data, 32);
         int receiveOffset = parseInt(data, 64);
         System.arraycopy(data, 96, bindingSig, 0, 64);
         System.arraycopy(data, 160, signHash, 0, 32);
-        //parse value
+        // parse value
         long value = parseLong(data, 192);
         for (int i = 0; i < 33; i++) {
           System.arraycopy(data, i * 32 + 224, frontier[i], 0, 32);
@@ -1346,8 +1473,11 @@ public class PrecompiledContracts {
         int spendAuthSigCount = parseInt(data, spendAuthSigOffset);
         int receiveCount = parseInt(data, receiveOffset);
 
-        if (spendCount != spendAuthSigCount || spendCount < 1
-            || spendCount > 2 || receiveCount < 1 || receiveCount > 2) {
+        if (spendCount != spendAuthSigCount
+            || spendCount < 1
+            || spendCount > 2
+            || receiveCount < 1
+            || receiveCount > 2) {
           return Pair.of(true, DataWord.ZERO().getData());
         }
         byte[][] anchor = new byte[spendCount][32];
@@ -1361,7 +1491,7 @@ public class PrecompiledContracts {
         byte[][] receiveEpk = new byte[receiveCount][32];
         byte[][] receiveProof = new byte[receiveCount][192];
 
-        //spend
+        // spend
         spendOffset += 32;
         for (int i = 0; i < spendCount; i++) {
           System.arraycopy(data, spendOffset + 320 * i, nullifier[i], 0, 32);
@@ -1374,7 +1504,7 @@ public class PrecompiledContracts {
         for (int i = 0; i < spendCount; i++) {
           System.arraycopy(data, spendAuthSigOffset + 64 * i, spendAuthSig[i], 0, 64);
         }
-        //output
+        // output
         receiveOffset += 32;
         for (int i = 0; i < receiveCount; i++) {
           System.arraycopy(data, receiveOffset + 288 * i, receiveCm[i], 0, 32);
@@ -1383,7 +1513,7 @@ public class PrecompiledContracts {
           System.arraycopy(data, receiveOffset + 288 * i + 96, receiveProof[i], 0, 192);
         }
 
-        //copy each spendCv(receiveCv) into spendCvs(receiveCvs)
+        // copy each spendCv(receiveCv) into spendCvs(receiveCvs)
         byte[] spendCvs = new byte[spendCount * 32];
         byte[] receiveCvs = new byte[receiveCount * 32];
         for (int i = 0; i < spendCount; i++) {
@@ -1392,7 +1522,7 @@ public class PrecompiledContracts {
         for (int i = 0; i < receiveCount; i++) {
           System.arraycopy(receiveCv[i], 0, receiveCvs, 32 * i, 32);
         }
-        //check duplicate nullifiers
+        // check duplicate nullifiers
         HashSet<String> nfSet = new HashSet<>();
         for (byte[] nf : nullifier) {
           if (nfSet.contains(ByteArray.toHexString(nf))) {
@@ -1400,7 +1530,7 @@ public class PrecompiledContracts {
           }
           nfSet.add(ByteArray.toHexString(nf));
         }
-        //check duplicate output note
+        // check duplicate output note
         HashSet<String> cmSet = new HashSet<>();
         for (byte[] cm : receiveCm) {
           if (cmSet.contains(ByteArray.toHexString(cm))) {
@@ -1421,26 +1551,43 @@ public class PrecompiledContracts {
 
         // submit check spend task
         for (int i = 0; i < spendCount; i++) {
-          Future<Boolean> futureCheckSpend = workers
-              .submit(new SaplingCheckSpendTask(countDownLatch, spendCv[i], anchor[i],
-                  nullifier[i], rk[i], spendProof[i], spendAuthSig[i], signHash));
+          Future<Boolean> futureCheckSpend =
+              workers.submit(
+                  new SaplingCheckSpendTask(
+                      countDownLatch,
+                      spendCv[i],
+                      anchor[i],
+                      nullifier[i],
+                      rk[i],
+                      spendProof[i],
+                      spendAuthSig[i],
+                      signHash));
           futures.add(futureCheckSpend);
         }
-        //submit check output task
+        // submit check output task
         for (int i = 0; i < receiveCount; i++) {
-          Future<Boolean> futureCheckOutput = workers
-              .submit(new SaplingCheckOutputTask(countDownLatch, receiveCv[i], receiveCm[i],
-                  receiveEpk[i], receiveProof[i]));
+          Future<Boolean> futureCheckOutput =
+              workers.submit(
+                  new SaplingCheckOutputTask(
+                      countDownLatch, receiveCv[i], receiveCm[i], receiveEpk[i], receiveProof[i]));
           futures.add(futureCheckOutput);
         }
         // submit check binding signature
-        Future<Boolean> futureCheckBindingSig = workers
-            .submit(new SaplingCheckBingdingSig(countDownLatch, value, bindingSig,
-                signHash, spendCvs, spendCount * 32, receiveCvs, receiveCount * 32));
+        Future<Boolean> futureCheckBindingSig =
+            workers.submit(
+                new SaplingCheckBingdingSig(
+                    countDownLatch,
+                    value,
+                    bindingSig,
+                    signHash,
+                    spendCvs,
+                    spendCount * 32,
+                    receiveCvs,
+                    receiveCount * 32));
         futures.add(futureCheckBindingSig);
 
-        boolean withNoTimeout = countDownLatch.await(getCPUTimeLeftInNanoSecond(),
-            TimeUnit.NANOSECONDS);
+        boolean withNoTimeout =
+            countDownLatch.await(getCPUTimeLeftInNanoSecond(), TimeUnit.NANOSECONDS);
         boolean checkResult = true;
         for (Future<Boolean> future : futures) {
           boolean eachTaskResult = future.get();
@@ -1476,9 +1623,15 @@ public class PrecompiledContracts {
 
       private CountDownLatch countDownLatch;
 
-      SaplingCheckSpendTask(CountDownLatch countDownLatch,
-          byte[] cv, byte[] anchor, byte[] nullifier, byte[] rk,
-          byte[] zkproof, byte[] spendAuthSig, byte[] signHash) {
+      SaplingCheckSpendTask(
+          CountDownLatch countDownLatch,
+          byte[] cv,
+          byte[] anchor,
+          byte[] nullifier,
+          byte[] rk,
+          byte[] zkproof,
+          byte[] spendAuthSig,
+          byte[] signHash) {
         this.cv = cv;
         this.anchor = anchor;
         this.nullifier = nullifier;
@@ -1493,9 +1646,16 @@ public class PrecompiledContracts {
       public Boolean call() throws ZksnarkException {
         boolean result;
         try {
-          result = JLibrustzcash.librustzcashSaplingCheckSpendNew(
-              new LibrustzcashParam.CheckSpendNewParams(this.cv, this.anchor, this.nullifier,
-                  this.rk, this.zkproof, this.spendAuthSig, this.signHash));
+          result =
+              JLibrustzcash.librustzcashSaplingCheckSpendNew(
+                  new LibrustzcashParam.CheckSpendNewParams(
+                      this.cv,
+                      this.anchor,
+                      this.nullifier,
+                      this.rk,
+                      this.zkproof,
+                      this.spendAuthSig,
+                      this.signHash));
         } catch (ZksnarkException e) {
           throw e;
         } finally {
@@ -1514,8 +1674,12 @@ public class PrecompiledContracts {
 
       private CountDownLatch countDownLatch;
 
-      SaplingCheckOutputTask(CountDownLatch countDownLatch, byte[] cv, byte[] cm,
-          byte[] ephemeralKey, byte[] zkproof) {
+      SaplingCheckOutputTask(
+          CountDownLatch countDownLatch,
+          byte[] cv,
+          byte[] cm,
+          byte[] ephemeralKey,
+          byte[] zkproof) {
         this.cv = cv;
         this.cm = cm;
         this.ephemeralKey = ephemeralKey;
@@ -1527,9 +1691,10 @@ public class PrecompiledContracts {
       public Boolean call() throws ZksnarkException {
         boolean result;
         try {
-          result = JLibrustzcash.librustzcashSaplingCheckOutputNew(
-              new LibrustzcashParam.CheckOutputNewParams(this.cv, this.cm,
-                  this.ephemeralKey, this.zkproof));
+          result =
+              JLibrustzcash.librustzcashSaplingCheckOutputNew(
+                  new LibrustzcashParam.CheckOutputNewParams(
+                      this.cv, this.cm, this.ephemeralKey, this.zkproof));
         } catch (ZksnarkException e) {
           throw e;
         } finally {
@@ -1551,9 +1716,15 @@ public class PrecompiledContracts {
 
       private CountDownLatch countDownLatch;
 
-      SaplingCheckBingdingSig(CountDownLatch countDownLatch, long valueBalance, byte[] bindingSig,
-          byte[] signHash, byte[] spendCvs, int spendCvLen,
-          byte[] receiveCvs, int receiveCvLen) {
+      SaplingCheckBingdingSig(
+          CountDownLatch countDownLatch,
+          long valueBalance,
+          byte[] bindingSig,
+          byte[] signHash,
+          byte[] spendCvs,
+          int spendCvLen,
+          byte[] receiveCvs,
+          int receiveCvLen) {
         this.valueBalance = valueBalance;
         this.bindingSig = bindingSig;
         this.signHash = signHash;
@@ -1568,10 +1739,16 @@ public class PrecompiledContracts {
       public Boolean call() throws ZksnarkException {
         boolean result;
         try {
-          result = JLibrustzcash.librustzcashSaplingFinalCheckNew(
-              new LibrustzcashParam.FinalCheckNewParams(this.valueBalance, this.bindingSig,
-                  this.signHash, this.spendCvs, this.spendCvLen,
-                  this.receiveCvs, this.receiveCvLen));
+          result =
+              JLibrustzcash.librustzcashSaplingFinalCheckNew(
+                  new LibrustzcashParam.FinalCheckNewParams(
+                      this.valueBalance,
+                      this.bindingSig,
+                      this.signHash,
+                      this.spendCvs,
+                      this.spendCvLen,
+                      this.receiveCvs,
+                      this.receiveCvLen));
         } catch (ZksnarkException e) {
           throw e;
         } finally {
@@ -1610,7 +1787,7 @@ public class PrecompiledContracts {
         byte[] spendAuthSig = new byte[64];
         byte[] bindingSig = new byte[64];
         byte[] signHash = new byte[32];
-        //spend
+        // spend
         System.arraycopy(data, 0, nullifier, 0, 32);
         System.arraycopy(data, 32, anchor, 0, 32);
         System.arraycopy(data, 64, cv, 0, 32);
@@ -1621,11 +1798,14 @@ public class PrecompiledContracts {
         System.arraycopy(data, 416, bindingSig, 0, 64);
         System.arraycopy(data, 480, signHash, 0, 32);
 
-        result = JLibrustzcash.librustzcashSaplingCheckSpend(
-            new LibrustzcashParam.CheckSpendParams(
-                ctx, cv, anchor, nullifier, rk, proof, spendAuthSig, signHash));
-        result = result && JLibrustzcash.librustzcashSaplingFinalCheck(
-            new LibrustzcashParam.FinalCheckParams(ctx, value, bindingSig, signHash));
+        result =
+            JLibrustzcash.librustzcashSaplingCheckSpend(
+                new LibrustzcashParam.CheckSpendParams(
+                    ctx, cv, anchor, nullifier, rk, proof, spendAuthSig, signHash));
+        result =
+            result
+                && JLibrustzcash.librustzcashSaplingFinalCheck(
+                    new LibrustzcashParam.FinalCheckParams(ctx, value, bindingSig, signHash));
       } catch (Throwable any) {
         result = false;
         String errorMsg = any.getMessage();
@@ -1687,8 +1867,9 @@ public class PrecompiledContracts {
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
 
-      long rewardBalance = VoteRewardUtil.queryReward(
-          TransactionTrace.convertToTronAddress(getCallerAddress()), getDeposit());
+      long rewardBalance =
+          VoteRewardUtil.queryReward(
+              TransactionTrace.convertToTronAddress(getCallerAddress()), getDeposit());
       return Pair.of(true, longTo32Bytes(rewardBalance));
     }
   }
@@ -1896,8 +2077,7 @@ public class PrecompiledContracts {
       }
       long code = new DataWord(data).longValueSafe();
 
-      long res = ChainParameterEnum.fromCode(code).getAction().apply(
-          getDeposit());
+      long res = ChainParameterEnum.fromCode(code).getAction().apply(getDeposit());
 
       return Pair.of(true, longTo32Bytes(res));
     }
@@ -2037,8 +2217,10 @@ public class PrecompiledContracts {
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
       if (data == null || data.length != 3 * WORD_SIZE) {
-        return Pair.of(true, encodeMultiRes(
-            DataWord.ZERO().getData(), DataWord.ZERO().getData(), DataWord.ZERO().getData()));
+        return Pair.of(
+            true,
+            encodeMultiRes(
+                DataWord.ZERO().getData(), DataWord.ZERO().getData(), DataWord.ZERO().getData()));
       }
 
       DataWord[] words = DataWord.parseArray(data);
@@ -2048,14 +2230,22 @@ public class PrecompiledContracts {
 
       Triple<Long, Long, Long> values =
           FreezeV2Util.checkUndelegateResource(target, amount, type, getDeposit());
-      if (values == null || values.getLeft() == null
-          || values.getMiddle() == null || values.getRight() == null) {
-        return Pair.of(true, encodeMultiRes(
-            DataWord.ZERO().getData(), DataWord.ZERO().getData(), DataWord.ZERO().getData()));
+      if (values == null
+          || values.getLeft() == null
+          || values.getMiddle() == null
+          || values.getRight() == null) {
+        return Pair.of(
+            true,
+            encodeMultiRes(
+                DataWord.ZERO().getData(), DataWord.ZERO().getData(), DataWord.ZERO().getData()));
       }
 
-      return Pair.of(true, encodeMultiRes(longTo32Bytes(values.getLeft()),
-          longTo32Bytes(values.getMiddle()), longTo32Bytes(values.getRight())));
+      return Pair.of(
+          true,
+          encodeMultiRes(
+              longTo32Bytes(values.getLeft()),
+              longTo32Bytes(values.getMiddle()),
+              longTo32Bytes(values.getRight())));
     }
   }
 
@@ -2081,8 +2271,8 @@ public class PrecompiledContracts {
         return Pair.of(true, encodeRes(DataWord.ZERO().getData(), DataWord.ZERO().getData()));
       }
 
-      return Pair.of(true, encodeRes(
-          longTo32Bytes(values.getLeft()), longTo32Bytes(values.getRight())));
+      return Pair.of(
+          true, encodeRes(longTo32Bytes(values.getLeft()), longTo32Bytes(values.getRight())));
     }
   }
 
@@ -2184,5 +2374,4 @@ public class PrecompiledContracts {
       return Pair.of(true, longTo32Bytes(acquiredResource));
     }
   }
-
 }
