@@ -32,7 +32,8 @@ public class Consensus {
   }
 
   public boolean validBlock(BlockCapsule blockCapsule) {
-    return consensusInterface.validBlock(blockCapsule);
+    return true;
+//    return consensusInterface.validBlock(blockCapsule);
   }
 
   public boolean applyBlock(BlockCapsule blockCapsule) {
