@@ -2,7 +2,6 @@ package org.tron.core.config;
 
 import ch.qos.logback.core.hook.ShutdownHookBase;
 import ch.qos.logback.core.util.Duration;
-import org.tron.program.FullNode;
 
 /**
  * @author kiven
