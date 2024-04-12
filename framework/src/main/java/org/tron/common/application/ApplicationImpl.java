@@ -57,9 +57,9 @@ public class ApplicationImpl implements Application {
     this.initServices(Args.getInstance());
     this.startServices();
     if ((!Args.getInstance().isSolidityNode()) && (!Args.getInstance().isP2pDisable())) {
-//      tronNetService.start();
+      tronNetService.start();
     }
-//    consensusService.start();
+    consensusService.start();
     MetricsUtil.init();
   }
 
