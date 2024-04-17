@@ -116,8 +116,9 @@ public class KhaosDatabase extends TronDatabase {
         block.setParent(kblock);
       } else {
         miniUnlinkedStore.insert(block);
-        logger.error("Block: {}, head: {}, miniStore: {}, miniUnlinkedStore: {}.",
+        logger.error("Block: {}, parent hash: {}, head: {}, miniStore: {}, miniUnlinkedStore: {}.",
             blk,
+            block.getParentHash(),
             head,
             miniStore,
             miniUnlinkedStore);
@@ -198,7 +199,7 @@ public class KhaosDatabase extends TronDatabase {
 
     return new Pair<>(list1, list2);
   }
-  
+
   private void checkNull(Object o) throws NonCommonBlockException {
     if (o == null) {
       throw new NonCommonBlockException();

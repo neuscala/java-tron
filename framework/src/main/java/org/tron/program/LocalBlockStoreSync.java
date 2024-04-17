@@ -104,8 +104,14 @@ public class LocalBlockStoreSync {
                     .getSyncBlockStore()
                     .get(
                         ChainBaseManager.getInstance()
-                            .getSyncBlockIndexStore()
-                            .get(7151640L - 1)
+                            .getChainBaseManager()
+                            .getSyncBlockStore()
+                            .get(
+                                ChainBaseManager.getInstance()
+                                    .getSyncBlockIndexStore()
+                                    .get(7151640L)
+                                    .getBytes())
+                            .getParentBlockId()
                             .getBytes())));
     LocalBlockStoreSync sync = new LocalBlockStoreSync(appT.getDbManager());
     sync.start();
