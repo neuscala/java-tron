@@ -1,7 +1,14 @@
 package org.tron.consensus.dpos;
 
+import static org.tron.common.utils.WalletUtil.getAddressStringList;
+
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -18,14 +25,6 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.store.DelegationStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.VotesStore;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import static org.tron.common.utils.WalletUtil.getAddressStringList;
 
 @Slf4j(topic = "consensus")
 @Component
@@ -155,14 +154,12 @@ public class MaintenanceManager {
       dynamicPropertiesStore.saveCycleStartBlockNumber(nextCycle,
               dynamicPropertiesStore.getLatestBlockHeaderNumber() + 1);
       dynamicPropertiesStore.saveCycleEndBlockNumber(nextCycle - 1,
-          dynamicPropertiesStore.getLatestBlockHeaderNumber() + 1);
-      List<WitnessCapsule> all = consensusDelegate.getAllWitnesses();
-      all.forEach(witness -> {
+              dynamicPropertiesStore.getLatestBlockHeaderNumber() + 1);
+      consensusDelegate.getAllWitnesses().forEach(witness -> {
         delegationStore.setBrokerage(nextCycle, witness.createDbKey(),
             delegationStore.getBrokerage(witness.createDbKey()));
         delegationStore.setWitnessVote(nextCycle, witness.createDbKey(), witness.getVoteCount());
       });
-      consensusDelegate.updateWitnessStandby(all);
     }
   }
 
