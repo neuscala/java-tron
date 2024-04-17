@@ -1027,12 +1027,12 @@ public class Manager {
       ValidateScheduleException, ReceiptCheckErrException, VMIllegalException,
       TooBigTransactionResultException, ZksnarkException, BadBlockException, EventBloomException {
     processBlock(block, txs);
-    chainBaseManager.getBlockStore().put(block.getBlockId().getBytes(), block);
-    chainBaseManager.getBlockIndexStore().put(block.getBlockId());
-    if (block.getTransactions().size() != 0) {
-      chainBaseManager.getTransactionRetStore()
-          .put(ByteArray.fromLong(block.getNum()), block.getResult());
-    }
+//    chainBaseManager.getBlockStore().put(block.getBlockId().getBytes(), block);
+//    chainBaseManager.getBlockIndexStore().put(block.getBlockId());
+//    if (block.getTransactions().size() != 0) {
+//      chainBaseManager.getTransactionRetStore()
+//          .put(ByteArray.fromLong(block.getNum()), block.getResult());
+//    }
 
     updateFork(block);
     if (System.currentTimeMillis() - block.getTimeStamp() >= 60_000) {

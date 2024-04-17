@@ -37,7 +37,7 @@ public class LocalBlockStoreSync {
 
   private SyncDynamicPropertiesStore syncDynamicPropertiesStore;
 
-  private AtomicLong ID = new AtomicLong();
+  private AtomicLong ID = new AtomicLong(7151640);
 
   private AtomicLong syncTargetBlockNum = new AtomicLong(60688563);
 
