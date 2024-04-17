@@ -1027,12 +1027,12 @@ public class Manager {
       ValidateScheduleException, ReceiptCheckErrException, VMIllegalException,
       TooBigTransactionResultException, ZksnarkException, BadBlockException, EventBloomException {
     processBlock(block, txs);
-//    chainBaseManager.getBlockStore().put(block.getBlockId().getBytes(), block);
-//    chainBaseManager.getBlockIndexStore().put(block.getBlockId());
-//    if (block.getTransactions().size() != 0) {
-//      chainBaseManager.getTransactionRetStore()
-//          .put(ByteArray.fromLong(block.getNum()), block.getResult());
-//    }
+    chainBaseManager.getBlockStore().put(block.getBlockId().getBytes(), block);
+    chainBaseManager.getBlockIndexStore().put(block.getBlockId());
+    if (block.getTransactions().size() != 0) {
+      chainBaseManager.getTransactionRetStore()
+          .put(ByteArray.fromLong(block.getNum()), block.getResult());
+    }
 
     updateFork(block);
     if (System.currentTimeMillis() - block.getTimeStamp() >= 60_000) {
@@ -1247,18 +1247,18 @@ public class Manager {
                     block.getNum(), SHIELDED_TRANS_IN_BLOCK_COUNTS));
           }
 
-          BlockCapsule newBlock = block;
-//          try {
-//            newBlock = this.khaosDb.push(block);
-//          } catch (UnLinkedBlockException e) {
-//            logger.error(
-//                    "LatestBlockHeaderHash: {}, latestBlockHeaderNumber: {}"
-//                            + ", latestSolidifiedBlockNum: {}.",
-//                    getDynamicPropertiesStore().getLatestBlockHeaderHash(),
-//                    getDynamicPropertiesStore().getLatestBlockHeaderNumber(),
-//                    getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
-//            throw e;
-//          }
+          BlockCapsule newBlock;
+          try {
+            newBlock = this.khaosDb.push(block);
+          } catch (UnLinkedBlockException e) {
+            logger.error(
+                    "LatestBlockHeaderHash: {}, latestBlockHeaderNumber: {}"
+                            + ", latestSolidifiedBlockNum: {}.",
+                    getDynamicPropertiesStore().getLatestBlockHeaderHash(),
+                    getDynamicPropertiesStore().getLatestBlockHeaderNumber(),
+                    getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
+            throw e;
+          }
 
           // DB don't need lower block
           if (getDynamicPropertiesStore().getLatestBlockHeaderHash() == null) {
@@ -1778,9 +1778,9 @@ public class Manager {
       chainBaseManager.getForkController().reset();
     }
 
-    updateTransHashCache(block);
-    updateRecentBlock(block);
-    updateRecentTransaction(block);
+//    updateTransHashCache(block);
+//    updateRecentBlock(block);
+//    updateRecentTransaction(block);
     updateDynamicProperties(block);
 
     chainBaseManager.getBalanceTraceStore().resetCurrentBlockTrace();
