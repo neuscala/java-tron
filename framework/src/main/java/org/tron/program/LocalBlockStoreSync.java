@@ -14,6 +14,7 @@ import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.KhaosDatabase;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
@@ -93,18 +94,19 @@ public class LocalBlockStoreSync {
 
     appT.startup();
     //    appT.blockUntilShutdown();
-
     ChainBaseManager.getInstance()
         .getKhaosDb()
-        .start(
-            ChainBaseManager.getInstance()
-                .getChainBaseManager()
-                .getSyncBlockStore()
-                .get(
-                    ChainBaseManager.getInstance()
-                        .getSyncBlockIndexStore()
-                        .get(7151640L - 1)
-                        .getBytes()));
+        .getMiniStore()
+        .insert(
+            new KhaosDatabase.KhaosBlock(
+                ChainBaseManager.getInstance()
+                    .getChainBaseManager()
+                    .getSyncBlockStore()
+                    .get(
+                        ChainBaseManager.getInstance()
+                            .getSyncBlockIndexStore()
+                            .get(7151640L - 1)
+                            .getBytes())));
     LocalBlockStoreSync sync = new LocalBlockStoreSync(appT.getDbManager());
     sync.start();
   }
