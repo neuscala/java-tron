@@ -92,7 +92,7 @@ public class LocalBlockStoreSync {
     }
 
     appT.startup();
-//    appT.blockUntilShutdown();
+    //    appT.blockUntilShutdown();
 
     LocalBlockStoreSync sync = new LocalBlockStoreSync(appT.getDbManager());
     sync.start();
@@ -106,6 +106,7 @@ public class LocalBlockStoreSync {
           "Success to start local store sync, ID: {}, targetSyncBlockNum: {}.",
           ID.get(),
           syncTargetBlockNum);
+      System.out.println("Success to start local store sync at " + System.currentTimeMillis());
     } catch (Exception e) {
       logger.error("Failed to start local store sync.", e);
       System.exit(0);
