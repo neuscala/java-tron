@@ -94,25 +94,25 @@ public class LocalBlockStoreSync {
 
     appT.startup();
     //    appT.blockUntilShutdown();
-    ChainBaseManager.getInstance()
-        .getKhaosDb()
-        .getMiniStore()
-        .insert(
-            new KhaosDatabase.KhaosBlock(
-                ChainBaseManager.getInstance()
-                    .getChainBaseManager()
-                    .getSyncBlockStore()
-                    .get(
-                        ChainBaseManager.getInstance()
-                            .getChainBaseManager()
-                            .getSyncBlockStore()
-                            .get(
-                                ChainBaseManager.getInstance()
-                                    .getSyncBlockIndexStore()
-                                    .get(7151640L)
-                                    .getBytes())
-                            .getParentBlockId()
-                            .getBytes())));
+
+    KhaosDatabase.KhaosBlock khaosBlock =
+        new KhaosDatabase.KhaosBlock(
+            ChainBaseManager.getInstance()
+                .getChainBaseManager()
+                .getSyncBlockStore()
+                .get(
+                    ChainBaseManager.getInstance()
+                        .getChainBaseManager()
+                        .getSyncBlockStore()
+                        .get(
+                            ChainBaseManager.getInstance()
+                                .getSyncBlockIndexStore()
+                                .get(7151640L)
+                                .getBytes())
+                        .getParentBlockId()
+                        .getBytes()));
+    ChainBaseManager.getInstance().getKhaosDb().getMiniStore().insert(khaosBlock);
+    System.out.println("Successful insert KhaosDb block: " + khaosBlock.getBlk().getBlockId());
     LocalBlockStoreSync sync = new LocalBlockStoreSync(appT.getDbManager());
     sync.start();
   }

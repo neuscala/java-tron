@@ -122,6 +122,7 @@ public class KhaosDatabase extends TronDatabase {
             head,
             miniStore,
             miniUnlinkedStore);
+        miniStore.hashKblkMap.entrySet().forEach(entry-> logger.info("Ministore keys: {}", entry.getKey()));
         throw new UnLinkedBlockException();
       }
     }
