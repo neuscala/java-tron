@@ -55,7 +55,7 @@ public class LocalBlockStoreSync {
     this.syncDynamicPropertiesStore =
         dbManager.getChainBaseManager().getSyncDynamicPropertiesStore();
 
-    ID.set(chainBaseManager.getDynamicPropertiesStore().getLatestLocalSyncedBlockNum());
+//    ID.set(chainBaseManager.getDynamicPropertiesStore().getLatestLocalSyncedBlockNum());
     syncTargetBlockNum.set(getSyncTargetBlockNum());
   }
 
@@ -106,7 +106,13 @@ public class LocalBlockStoreSync {
           "Success to start local store sync, ID: {}, targetSyncBlockNum: {}.",
           ID.get(),
           syncTargetBlockNum);
-      System.out.println("Success to start local store sync at " + System.currentTimeMillis());
+      System.out.println(
+          "Success to start local store sync, ID: "
+              + ID.get()
+              + ", targetSyncBlockNum: "
+              + syncTargetBlockNum
+              + " at "
+              + System.currentTimeMillis());
     } catch (Exception e) {
       logger.error("Failed to start local store sync.", e);
       System.exit(0);
