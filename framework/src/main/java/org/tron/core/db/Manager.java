@@ -1247,18 +1247,18 @@ public class Manager {
                     block.getNum(), SHIELDED_TRANS_IN_BLOCK_COUNTS));
           }
 
-          BlockCapsule newBlock;
-          try {
-            newBlock = this.khaosDb.push(block);
-          } catch (UnLinkedBlockException e) {
-            logger.error(
-                    "LatestBlockHeaderHash: {}, latestBlockHeaderNumber: {}"
-                            + ", latestSolidifiedBlockNum: {}.",
-                    getDynamicPropertiesStore().getLatestBlockHeaderHash(),
-                    getDynamicPropertiesStore().getLatestBlockHeaderNumber(),
-                    getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
-            throw e;
-          }
+          BlockCapsule newBlock = block;
+//          try {
+//            newBlock = this.khaosDb.push(block);
+//          } catch (UnLinkedBlockException e) {
+//            logger.error(
+//                    "LatestBlockHeaderHash: {}, latestBlockHeaderNumber: {}"
+//                            + ", latestSolidifiedBlockNum: {}.",
+//                    getDynamicPropertiesStore().getLatestBlockHeaderHash(),
+//                    getDynamicPropertiesStore().getLatestBlockHeaderNumber(),
+//                    getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
+//            throw e;
+//          }
 
           // DB don't need lower block
           if (getDynamicPropertiesStore().getLatestBlockHeaderHash() == null) {
