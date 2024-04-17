@@ -55,12 +55,12 @@ public class LocalBlockStoreSync {
     this.syncDynamicPropertiesStore =
         dbManager.getChainBaseManager().getSyncDynamicPropertiesStore();
 
-//    ID.set(chainBaseManager.getDynamicPropertiesStore().getLatestLocalSyncedBlockNum());
+    //    ID.set(chainBaseManager.getDynamicPropertiesStore().getLatestLocalSyncedBlockNum());
     syncTargetBlockNum.set(getSyncTargetBlockNum());
   }
 
   /** Start the Local block store sync process. */
-  public static void main(String[] args) {
+  public static void main(String[] args) throws ItemNotFoundException, BadItemException {
     logger.info("Local block store sync is running.");
     Args.setParam(args, Constant.TESTNET_CONF);
     CommonParameter parameter = CommonParameter.getInstance();
@@ -94,6 +94,17 @@ public class LocalBlockStoreSync {
     appT.startup();
     //    appT.blockUntilShutdown();
 
+    ChainBaseManager.getInstance()
+        .getKhaosDb()
+        .start(
+            ChainBaseManager.getInstance()
+                .getChainBaseManager()
+                .getSyncBlockStore()
+                .get(
+                    ChainBaseManager.getInstance()
+                        .getSyncBlockIndexStore()
+                        .get(7151640L - 1)
+                        .getBytes()));
     LocalBlockStoreSync sync = new LocalBlockStoreSync(appT.getDbManager());
     sync.start();
   }

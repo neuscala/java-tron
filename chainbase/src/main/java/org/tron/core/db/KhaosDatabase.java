@@ -60,7 +60,7 @@ public class KhaosDatabase extends TronDatabase {
     return false;
   }
 
-  void start(BlockCapsule blk) {
+  public void start(BlockCapsule blk) {
     this.head = new KhaosBlock(blk);
     miniStore.insert(this.head);
   }
