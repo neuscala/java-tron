@@ -1,5 +1,6 @@
 package org.tron.common.runtime;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -77,6 +78,14 @@ public class RuntimeImpl implements Runtime {
   @Override
   public String getRuntimeError() {
     return context.getProgramResult().getRuntimeError();
+  }
+
+  @Override
+  public List<byte[]> getAllAccountKeys() {
+    if (Objects.nonNull(actuator2)) {
+      return actuator2.getAllAccountKeys();
+    }
+    return new ArrayList<>();
   }
 
 

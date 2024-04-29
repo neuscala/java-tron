@@ -19,7 +19,6 @@ import org.tron.core.services.filter.HttpApiAccessFilter;
 import org.tron.core.services.filter.HttpInterceptor;
 import org.tron.core.services.filter.LiteFnQueryHttpFilter;
 
-
 @Component("fullNodeHttpApiService")
 @Slf4j(topic = "API")
 public class FullNodeHttpApiService extends HttpService {
@@ -293,6 +292,8 @@ public class FullNodeHttpApiService extends HttpService {
   private UnDelegateResourceServlet unDelegateResourceServlet;
   @Autowired
   private CancelAllUnfreezeV2Servlet cancelAllUnfreezeV2Servlet;
+  @Autowired
+  private FilterContractServlet filterContractServlet;
 
   @Override
   public void init() {
@@ -311,6 +312,7 @@ public class FullNodeHttpApiService extends HttpService {
       context.setContextPath("/");
       apiServer.setHandler(context);
 
+      context.addServlet(new ServletHolder(filterContractServlet), "/wallet/filtercontract");
       context.addServlet(new ServletHolder(getAccountServlet), "/wallet/getaccount");
       context.addServlet(new ServletHolder(transferServlet), "/wallet/createtransaction");
       context.addServlet(new ServletHolder(broadcastServlet), "/wallet/broadcasttransaction");

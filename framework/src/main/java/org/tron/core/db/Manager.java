@@ -1,6 +1,7 @@
 package org.tron.core.db;
 
 import static org.tron.common.utils.Commons.adjustBalance;
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.exception.BadBlockException.TypeEnum.CALC_MERKLE_ROOT_FAILED;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.SUCCESS;
@@ -10,7 +11,10 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import io.prometheus.client.Histogram;
+
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -87,6 +91,7 @@ import org.tron.core.capsule.BlockBalanceTraceCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.capsule.ContractStateCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionRetCapsule;
@@ -138,6 +143,7 @@ import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
 import org.tron.core.store.CodeStore;
+import org.tron.core.store.ContractStateStore;
 import org.tron.core.store.ContractStore;
 import org.tron.core.store.DelegatedResourceAccountIndexStore;
 import org.tron.core.store.DelegatedResourceStore;
@@ -162,6 +168,7 @@ import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.contract.BalanceContract;
+import org.tron.protos.contract.SmartContractOuterClass;
 
 
 @Slf4j(topic = "DB")
@@ -1424,8 +1431,8 @@ public class Manager {
       chainBaseManager.getBalanceTraceStore().initCurrentTransactionBalanceTrace(trxCap);
     }
 
-    validateTapos(trxCap);
-    validateCommon(trxCap);
+//    validateTapos(trxCap);
+//    validateCommon(trxCap);
 
     if (trxCap.getInstance().getRawData().getContractList().size() != 1) {
       throw new ContractSizeNotEqualToOneException(
@@ -1434,7 +1441,7 @@ public class Manager {
           txId, trxCap.getInstance().getRawData().getContractList().size()));
     }
 
-    validateDup(trxCap);
+//    validateDup(trxCap);
 
     if (!trxCap.validateSignature(chainBaseManager.getAccountStore(),
         chainBaseManager.getDynamicPropertiesStore())) {
@@ -1472,6 +1479,220 @@ public class Manager {
     trace.finalization();
     if (getDynamicPropertiesStore().supportVM()) {
       trxCap.setResult(trace.getTransactionContext());
+
+      // Record something for smart contract
+      if (trxCap.isContractType()) {
+
+        byte[] contractAddress = trace.getRuntimeResult().getContractAddress();
+        byte[] usdtAddr = Hex.decode("41a614f803B6FD780986A42c78Ec9c7f77e6DeD13C");
+
+        // Get contract state
+        ContractStateCapsule usdt = getChainBaseManager().getContractStateStore().getUsdtRecord();
+        if (usdt == null) {
+          usdt = new ContractStateCapsule(getDynamicPropertiesStore().getCurrentCycleNumber());
+        }
+        if (trace.getRuntimeResult().getResultCode() == SUCCESS && Arrays.equals(usdtAddr, contractAddress)) {
+          // 直接调用
+          // Record total energy usage and penalty whatever the execution result
+          usdt.addEnergyUsageTotal(trace.getReceipt().getEnergyUsageTotal());
+          usdt.addEnergyPenaltyTotal(trace.getReceipt().getEnergyPenaltyTotal());
+          usdt.addTrxBurn(trace.getReceipt().getEnergyFee());
+          usdt.addTxTotalCount();
+
+          // Record trx penalty burn
+          long energyByTrxBurned = trace.getReceipt().getEnergyUsageTotal()
+              - trace.getReceipt().getEnergyUsage() - trace.getReceipt().getOriginEnergyUsage();
+
+          energyByTrxBurned = Math.min(
+              energyByTrxBurned,
+              trace.getReceipt().getEnergyPenaltyTotal());
+
+          usdt.addTrxPenalty(energyByTrxBurned * getDynamicPropertiesStore().getEnergyFee());
+
+          // Deal with USDT
+          try {
+            String calldata = Hex.toHexString(trxCap.getInstance().getRawData().getContract(0).getParameter()
+                    .unpack(SmartContractOuterClass.TriggerSmartContract.class).getData().toByteArray());
+            if (calldata.startsWith("a9059cbb") || calldata.startsWith("23b872dd")) {
+              boolean isTransfer;
+              BigInteger amount;
+              byte[] fromAddress;
+              byte[] toAddress;
+              if (calldata.startsWith("a9059cbb")) {
+                isTransfer = true;
+
+                usdt.addTransferCount();
+                usdt.addTransferFee(trace.getReceipt().getEnergyFee());
+                usdt.addTransferEnergyUsage(trace.getReceipt().getEnergyUsageTotal());
+                usdt.addTransferEnergyPenalty(trace.getReceipt().getEnergyPenaltyTotal());
+                if (calldata.length() < 136) {
+                  amount = BigInteger.valueOf(0);
+                } else {
+                  amount = new BigInteger(calldata.substring(36 * 2, 68 * 2), 16);
+                }
+                fromAddress = trxCap.getOwnerAddress();
+                toAddress = Hex.decode("41" + calldata.substring(32, 36 * 2));
+
+              } else {
+                isTransfer = false;
+
+                usdt.addTransferFromCount();
+                usdt.addTransferFromFee(trace.getReceipt().getEnergyFee());
+                usdt.addTransferFromEnergyUsage(trace.getReceipt().getEnergyUsageTotal());
+                usdt.addTransferFromEnergyPenalty(trace.getReceipt().getEnergyPenaltyTotal());
+                if (calldata.length() < 200) {
+                  amount = BigInteger.valueOf(0);
+                } else {
+                  amount = new BigInteger(calldata.substring(68 * 2, 100 * 2), 16);
+                }
+                fromAddress = Hex.decode("41" + calldata.substring(32, 36 * 2));
+                toAddress = Hex.decode("41" + calldata.substring(32 * 3, 68 * 2));
+              }
+
+              ContractStateCapsule ownerCap =
+                  getChainBaseManager()
+                      .getContractStateStore()
+                      .getAccountRecord(trxCap.getOwnerAddress());
+              if (ownerCap == null) {
+                ownerCap =
+                    new ContractStateCapsule(getDynamicPropertiesStore().getCurrentCycleNumber());
+              }
+              ownerCap.addCallerCount();
+              ownerCap.addCallerFee(trace.getReceipt().getEnergyFee());
+              ownerCap.addCallerEnergyUsage(trace.getReceipt().getEnergyUsage());
+              ownerCap.addCallerEnergyUsageTotal(trace.getReceipt().getEnergyUsageTotal());
+              // Save to db
+              chainBaseManager.getContractStateStore().setAccountRecord(trxCap.getOwnerAddress(), ownerCap);
+
+              ContractStateCapsule fromCap =
+                  getChainBaseManager()
+                      .getContractStateStore()
+                      .getAccountRecord(fromAddress);
+              if (fromCap == null) {
+                fromCap =
+                    new ContractStateCapsule(getDynamicPropertiesStore().getCurrentCycleNumber());
+              }
+              fromCap.addFromStats(
+                  amount,
+                  trace.getReceipt().getEnergyFee(),
+                  trace.getReceipt().getEnergyUsage(),
+                  trace.getReceipt().getEnergyUsageTotal(),
+                  isTransfer);
+              // Save to db
+              chainBaseManager.getContractStateStore().setAccountRecord(fromAddress, fromCap);
+
+              ContractStateCapsule toCap =
+                  getChainBaseManager()
+                      .getContractStateStore()
+                      .getAccountRecord(toAddress);
+              if (toCap == null) {
+                toCap =
+                    new ContractStateCapsule(getDynamicPropertiesStore().getCurrentCycleNumber());
+              }
+              toCap.addToStats(
+                  amount,
+                  trace.getReceipt().getEnergyFee(),
+                  trace.getReceipt().getEnergyUsage(),
+                  trace.getReceipt().getEnergyUsageTotal(),
+                  isTransfer);
+              // Save to db
+              chainBaseManager.getContractStateStore().setAccountRecord(toAddress, toCap);
+            }
+          } catch (InvalidProtocolBufferException e) {
+            throw new RuntimeException(e);
+          }
+
+          // Save to db
+          chainBaseManager.getContractStateStore().setUsdtRecord(usdt);
+        } else {
+          // 内部交易
+          if (usdt.getTransferNewEnergyUsage() != 0
+              || usdt.getTransferFromNewEnergyUsage() != 0) {
+
+            // contract
+            ContractStateCapsule contractCap =
+                getChainBaseManager()
+                    .getContractStateStore()
+                    .getContractRecord(contractAddress);
+            if (contractCap == null) {
+              contractCap =
+                  new ContractStateCapsule(getDynamicPropertiesStore().getCurrentCycleNumber());
+            }
+
+            long newSumFee = 0;
+            if (trace.getReceipt().getEnergyFee() != 0) {
+              if (usdt.getTransferNewEnergyUsage() != 0) {
+                long newEnergyFee =
+                    (long)
+                        ((double) trace.getReceipt().getEnergyFee()
+                            * usdt.getTransferNewEnergyUsage()
+                            / trace.getReceipt().getEnergyUsageTotal());
+                usdt.addTransferFee(newEnergyFee);
+
+                newSumFee += newEnergyFee;
+
+                contractCap.addTriggerToFee(newEnergyFee);
+                contractCap.addTriggerToEnergyUsageTotal(usdt.getTransferNewEnergyUsage());
+              }
+              if (usdt.getTransferFromNewEnergyUsage() != 0) {
+                long newEnergyFee =
+                    (long)
+                        ((double) trace.getReceipt().getEnergyFee()
+                            * usdt.getTransferFromNewEnergyUsage()
+                            / trace.getReceipt().getEnergyUsageTotal());
+                usdt.addTransferFromFee(newEnergyFee);
+
+                newSumFee += newEnergyFee;
+
+                contractCap.addTriggerToFee(newEnergyFee);
+                contractCap.addTriggerToEnergyUsageTotal(usdt.getTransferFromNewEnergyUsage());
+              }
+            }
+            usdt.clearTempEnergyRecord();
+
+            // Save to db
+            chainBaseManager.getContractStateStore().setUsdtRecord(usdt);
+
+            contractCap.addTriggerToCount();
+            // Save to db
+            chainBaseManager.getContractStateStore().setContractRecord(contractAddress, contractCap);
+
+            List<byte[]> accountKeys =
+                trace.getRuntime().getAllAccountKeys().stream()
+                    .filter(key -> !Arrays.equals(usdtAddr, key))
+                    .collect(Collectors.toList());
+            List<ContractStateCapsule> accCaps =
+                accountKeys.stream()
+                    .map(
+                        accountKey ->
+                            chainBaseManager.getContractStateStore().getAccountRecord(accountKey))
+
+                    .collect(Collectors.toList());
+            long sumCount =
+                accCaps.stream()
+                    .filter(Objects::nonNull)
+                    .mapToLong(ContractStateCapsule::getInternalTransferCount)
+                    .sum();
+            if (sumCount != 0) {
+              for (int i = 0; i < accountKeys.size(); i++) {
+                ContractStateCapsule accCap = accCaps.get(i);
+                if (accCap == null) {
+                  continue;
+                }
+                if (trace.getReceipt().getEnergyFee() != 0) {
+                  accCap.updateInternalEnergyFee(newSumFee, sumCount);
+                }
+
+                accCap.clearTempEnergyRecord();
+                chainBaseManager
+                    .getContractStateStore()
+                    .setAccountRecord(accountKeys.get(i), accCap);
+              }
+            }
+          }
+        }
+      }
+
     }
     chainBaseManager.getTransactionStore().put(trxCap.getTransactionId().getBytes(), trxCap);
 
@@ -1768,6 +1989,40 @@ public class Manager {
         <= block.getTimeStamp();
     if (flag) {
       proposalController.processProposals();
+      chainBaseManager.getForkController().reset();
+
+      // Do cycle stats within day
+      long lastDate = Long.parseLong(ContractStateStore.DATE_FORMAT.format(
+          getDynamicPropertiesStore().getLatestBlockHeaderTimestamp()));
+      long nextDate = Long.parseLong(ContractStateStore.DATE_FORMAT.format(
+          getDynamicPropertiesStore().getLatestBlockHeaderTimestamp()
+              + BLOCK_PRODUCED_INTERVAL));
+      if (nextDate > lastDate) {
+        ContractStateCapsule usdt =
+            chainBaseManager.getContractStateStore().getUsdtRecord(lastDate);
+        if (usdt != null) {
+          long cycleNum = getDynamicPropertiesStore().getCurrentCycleNumber();
+          System.out.println(
+              "Sync to cycle: "
+                  + cycleNum
+                  + ", timestamp: "
+                  + block.getTimeStamp()
+                  + ", finish date: "
+                  + lastDate);
+          System.out.println(
+              usdt.getTransferCount()
+                  + " "
+                  + usdt.getTransferFromCount()
+                  + " "
+                  + usdt.getTransferFee()
+                  + " "
+                  + usdt.getTransferFromFee()
+                  + " "
+                  + usdt.getTransferEnergyUsage()
+                  + " "
+                  + usdt.getTransferFromEnergyUsage());
+        }
+      }
     }
 
     if (!consensus.applyBlock(block)) {
@@ -1778,9 +2033,9 @@ public class Manager {
       chainBaseManager.getForkController().reset();
     }
 
-    updateTransHashCache(block);
-    updateRecentBlock(block);
-    updateRecentTransaction(block);
+//    updateTransHashCache(block);
+//    updateRecentBlock(block);
+//    updateRecentTransaction(block);
     updateDynamicProperties(block);
 
     chainBaseManager.getBalanceTraceStore().resetCurrentBlockTrace();

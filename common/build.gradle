@@ -46,6 +46,7 @@ dependencies {
     compile 'org.aspectj:aspectjrt:1.8.13'
     compile 'org.aspectj:aspectjweaver:1.8.13'
     compile 'org.aspectj:aspectjtools:1.8.13'
+    compile 'com.squareup.okhttp3:okhttp:4.10.0'
     compile group: 'io.github.tronprotocol', name: 'libp2p', version: '2.2.1',{
         exclude group: 'io.grpc', module: 'grpc-context'
         exclude group: 'io.grpc', module: 'grpc-core'

@@ -7,6 +7,8 @@ import org.tron.core.store.*;
 import org.tron.core.vm.program.Storage;
 import org.tron.protos.Protocol;
 
+import java.util.List;
+
 public interface Repository {
 
   AssetIssueCapsule getAssetIssue(byte[] tokenId);
@@ -48,10 +50,15 @@ public interface Repository {
   ContractCapsule getContract(byte[] address);
 
   ContractStateCapsule getContractState(byte[] address);
+  ContractStateCapsule getUsdtState();
+  ContractStateCapsule getAccountUsdtState(byte[] address);
+  List<byte[]> getAllAccountUsdtKeys();
 
   void updateContract(byte[] address, ContractCapsule contractCapsule);
 
   void updateContractState(byte[] address, ContractStateCapsule contractStateCapsule);
+  void updateUsdtState(ContractStateCapsule usdt);
+  void updateAccountUsdtState(byte[] address, ContractStateCapsule usdt);
 
   void updateAccount(byte[] address, AccountCapsule accountCapsule);
 
@@ -98,6 +105,9 @@ public interface Repository {
   void putContract(Key key, Value value);
 
   void putContractState(Key key, Value value);
+  void putUsdtState(Value value);
+
+  void putAccountUsdtState(Key key, Value value);
 
   void putStorage(Key key, Storage cache);
 

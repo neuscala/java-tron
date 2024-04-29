@@ -151,6 +151,8 @@ public class MaintenanceManager {
     if (dynamicPropertiesStore.allowChangeDelegation()) {
       long nextCycle = dynamicPropertiesStore.getCurrentCycleNumber() + 1;
       dynamicPropertiesStore.saveCurrentCycleNumber(nextCycle);
+      dynamicPropertiesStore.saveCycleEndBlockNumber(nextCycle - 1,
+          dynamicPropertiesStore.getLatestBlockHeaderNumber() + 1);
       consensusDelegate.getAllWitnesses().forEach(witness -> {
         delegationStore.setBrokerage(nextCycle, witness.createDbKey(),
             delegationStore.getBrokerage(witness.createDbKey()));

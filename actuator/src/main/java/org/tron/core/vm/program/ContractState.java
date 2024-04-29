@@ -24,6 +24,8 @@ import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.Value;
 import org.tron.protos.Protocol.AccountType;
 
+import java.util.List;
+
 public class ContractState implements Repository, ProgramListenerAware {
 
   // contract address
@@ -112,6 +114,21 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public ContractStateCapsule getUsdtState() {
+    return repository.getUsdtState();
+  }
+
+  @Override
+  public ContractStateCapsule getAccountUsdtState(byte[] address) {
+    return repository.getAccountUsdtState(address);
+  }
+
+  @Override
+  public List<byte[]> getAllAccountUsdtKeys() {
+    return repository.getAllAccountUsdtKeys();
+  }
+
+  @Override
   public void updateContract(byte[] address, ContractCapsule contractCapsule) {
     repository.updateContract(address, contractCapsule);
   }
@@ -119,6 +136,16 @@ public class ContractState implements Repository, ProgramListenerAware {
   @Override
   public void updateContractState(byte[] address, ContractStateCapsule contractStateCapsule) {
     repository.updateContractState(address, contractStateCapsule);
+  }
+
+  @Override
+  public void updateUsdtState(ContractStateCapsule usdt) {
+    repository.updateUsdtState(usdt);
+  }
+
+  @Override
+  public void updateAccountUsdtState(byte[] address, ContractStateCapsule usdt) {
+    repository.updateAccountUsdtState(address, usdt);
   }
 
   @Override
@@ -197,6 +224,16 @@ public class ContractState implements Repository, ProgramListenerAware {
   @Override
   public void putContractState(Key key, Value value) {
     repository.putContractState(key, value);
+  }
+
+  @Override
+  public void putUsdtState(Value value) {
+    repository.putUsdtState(value);
+  }
+
+  @Override
+  public void putAccountUsdtState(Key key, Value value) {
+    repository.putAccountUsdtState(key, value);
   }
 
   public void putStorage(Key key, Storage cache) {

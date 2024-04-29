@@ -4,6 +4,8 @@ import org.tron.core.db.TransactionContext;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 
+import java.util.List;
+
 
 public interface Runtime {
 
@@ -13,5 +15,7 @@ public interface Runtime {
   ProgramResult getResult();
 
   String getRuntimeError();
+
+  List<byte[]> getAllAccountKeys();
 
 }

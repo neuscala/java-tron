@@ -5,8 +5,14 @@ import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERV
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 import com.google.protobuf.ByteString;
+
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
@@ -79,6 +85,7 @@ public class RepositoryImpl implements Repository {
   private static final byte[] TOTAL_NET_WEIGHT = "TOTAL_NET_WEIGHT".getBytes();
   private static final byte[] TOTAL_ENERGY_WEIGHT = "TOTAL_ENERGY_WEIGHT".getBytes();
   private static final byte[] TOTAL_TRON_POWER_WEIGHT = "TOTAL_TRON_POWER_WEIGHT".getBytes();
+  private static final byte[] USDT_ADDR = Hex.decode("41a614f803B6FD780986A42c78Ec9c7f77e6DeD13C");
 
   private StoreFactory storeFactory;
   @Getter
@@ -122,6 +129,8 @@ public class RepositoryImpl implements Repository {
   private final HashMap<Key, Value<byte[]>> codeCache = new HashMap<>();
   private final HashMap<Key, Value<SmartContract>> contractCache = new HashMap<>();
   private final HashMap<Key, Value<ContractState>> contractStateCache
+      = new HashMap<>();
+  private final HashMap<Key, Value<ContractState>> usdtCache
       = new HashMap<>();
   private final HashMap<Key, Storage> storageCache = new HashMap<>();
 
@@ -497,6 +506,56 @@ public class RepositoryImpl implements Repository {
   }
 
   @Override
+  public ContractStateCapsule getUsdtState() {
+    Key key = Key.create(USDT_ADDR);
+    if (usdtCache.containsKey(key)) {
+      return new ContractStateCapsule(usdtCache.get(key).getValue());
+    }
+
+    ContractStateCapsule usdt;
+    if (parent != null) {
+      usdt = parent.getUsdtState();
+    } else {
+      usdt = getContractStateStore().getUsdtRecord();
+    }
+
+    if (usdt != null) {
+      usdtCache.put(key, Value.create(usdt));
+    }
+    return usdt;
+  }
+
+  @Override
+  public ContractStateCapsule getAccountUsdtState(byte[] address) {
+    Key key = Key.create(address);
+    if (usdtCache.containsKey(key)) {
+      return new ContractStateCapsule(usdtCache.get(key).getValue());
+    }
+
+    ContractStateCapsule usdt;
+    if (parent != null) {
+      usdt = parent.getAccountUsdtState(address);
+    } else {
+      usdt = getContractStateStore().getAccountRecord(address);
+    }
+
+    if (usdt == null) {
+      usdt = new ContractStateCapsule(getDynamicPropertiesStore().getCurrentCycleNumber());
+    }
+
+    usdtCache.put(key, Value.create(usdt));
+    return usdt;
+  }
+
+  @Override
+  public List<byte[]> getAllAccountUsdtKeys() {
+    return usdtCache.keySet().stream()
+        .map(Key::getData)
+        .filter(data -> !Arrays.equals(data, USDT_ADDR))
+        .collect(Collectors.toList());
+  }
+
+  @Override
   public void updateContract(byte[] address, ContractCapsule contractCapsule) {
     contractCache.put(Key.create(address),
         Value.create(contractCapsule, Type.DIRTY));
@@ -506,6 +565,18 @@ public class RepositoryImpl implements Repository {
   public void updateContractState(byte[] address, ContractStateCapsule contractStateCapsule) {
     contractStateCache.put(Key.create(address),
         Value.create(contractStateCapsule, Type.DIRTY));
+  }
+
+  @Override
+  public void updateUsdtState(ContractStateCapsule usdt) {
+    usdtCache.put(Key.create(USDT_ADDR),
+        Value.create(usdt, Type.DIRTY));
+  }
+
+  @Override
+  public void updateAccountUsdtState(byte[] address, ContractStateCapsule usdt) {
+    usdtCache.put(Key.create(address),
+        Value.create(usdt, Type.DIRTY));
   }
 
   @Override
@@ -703,6 +774,7 @@ public class RepositoryImpl implements Repository {
     commitCodeCache(repository);
     commitContractCache(repository);
     commitContractStateCache(repository);
+    commitUsdtCache(repository);
     commitStorageCache(repository);
     commitDynamicCache(repository);
     commitDelegatedResourceCache(repository);
@@ -729,6 +801,16 @@ public class RepositoryImpl implements Repository {
   @Override
   public void putContractState(Key key, Value value) {
     contractStateCache.put(key, value);
+  }
+
+  @Override
+  public void putUsdtState(Value value) {
+    usdtCache.put(new Key(USDT_ADDR), value);
+  }
+
+  @Override
+  public void putAccountUsdtState(Key key, Value value) {
+    usdtCache.put(key, value);
   }
 
   @Override
@@ -930,6 +1012,23 @@ public class RepositoryImpl implements Repository {
         } else {
           ContractStateCapsule contractStateCapsule = new ContractStateCapsule(value.getValue());
           getContractStateStore().put(key.getData(), contractStateCapsule);
+        }
+      }
+    }));
+  }
+
+  private void commitUsdtCache(Repository deposit) {
+    usdtCache.forEach(((key, value) -> {
+      if (value.getType().isDirty() || value.getType().isCreate()) {
+        if (deposit != null) {
+          deposit.putUsdtState(value);
+        } else {
+          ContractStateCapsule usdt = new ContractStateCapsule(value.getValue());
+          if (key.equals(Key.create(USDT_ADDR))) {
+            getContractStateStore().setUsdtRecord(usdt);
+          } else {
+            getContractStateStore().setAccountRecord(key.getData(), usdt);
+          }
         }
       }
     }));
