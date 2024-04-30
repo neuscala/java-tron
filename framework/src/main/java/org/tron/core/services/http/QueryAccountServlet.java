@@ -45,34 +45,38 @@ public class QueryAccountServlet extends RateLimiterServlet {
           request.getParameter("address") == null ? null : request.getParameter("address");
       if (StringUtils.isEmpty(address)) {
         address = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
-      }
+        ContractStateCapsule cap = contractStateStore.getUsdtRecord(date);
 
-      Boolean isContract =
-          request.getParameter("contract") == null
-              ? null
-              : Boolean.valueOf(request.getParameter("contract"));
-      if (Objects.isNull(isContract)) {
-        isContract = false;
-      }
-      byte[] addr = Commons.decodeFromBase58Check(address);
-
-      if (Objects.nonNull(addr)) {
-        ContractStateCapsule cap =
-            isContract
-                ? contractStateStore.getContractRecord(date, addr)
-                : contractStateStore.getAccountRecord(date, addr);
-
-        response.getWriter().println(cap.toString());
+        response.getWriter().println("{" + address + ": " + cap.toString() + "}");
       } else {
-        response
-            .getWriter()
-            .println(
-                "Parsed addr is null: date "
-                    + date
-                    + ", address: "
-                    + address
-                    + ", contract: "
-                    + isContract);
+
+        Boolean isContract =
+            request.getParameter("contract") == null
+                ? null
+                : Boolean.valueOf(request.getParameter("contract"));
+        if (Objects.isNull(isContract)) {
+          isContract = false;
+        }
+        byte[] addr = Commons.decodeFromBase58Check(address);
+
+        if (Objects.nonNull(addr)) {
+          ContractStateCapsule cap =
+              isContract
+                  ? contractStateStore.getContractRecord(date, addr)
+                  : contractStateStore.getAccountRecord(date, addr);
+
+          response.getWriter().println("{" + address + ": " + cap.toString() + "}");
+        } else {
+          response
+              .getWriter()
+              .println(
+                  "Parsed addr is null: date "
+                      + date
+                      + ", address: "
+                      + address
+                      + ", contract: "
+                      + isContract);
+        }
       }
     } catch (Exception e) {
       response

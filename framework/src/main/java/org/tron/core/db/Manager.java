@@ -2008,7 +2008,9 @@ public class Manager {
                   + ", timestamp: "
                   + block.getTimeStamp()
                   + ", finish date: "
-                  + lastDate);
+                  + lastDate
+                  + ", current timestamp: "
+                  + System.currentTimeMillis());
           System.out.println(
               usdt.getTransferCount()
                   + " "
