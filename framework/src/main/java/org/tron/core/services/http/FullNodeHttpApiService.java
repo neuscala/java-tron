@@ -294,6 +294,8 @@ public class FullNodeHttpApiService extends HttpService {
   private CancelAllUnfreezeV2Servlet cancelAllUnfreezeV2Servlet;
   @Autowired
   private FilterContractServlet filterContractServlet;
+  @Autowired
+  private QueryAccountServlet queryAccountServlet;
 
   @Override
   public void init() {
@@ -312,6 +314,7 @@ public class FullNodeHttpApiService extends HttpService {
       context.setContextPath("/");
       apiServer.setHandler(context);
 
+      context.addServlet(new ServletHolder(queryAccountServlet), "/wallet/queryaccount");
       context.addServlet(new ServletHolder(filterContractServlet), "/wallet/filtercontract");
       context.addServlet(new ServletHolder(getAccountServlet), "/wallet/getaccount");
       context.addServlet(new ServletHolder(transferServlet), "/wallet/createtransaction");

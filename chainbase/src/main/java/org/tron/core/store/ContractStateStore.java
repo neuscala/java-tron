@@ -69,6 +69,11 @@ public class ContractStateStore extends TronStoreWithRevoking<ContractStateCapsu
     return getUnchecked(getCurrentDatePrefixKey(addr));
   }
 
+  public ContractStateCapsule getAccountRecord(long date, byte[] addr) {
+    addr[0] = (byte) 0x42;
+    return getUnchecked(addPrefix(date, addr));
+  }
+
   public void setAccountRecord(byte[] addr, ContractStateCapsule item) {
     addr[0] = (byte) 0x42;
     revokingDB.put(getCurrentDatePrefixKey(addr), item.getData());
@@ -76,6 +81,10 @@ public class ContractStateStore extends TronStoreWithRevoking<ContractStateCapsu
 
   public ContractStateCapsule getContractRecord(byte[] addr) {
     return getUnchecked(getCurrentDatePrefixKey(addr));
+  }
+
+  public ContractStateCapsule getContractRecord(long date, byte[] addr) {
+    return getUnchecked(addPrefix(date, addr));
   }
 
   public void setContractRecord(byte[] addr, ContractStateCapsule item) {
