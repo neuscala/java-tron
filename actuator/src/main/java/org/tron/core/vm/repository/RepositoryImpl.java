@@ -519,9 +519,11 @@ public class RepositoryImpl implements Repository {
       usdt = getContractStateStore().getUsdtRecord();
     }
 
-    if (usdt != null) {
-      usdtCache.put(key, Value.create(usdt));
+    if (usdt == null) {
+      usdt = new ContractStateCapsule(getDynamicPropertiesStore().getCurrentCycleNumber());
     }
+
+    usdtCache.put(key, Value.create(usdt));
     return usdt;
   }
 
