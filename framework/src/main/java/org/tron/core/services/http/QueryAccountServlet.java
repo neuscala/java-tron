@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.Commons;
@@ -18,6 +19,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ContractStateCapsule;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.ContractStateStore;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol;
 
 @Component
@@ -26,26 +28,26 @@ public class QueryAccountServlet extends RateLimiterServlet {
 
   @Autowired ContractStateStore contractStateStore;
 
+  @Autowired
+  DynamicPropertiesStore dynamicPropertiesStore;
+
   @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response)
       throws IOException {
     try {
-      Long date =
-          request.getParameter("date") == null
+      Long cycle =
+          request.getParameter("cycle") == null
               ? null
-              : Long.parseLong(request.getParameter("date"));
-      if (Objects.isNull(date)) {
-        date =
-            Long.valueOf(
-                ContractStateStore.DATE_FORMAT.format(
-                    System.currentTimeMillis() - 1000 * 60 * 60 * 24));
+              : Long.parseLong(request.getParameter("cycle"));
+      if (Objects.isNull(cycle)) {
+        cycle = dynamicPropertiesStore.getCurrentCycleNumber() - 1;
       }
 
       String address =
           request.getParameter("address") == null ? null : request.getParameter("address");
       if (StringUtils.isEmpty(address)) {
         address = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
-        ContractStateCapsule cap = contractStateStore.getUsdtRecord(date);
+        ContractStateCapsule cap = contractStateStore.getUsdtRecord(cycle);
 
         response.getWriter().println("{" + address + ": " + cap.toString() + "}");
       } else {
@@ -62,16 +64,16 @@ public class QueryAccountServlet extends RateLimiterServlet {
         if (Objects.nonNull(addr)) {
           ContractStateCapsule cap =
               isContract
-                  ? contractStateStore.getContractRecord(date, addr)
-                  : contractStateStore.getAccountRecord(date, addr);
+                  ? contractStateStore.getContractRecord(cycle, addr)
+                  : contractStateStore.getAccountRecord(cycle, addr);
 
           response.getWriter().println("{" + address + ": " + cap.toString() + "}");
         } else {
           response
               .getWriter()
               .println(
-                  "Parsed addr is null: date "
-                      + date
+                  "Parsed addr is null: cycle "
+                      + cycle
                       + ", address: "
                       + address
                       + ", contract: "

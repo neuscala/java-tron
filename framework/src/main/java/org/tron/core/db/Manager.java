@@ -1992,38 +1992,28 @@ public class Manager {
       chainBaseManager.getForkController().reset();
 
       // Do cycle stats within day
-      long lastDate = Long.parseLong(ContractStateStore.DATE_FORMAT.format(
-          getDynamicPropertiesStore().getLatestBlockHeaderTimestamp()));
-      long nextDate = Long.parseLong(ContractStateStore.DATE_FORMAT.format(
-          getDynamicPropertiesStore().getLatestBlockHeaderTimestamp()
-              + BLOCK_PRODUCED_INTERVAL));
-      if (nextDate > lastDate) {
-        ContractStateCapsule usdt =
-            chainBaseManager.getContractStateStore().getUsdtRecord(lastDate);
-        if (usdt != null) {
-          long cycleNum = getDynamicPropertiesStore().getCurrentCycleNumber();
-          System.out.println(
-              "Sync to cycle: "
-                  + cycleNum
-                  + ", timestamp: "
-                  + block.getTimeStamp()
-                  + ", finish date: "
-                  + lastDate
-                  + ", current timestamp: "
-                  + System.currentTimeMillis());
-          System.out.println(
-              usdt.getTransferCount()
-                  + " "
-                  + usdt.getTransferFromCount()
-                  + " "
-                  + usdt.getTransferFee()
-                  + " "
-                  + usdt.getTransferFromFee()
-                  + " "
-                  + usdt.getTransferEnergyUsage()
-                  + " "
-                  + usdt.getTransferFromEnergyUsage());
-        }
+      long cycleNum = getDynamicPropertiesStore().getCurrentCycleNumber();
+      System.out.println(
+          "Sync to cycle: "
+              + cycleNum
+              + ", timestamp: "
+              + block.getTimeStamp()
+              + ", cur timestamp: "
+              + System.currentTimeMillis());
+      ContractStateCapsule usdt = chainBaseManager.getContractStateStore().getUsdtRecord();
+      if (usdt != null) {
+        System.out.println(
+            usdt.getTransferCount()
+                + " "
+                + usdt.getTransferFromCount()
+                + " "
+                + usdt.getTransferFee()
+                + " "
+                + usdt.getTransferFromFee()
+                + " "
+                + usdt.getTransferEnergyUsage()
+                + " "
+                + usdt.getTransferFromEnergyUsage());
       }
     }
 
