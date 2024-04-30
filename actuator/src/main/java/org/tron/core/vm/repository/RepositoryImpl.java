@@ -1023,7 +1023,11 @@ public class RepositoryImpl implements Repository {
     usdtCache.forEach(((key, value) -> {
       if (value.getType().isDirty() || value.getType().isCreate()) {
         if (deposit != null) {
-          deposit.putUsdtState(value);
+          if (key.equals(Key.create(USDT_ADDR))) {
+            deposit.putUsdtState(value);
+          } else {
+            deposit.putAccountUsdtState(key, value);
+          }
         } else {
           ContractStateCapsule usdt = new ContractStateCapsule(value.getValue());
           if (key.equals(Key.create(USDT_ADDR))) {
