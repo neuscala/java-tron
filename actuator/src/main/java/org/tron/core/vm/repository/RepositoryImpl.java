@@ -29,6 +29,7 @@ import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.*;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.Common;
+import org.tron.protos.contract.SmartContractOuterClass;
 import org.tron.protos.contract.SmartContractOuterClass.ContractState;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 
@@ -47,6 +48,7 @@ public class RepositoryImpl implements Repository {
   private static final byte[] TOTAL_NET_WEIGHT = "TOTAL_NET_WEIGHT".getBytes();
   private static final byte[] TOTAL_ENERGY_WEIGHT = "TOTAL_ENERGY_WEIGHT".getBytes();
   private static final byte[] TOTAL_TRON_POWER_WEIGHT = "TOTAL_TRON_POWER_WEIGHT".getBytes();
+  private static final byte[] ADDR_AND_TX = "ADDR_AND_TX".getBytes();
 
   private StoreFactory storeFactory;
   @Getter
@@ -477,6 +479,25 @@ public class RepositoryImpl implements Repository {
   }
 
   @Override
+  public boolean isAccountCreate(byte[] address) {
+    if (accountCache.containsKey(Key.create(address))) {
+      return accountCache.get(Key.create(address)).getType().isCreate();
+    }
+    return false;
+  }
+
+  @Override
+  public void addNewAddrRecord(SmartContractOuterClass.NewAddressTypeCode type) {
+    ContractStateCapsule record = getContractState(ADDR_AND_TX);
+    if (record == null) {
+      record = new ContractStateCapsule(getDynamicPropertiesStore().getCurrentCycleNumber());
+    }
+
+    record.addNewAddressCount(type);
+    updateContractState(ADDR_AND_TX, record);
+  }
+
+  @Override
   public void updateAccount(byte[] address, AccountCapsule accountCapsule) {
     accountCache.put(Key.create(address),
         Value.create(accountCapsule, Type.DIRTY));
@@ -897,7 +918,11 @@ public class RepositoryImpl implements Repository {
           deposit.putContractState(key, value);
         } else {
           ContractStateCapsule contractStateCapsule = new ContractStateCapsule(value.getValue());
-          getContractStateStore().put(key.getData(), contractStateCapsule);
+          if (Arrays.equals(key.getData(), ADDR_AND_TX)) {
+            getContractStateStore().setAddrAndTxRecord(contractStateCapsule);
+          } else {
+            getContractStateStore().put(key.getData(), contractStateCapsule);
+          }
         }
       }
     }));

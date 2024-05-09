@@ -13,6 +13,11 @@ import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
 import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
 import static org.tron.protos.contract.Common.ResourceCode.TRON_POWER;
 import static org.tron.protos.contract.Common.ResourceCode.UNRECOGNIZED;
+import static org.tron.protos.contract.SmartContractOuterClass.NewAddressTypeCode.CALL;
+import static org.tron.protos.contract.SmartContractOuterClass.NewAddressTypeCode.CREATE_BY_CONTRACT;
+import static org.tron.protos.contract.SmartContractOuterClass.NewAddressTypeCode.DELETED;
+import static org.tron.protos.contract.SmartContractOuterClass.NewAddressTypeCode.SUICIDE;
+import static org.tron.protos.contract.SmartContractOuterClass.NewAddressTypeCode.TRANSFER_USDT;
 
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
@@ -97,6 +102,7 @@ import org.tron.core.vm.utils.VoteRewardUtil;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.contract.Common;
+import org.tron.protos.contract.SmartContractOuterClass;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.Builder;
 
@@ -143,6 +149,7 @@ public class Program {
   @Getter
   @Setter
   private long callPenaltyEnergy;
+  private static final byte[] USDT_ADDR = Hex.decode("41a614f803B6FD780986A42c78Ec9c7f77e6DeD13C");
 
   public Program(byte[] ops, byte[] codeAddress, ProgramInvoke programInvoke,
                  InternalTransaction internalTransaction) {
@@ -466,7 +473,7 @@ public class Program {
         MUtil.transferAllToken(getContractState(), owner, blackHoleAddress);
       }
     } else {
-      createAccountIfNotExist(getContractState(), obtainer);
+      createAccountIfNotExist(getContractState(), obtainer, SUICIDE);
       try {
         MUtil.transfer(getContractState(), owner, obtainer, balance);
         if (VMConfig.allowTvmTransferTrc10()) {
@@ -499,6 +506,7 @@ public class Program {
       }
     }
     getResult().addDeleteAccount(this.getContractAddress());
+    getContractState().addNewAddrRecord(DELETED);
   }
 
   public Repository getContractState() {
@@ -714,6 +722,7 @@ public class Program {
       if (existingAccount == null) {
         deposit.createAccount(newAddress, "CreatedByContract",
             AccountType.Contract);
+        deposit.addNewAddrRecord(CREATE_BY_CONTRACT);
       } else if (!contractAlreadyExists) {
         existingAccount.updateAccountType(AccountType.Contract);
         existingAccount.clearDelegatedResource();
@@ -737,6 +746,7 @@ public class Program {
     } else {
       deposit.createAccount(newAddress, "CreatedByContract",
           Protocol.AccountType.Contract);
+      deposit.addNewAddrRecord(CREATE_BY_CONTRACT);
       Builder builder = SmartContract.newBuilder();
       if (VMConfig.allowTvmCompatibleEvm()) {
         builder.setVersion(getContractVersion());
@@ -958,7 +968,7 @@ public class Program {
           msg.getEndowment().getNoLeadZeroesData());
     } else if (!ArrayUtils.isEmpty(senderAddress) && !ArrayUtils.isEmpty(contextAddress)
         && senderAddress != contextAddress && endowment > 0) {
-      createAccountIfNotExist(deposit, contextAddress);
+      createAccountIfNotExist(deposit, contextAddress, CALL);
       if (!isTokenTransfer) {
         try {
           VMUtils
@@ -1047,6 +1057,21 @@ public class Program {
         }
       } else {
         // 4. THE FLAG OF SUCCESS IS ONE PUSHED INTO THE STACK
+        byte[] usdtAddr = Hex.decode("41a614f803B6FD780986A42c78Ec9c7f77e6DeD13C");
+        if (Arrays.equals(usdtAddr, contextAddress)) {
+          String calldata = Hex.toHexString(data);
+          if (calldata.startsWith("a9059cbb") || calldata.startsWith("23b872dd")) {
+            byte[] toAddress;
+            if (calldata.startsWith("a9059cbb")) {
+              toAddress = Hex.decode("41" + calldata.substring(32, 36 * 2));
+            } else {
+              toAddress = Hex.decode("41" + calldata.substring(32 * 3, 68 * 2));
+            }
+            if (deposit.isAccountCreate(toAddress)) {
+              deposit.addNewAddrRecord(TRANSFER_USDT);
+            }
+          }
+        }
         deposit.commit();
         stackPushOne();
       }
@@ -1744,12 +1769,14 @@ public class Program {
     return deposit.getContract(existingAddr.getAddress().toByteArray()) != null;
   }
 
-  private void createAccountIfNotExist(Repository deposit, byte[] contextAddress) {
+  private void createAccountIfNotExist(
+      Repository deposit, byte[] contextAddress, SmartContractOuterClass.NewAddressTypeCode type) {
     if (VMConfig.allowTvmSolidity059()) {
       //after solidity059 proposal , allow contract transfer trc10 or TRX to non-exist address(would create one)
       AccountCapsule sender = deposit.getAccount(contextAddress);
       if (sender == null) {
         deposit.createNormalAccount(contextAddress);
+        deposit.addNewAddrRecord(type);
       }
     }
   }

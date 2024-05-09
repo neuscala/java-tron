@@ -23,6 +23,7 @@ import org.tron.core.vm.repository.Key;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.Value;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.contract.SmartContractOuterClass;
 
 public class ContractState implements Repository, ProgramListenerAware {
 
@@ -119,6 +120,16 @@ public class ContractState implements Repository, ProgramListenerAware {
   @Override
   public void updateContractState(byte[] address, ContractStateCapsule contractStateCapsule) {
     repository.updateContractState(address, contractStateCapsule);
+  }
+
+  @Override
+  public boolean isAccountCreate(byte[] address) {
+    return repository.isAccountCreate(address);
+  }
+
+  @Override
+  public void addNewAddrRecord(SmartContractOuterClass.NewAddressTypeCode type) {
+    repository.addNewAddrRecord(type);
   }
 
   @Override

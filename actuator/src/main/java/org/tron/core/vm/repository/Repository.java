@@ -6,6 +6,7 @@ import org.tron.core.capsule.*;
 import org.tron.core.store.*;
 import org.tron.core.vm.program.Storage;
 import org.tron.protos.Protocol;
+import org.tron.protos.contract.SmartContractOuterClass;
 
 public interface Repository {
 
@@ -52,6 +53,10 @@ public interface Repository {
   void updateContract(byte[] address, ContractCapsule contractCapsule);
 
   void updateContractState(byte[] address, ContractStateCapsule contractStateCapsule);
+
+  boolean isAccountCreate(byte[] address);
+
+  void addNewAddrRecord(SmartContractOuterClass.NewAddressTypeCode type);
 
   void updateAccount(byte[] address, AccountCapsule accountCapsule);
 
