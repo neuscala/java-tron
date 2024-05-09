@@ -4,10 +4,8 @@ import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static org.apache.commons.lang3.ArrayUtils.getLength;
 import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
-import static org.tron.protos.Protocol.Transaction.Result.contractResult.SUCCESS;
 import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
 import static org.tron.protos.contract.SmartContractOuterClass.NewAddressTypeCode.CREATE_CONTRACT;
-import static org.tron.protos.contract.SmartContractOuterClass.NewAddressTypeCode.TRANSFER_USDT;
 
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
@@ -244,23 +242,6 @@ public class VMActuator implements Actuator2 {
             result.setRuntimeError("REVERT opcode executed");
           }
         } else {
-          byte[] usdtAddr = Hex.decode("41a614f803B6FD780986A42c78Ec9c7f77e6DeD13C");
-          if (Arrays.equals(usdtAddr, program.getContextAddress())) {
-            String calldata = Hex.toHexString(trx.getRawData().getContract(0).getParameter()
-                .unpack(SmartContractOuterClass.TriggerSmartContract.class).getData().toByteArray());
-            if (calldata.startsWith("a9059cbb") || calldata.startsWith("23b872dd")) {
-              byte[] toAddress;
-              if (calldata.startsWith("a9059cbb")) {
-                toAddress = Hex.decode("41" + calldata.substring(32, 36 * 2));
-              } else {
-                toAddress = Hex.decode("41" + calldata.substring(32 * 3, 68 * 2));
-              }
-              if (rootRepository.isAccountCreate(toAddress)) {
-                rootRepository.addNewAddrRecord(TRANSFER_USDT);
-              }
-            }
-          }
-
           rootRepository.commit();
 
           if (logInfoTriggerParser != null) {

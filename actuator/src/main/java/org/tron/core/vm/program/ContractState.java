@@ -113,6 +113,11 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public ContractStateCapsule getAccountState(byte[] address) {
+    return repository.getAccountState(address);
+  }
+
+  @Override
   public void updateContract(byte[] address, ContractCapsule contractCapsule) {
     repository.updateContract(address, contractCapsule);
   }
@@ -123,6 +128,11 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public void updateAccountState(byte[] address, ContractStateCapsule contractStateCapsule) {
+    repository.updateAccountState(address, contractStateCapsule);
+  }
+
+  @Override
   public boolean isAccountCreate(byte[] address) {
     return repository.isAccountCreate(address);
   }
@@ -130,6 +140,11 @@ public class ContractState implements Repository, ProgramListenerAware {
   @Override
   public void addNewAddrRecord(SmartContractOuterClass.NewAddressTypeCode type) {
     repository.addNewAddrRecord(type);
+  }
+
+  @Override
+  public void addNewUsdtOwner() {
+    repository.addNewUsdtOwner();
   }
 
   @Override
@@ -208,6 +223,11 @@ public class ContractState implements Repository, ProgramListenerAware {
   @Override
   public void putContractState(Key key, Value value) {
     repository.putContractState(key, value);
+  }
+
+  @Override
+  public void putAccountState(Key key, Value value) {
+    repository.putAccountState(key, value);
   }
 
   public void putStorage(Key key, Storage cache) {

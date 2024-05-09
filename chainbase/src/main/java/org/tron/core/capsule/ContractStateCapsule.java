@@ -5,12 +5,10 @@ import static org.tron.core.Constant.DYNAMIC_ENERGY_FACTOR_DECIMAL;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.CollectionUtils;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.contract.SmartContractOuterClass;
 import org.tron.protos.contract.SmartContractOuterClass.ContractState;
 
-import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j(topic = "capsule")
@@ -119,6 +117,25 @@ public class ContractStateCapsule implements ProtoCapsule<ContractState> {
 
   public void setNewTransactionCount(long value) {
     this.contractState = this.contractState.toBuilder().setNewTransactionCount(value).build();
+  }
+
+  public long getNewUsdtOwner() {
+    return this.getInstance().getNewUsdtOwner();
+  }
+
+  public void addNewUsdtOwner() {
+    this.contractState =
+        this.contractState.toBuilder()
+            .setNewUsdtOwner(this.getNewUsdtOwner() + 1)
+            .build();
+  }
+
+  public boolean ownedUsdt() {
+    return this.contractState.getOwnedUsdt();
+  }
+
+  public void setOwnedUsdt(boolean owned) {
+    this.contractState = this.contractState.toBuilder().setOwnedUsdt(owned).build();
   }
 
   public boolean catchUpToCycle(DynamicPropertiesStore dps) {

@@ -11,7 +11,6 @@ import com.google.common.collect.Lists;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import io.prometheus.client.Histogram;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;

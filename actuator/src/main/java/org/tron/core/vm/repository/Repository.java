@@ -50,13 +50,19 @@ public interface Repository {
 
   ContractStateCapsule getContractState(byte[] address);
 
+  ContractStateCapsule getAccountState(byte[] address);
+
   void updateContract(byte[] address, ContractCapsule contractCapsule);
 
   void updateContractState(byte[] address, ContractStateCapsule contractStateCapsule);
 
+  void updateAccountState(byte[] address, ContractStateCapsule contractStateCapsule);
+
   boolean isAccountCreate(byte[] address);
 
   void addNewAddrRecord(SmartContractOuterClass.NewAddressTypeCode type);
+
+  void addNewUsdtOwner();
 
   void updateAccount(byte[] address, AccountCapsule accountCapsule);
 
@@ -103,6 +109,8 @@ public interface Repository {
   void putContract(Key key, Value value);
 
   void putContractState(Key key, Value value);
+
+  void putAccountState(Key key, Value value);
 
   void putStorage(Key key, Storage cache);
 

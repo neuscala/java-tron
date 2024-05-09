@@ -50,6 +50,16 @@ public class ContractStateStore extends TronStoreWithRevoking<ContractStateCapsu
     revokingDB.put(getCurrentPrefixKey(ADDR_AND_TX), capsule.getData());
   }
 
+  public ContractStateCapsule getAccountRecord(byte[] addr) {
+    addr[0] = (byte) 0x42;
+    return getUnchecked(addr);
+  }
+
+  public void setAccountRecord(byte[] addr, ContractStateCapsule capsule) {
+    addr[0] = (byte) 0x42;
+    revokingDB.put(addr, capsule.getData());
+  }
+
   private byte[] addPrefix(long cycleNumber, byte[] key) {
     return ByteUtil.merge((cycleNumber + "-").getBytes(), key);
   }

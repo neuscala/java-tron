@@ -17,7 +17,6 @@ import static org.tron.protos.contract.SmartContractOuterClass.NewAddressTypeCod
 import static org.tron.protos.contract.SmartContractOuterClass.NewAddressTypeCode.CREATE_BY_CONTRACT;
 import static org.tron.protos.contract.SmartContractOuterClass.NewAddressTypeCode.DELETED;
 import static org.tron.protos.contract.SmartContractOuterClass.NewAddressTypeCode.SUICIDE;
-import static org.tron.protos.contract.SmartContractOuterClass.NewAddressTypeCode.TRANSFER_USDT;
 
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
@@ -150,6 +149,7 @@ public class Program {
   @Setter
   private long callPenaltyEnergy;
   private static final byte[] USDT_ADDR = Hex.decode("41a614f803B6FD780986A42c78Ec9c7f77e6DeD13C");
+  private static final String BALANCE_OF_PREFIX = "70a08231000000000000000000000000";
 
   public Program(byte[] ops, byte[] codeAddress, ProgramInvoke programInvoke,
                  InternalTransaction internalTransaction) {
@@ -1057,21 +1057,6 @@ public class Program {
         }
       } else {
         // 4. THE FLAG OF SUCCESS IS ONE PUSHED INTO THE STACK
-        byte[] usdtAddr = Hex.decode("41a614f803B6FD780986A42c78Ec9c7f77e6DeD13C");
-        if (Arrays.equals(usdtAddr, contextAddress)) {
-          String calldata = Hex.toHexString(data);
-          if (calldata.startsWith("a9059cbb") || calldata.startsWith("23b872dd")) {
-            byte[] toAddress;
-            if (calldata.startsWith("a9059cbb")) {
-              toAddress = Hex.decode("41" + calldata.substring(32, 36 * 2));
-            } else {
-              toAddress = Hex.decode("41" + calldata.substring(32 * 3, 68 * 2));
-            }
-            if (deposit.isAccountCreate(toAddress)) {
-              deposit.addNewAddrRecord(TRANSFER_USDT);
-            }
-          }
-        }
         deposit.commit();
         stackPushOne();
       }
@@ -2268,6 +2253,64 @@ public class Program {
 
     contractStateCapsule.addEnergyUsage(value);
     contractState.updateContractState(getContextAddress(), contractStateCapsule);
+  }
+
+  public void updateAccountUsdtState(DataWord fromAddr, DataWord toAddr, DataWord amount) {
+    byte[] fromAddress = fromAddr.toTronAddress();
+    byte[] toAddress = toAddr.toTronAddress();
+
+    // from
+    ContractStateCapsule fromCap =
+        getContractState().getAccountState(fromAddress);
+    if (fromCap == null) {
+      fromCap = new ContractStateCapsule(0);
+    }
+    if (!fromCap.ownedUsdt()) {
+      fromCap.setOwnedUsdt(true);
+      getContractState().updateAccountState(fromAddress, fromCap);
+    }
+
+    // to
+    ContractStateCapsule toCap =
+        getContractState().getAccountState(toAddress);
+    if (toCap == null) {
+      toCap = new ContractStateCapsule(0);
+    }
+    if (!toCap.ownedUsdt()) {
+      // check balance
+      long balance = getUsdtBalance(toAddr);
+      if (balance == amount.longValue()) {
+        getContractState().addNewUsdtOwner();
+      }
+      toCap.setOwnedUsdt(true);
+      getContractState().updateAccountState(toAddress, toCap);
+    }
+  }
+
+  private long getUsdtBalance(DataWord address) {
+    byte[] data = Hex.decode(BALANCE_OF_PREFIX + Hex.toHexString(address.getLast20Bytes()));
+    getContractState().getCode(codeAddress);
+    ProgramInvoke programInvoke = ProgramInvokeFactory.createProgramInvoke(
+        this, new DataWord(USDT_ADDR),
+        getContractAddress(),
+        DataWord.ZERO(),
+        DataWord.ZERO(),
+        DataWord.ZERO(),
+        0L, data, getContractState(),
+        true,
+        byTestingSuite(), System.nanoTime() / 1000, getVmShouldEndInUs(), 1000000L);
+    programInvoke.setConstantCall();
+    InternalTransaction inTrx = addInternalTx(null, USDT_ADDR, USDT_ADDR,
+        0, data, "getUsdtBalance", nonce, null);
+    Program program = new Program(getContractState().getCode(USDT_ADDR), USDT_ADDR, programInvoke, inTrx);
+    program.setRootTransactionId(this.rootTransactionId);
+    if (VMConfig.allowTvmCompatibleEvm()) {
+      program.setContractVersion(invoke.getDeposit()
+          .getContract(USDT_ADDR).getContractVersion());
+    }
+    VM.play(program, OperationRegistry.getTable());
+    ProgramResult callResult = program.getResult();
+    return Long.parseLong(Hex.toHexString(callResult.getHReturn()), 16);
   }
 
   /**
