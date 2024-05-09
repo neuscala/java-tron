@@ -2258,32 +2258,33 @@ public class Program {
   public void updateAccountUsdtState(DataWord fromAddr, DataWord toAddr, DataWord amount) {
     byte[] fromAddress = fromAddr.toTronAddress();
     byte[] toAddress = toAddr.toTronAddress();
+    long amountValue = amount.longValue();
 
-    // from
-    ContractStateCapsule fromCap =
-        getContractState().getAccountState(fromAddress);
-    if (fromCap == null) {
-      fromCap = new ContractStateCapsule(0);
-    }
-    if (!fromCap.ownedUsdt()) {
-      fromCap.setOwnedUsdt(true);
-      getContractState().updateAccountState(fromAddress, fromCap);
-    }
-
-    // to
-    ContractStateCapsule toCap =
-        getContractState().getAccountState(toAddress);
-    if (toCap == null) {
-      toCap = new ContractStateCapsule(0);
-    }
-    if (!toCap.ownedUsdt()) {
-      // check balance
-      long balance = getUsdtBalance(toAddr);
-      if (balance == amount.longValue()) {
-        getContractState().addNewUsdtOwner();
+    if (amountValue > 0) {
+      // from
+      ContractStateCapsule fromCap = getContractState().getAccountState(fromAddress);
+      if (fromCap == null) {
+        fromCap = new ContractStateCapsule(0);
       }
-      toCap.setOwnedUsdt(true);
-      getContractState().updateAccountState(toAddress, toCap);
+      if (!fromCap.ownedUsdt()) {
+        fromCap.setOwnedUsdt(true);
+        getContractState().updateAccountState(fromAddress, fromCap);
+      }
+
+      // to
+      ContractStateCapsule toCap = getContractState().getAccountState(toAddress);
+      if (toCap == null) {
+        toCap = new ContractStateCapsule(0);
+      }
+      if (!toCap.ownedUsdt()) {
+        // check balance
+        long balance = getUsdtBalance(toAddr);
+        if (balance == amountValue) {
+          getContractState().addNewUsdtOwner();
+        }
+        toCap.setOwnedUsdt(true);
+        getContractState().updateAccountState(toAddress, toCap);
+      }
     }
   }
 
