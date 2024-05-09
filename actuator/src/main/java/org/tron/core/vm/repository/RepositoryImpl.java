@@ -457,7 +457,11 @@ public class RepositoryImpl implements Repository {
     if (parent != null) {
       contractStateCapsule = parent.getContractState(address);
     } else {
-      contractStateCapsule = getContractStateStore().get(address);
+      if (Arrays.equals(address, ADDR_AND_TX)) {
+        contractStateCapsule = getContractStateStore().getAddrAndTxRecord();
+      } else {
+        contractStateCapsule = getContractStateStore().get(address);
+      }
     }
 
     if (contractStateCapsule != null) {
