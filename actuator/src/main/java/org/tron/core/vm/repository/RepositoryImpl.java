@@ -511,14 +511,6 @@ public class RepositoryImpl implements Repository {
   }
 
   @Override
-  public boolean isAccountCreate(byte[] address) {
-    if (accountCache.containsKey(Key.create(address))) {
-      return accountCache.get(Key.create(address)).getType().isCreate();
-    }
-    return false;
-  }
-
-  @Override
   public void addNewAddrRecord(SmartContractOuterClass.NewAddressTypeCode type) {
     ContractStateCapsule record = getAccountState(ADDR_AND_TX);
     if (record == null) {

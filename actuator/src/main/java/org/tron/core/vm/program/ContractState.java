@@ -133,11 +133,6 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
-  public boolean isAccountCreate(byte[] address) {
-    return repository.isAccountCreate(address);
-  }
-
-  @Override
   public void addNewAddrRecord(SmartContractOuterClass.NewAddressTypeCode type) {
     repository.addNewAddrRecord(type);
   }
