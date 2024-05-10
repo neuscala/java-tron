@@ -1787,7 +1787,7 @@ public class Manager {
           + dbDirectory + File.separator + addrDbName));
       addrAndTxRecord.setAddressDbSize(addrDbSize);
 
-      String txDbName = chainBaseManager.getTransactionStore().getDb().getDbName();
+      String txDbName = chainBaseManager.getBlockStore().getDb().getDbName();
       long txDbSize = getFolderSize(new File(outputDirectory + File.separator
           + dbDirectory + File.separator + txDbName));
       addrAndTxRecord.setTransactionDbSize(txDbSize);
