@@ -60,6 +60,7 @@ public class GetAddressAndTxServlet extends RateLimiterServlet {
               cycleCap.getTransactionDbSize() - firstCap.getTransactionDbSize());
         }
       }
+      result.setNewAddressCountMap(newAddressCountMap);
 
       response.getWriter().println(result);
     } catch (Exception e) {
