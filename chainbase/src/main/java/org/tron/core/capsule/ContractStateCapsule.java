@@ -130,6 +130,13 @@ public class ContractStateCapsule implements ProtoCapsule<ContractState> {
             .build();
   }
 
+  public void addNewUsdtOwner(long value) {
+    this.contractState =
+        this.contractState.toBuilder()
+            .setNewUsdtOwner(this.getNewUsdtOwner() + value)
+            .build();
+  }
+
   public boolean ownedUsdt() {
     return this.contractState.getOwnedUsdt();
   }
@@ -208,5 +215,10 @@ public class ContractStateCapsule implements ProtoCapsule<ContractState> {
     this.contractState = ContractState.newBuilder()
         .setUpdateCycle(latestCycle)
         .build();
+  }
+
+  @Override
+  public String toString() {
+    return "{\n" + contractState.toString() + '}';
   }
 }
