@@ -4,6 +4,7 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
 import com.beust.jcommander.JCommander;
 import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.tron.common.application.Application;
@@ -11,7 +12,9 @@ import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.prometheus.Metrics;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
+import org.tron.core.capsule.ContractStateCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
@@ -24,9 +27,12 @@ import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
 import org.tron.core.services.interfaceOnSolidity.http.solidity.HttpApiOnSolidityService;
 import org.tron.core.services.jsonrpc.FullNodeJsonRpcHttpService;
 import org.tron.core.store.AccountStore;
+import org.tron.core.store.ContractStateStore;
 import org.tron.core.store.DynamicPropertiesStore;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j(topic = "app")
@@ -163,7 +169,33 @@ public class FullNode {
       System.out.println("Stake for energy: " + dynamicPropertiesStore.getTotalEnergyWeight2());
     }
 
-    appT.startup();
-    appT.blockUntilShutdown();
+    //    appT.startup();
+    //    appT.blockUntilShutdown();
+
+    try {
+      ContractStateStore contractStateStore = ChainBaseManager.getInstance().getContractStateStore();
+      File file = new File("tron_usdt_addr.txt");
+      BufferedReader reader = new BufferedReader(new FileReader(file));
+      String address;
+      long count = 0;
+      while ((address = reader.readLine()) != null) {
+        byte[] key = Hex.decode(address);
+        ContractStateCapsule cap = contractStateStore.getAccountRecord(key);
+        if (cap == null) {
+          cap = new ContractStateCapsule(0);
+        }
+        cap.setOwnedUsdt(true);
+        contractStateStore.setAccountRecord(key, cap);
+        count++;
+
+        if (count % 500000 == 0) {
+          logger.info("Init usdt owned address count {}", count);
+        }
+      }
+
+      logger.info("Init usdt owned success, total count {}.", count);
+    } catch (Exception e) {
+      logger.error("Init usdt owned failed, {}", e.getMessage());
+    }
   }
 }
