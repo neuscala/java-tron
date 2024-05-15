@@ -176,8 +176,8 @@ public class FullNode {
       ContractStateStore contractStateStore = ChainBaseManager.getInstance().getContractStateStore();
       File file = new File("tron_usdt_addr.txt");
       BufferedReader reader = new BufferedReader(new FileReader(file));
-      String address;
       long count = 0;
+      String address;
       while ((address = reader.readLine()) != null) {
         byte[] key = Hex.decode(address);
         ContractStateCapsule cap = contractStateStore.getAccountRecord(key);

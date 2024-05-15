@@ -63,6 +63,7 @@ public class ContractStateStore extends TronStoreWithRevoking<ContractStateCapsu
   private byte[] addPrefix(long cycleNumber, byte[] key) {
     return ByteUtil.merge((cycleNumber + "-").getBytes(), key);
   }
+
   private byte[] getCurrentPrefixKey(byte[] key) {
     return addPrefix(dps.getCurrentCycleNumber(), key);
   }

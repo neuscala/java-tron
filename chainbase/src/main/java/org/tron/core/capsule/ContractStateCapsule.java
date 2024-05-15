@@ -115,10 +115,6 @@ public class ContractStateCapsule implements ProtoCapsule<ContractState> {
             .build();
   }
 
-  public void setNewTransactionCount(long value) {
-    this.contractState = this.contractState.toBuilder().setNewTransactionCount(value).build();
-  }
-
   public long getNewUsdtOwner() {
     return this.getInstance().getNewUsdtOwner();
   }
