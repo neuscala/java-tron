@@ -1620,33 +1620,31 @@ public class Manager {
             }
 
             long newSumFee = 0;
-            if (trace.getReceipt().getEnergyFee() != 0) {
-              if (usdt.getTransferNewEnergyUsage() != 0) {
-                long newEnergyFee =
-                    (long)
-                        ((double) trace.getReceipt().getEnergyFee()
-                            * usdt.getTransferNewEnergyUsage()
-                            / trace.getReceipt().getEnergyUsageTotal());
-                usdt.addTransferFee(newEnergyFee);
+            if (usdt.getTransferNewEnergyUsage() != 0) {
+              long newEnergyFee =
+                  (long)
+                      ((double) trace.getReceipt().getEnergyFee()
+                          * usdt.getTransferNewEnergyUsage()
+                          / trace.getReceipt().getEnergyUsageTotal());
+              usdt.addTransferFee(newEnergyFee);
 
-                newSumFee += newEnergyFee;
+              newSumFee += newEnergyFee;
 
-                contractCap.addTriggerToFee(newEnergyFee);
-                contractCap.addTriggerToEnergyUsageTotal(usdt.getTransferNewEnergyUsage());
-              }
-              if (usdt.getTransferFromNewEnergyUsage() != 0) {
-                long newEnergyFee =
-                    (long)
-                        ((double) trace.getReceipt().getEnergyFee()
-                            * usdt.getTransferFromNewEnergyUsage()
-                            / trace.getReceipt().getEnergyUsageTotal());
-                usdt.addTransferFromFee(newEnergyFee);
+              contractCap.addTriggerToFee(newEnergyFee);
+              contractCap.addTriggerToEnergyUsageTotal(usdt.getTransferNewEnergyUsage());
+            }
+            if (usdt.getTransferFromNewEnergyUsage() != 0) {
+              long newEnergyFee =
+                  (long)
+                      ((double) trace.getReceipt().getEnergyFee()
+                          * usdt.getTransferFromNewEnergyUsage()
+                          / trace.getReceipt().getEnergyUsageTotal());
+              usdt.addTransferFromFee(newEnergyFee);
 
-                newSumFee += newEnergyFee;
+              newSumFee += newEnergyFee;
 
-                contractCap.addTriggerToFee(newEnergyFee);
-                contractCap.addTriggerToEnergyUsageTotal(usdt.getTransferFromNewEnergyUsage());
-              }
+              contractCap.addTriggerToFee(newEnergyFee);
+              contractCap.addTriggerToEnergyUsageTotal(usdt.getTransferFromNewEnergyUsage());
             }
             usdt.clearTempEnergyRecord();
 
