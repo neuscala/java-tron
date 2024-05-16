@@ -38,7 +38,7 @@ public class LocalBlockStoreSync {
 
   private SyncDynamicPropertiesStore syncDynamicPropertiesStore;
 
-  private AtomicLong ID = new AtomicLong(7151640);
+  private AtomicLong ID = new AtomicLong();
 
   private AtomicLong syncTargetBlockNum = new AtomicLong(60688563);
 
@@ -56,6 +56,7 @@ public class LocalBlockStoreSync {
     this.syncDynamicPropertiesStore =
         dbManager.getChainBaseManager().getSyncDynamicPropertiesStore();
 
+    chainBaseManager.getDynamicPropertiesStore().saveLatestLocalSyncedBlockNum(26191592L);
     ID.set(chainBaseManager.getDynamicPropertiesStore().getLatestLocalSyncedBlockNum());
     syncTargetBlockNum.set(getSyncTargetBlockNum());
   }
