@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -73,6 +74,7 @@ import org.tron.common.prometheus.MetricKeys;
 import org.tron.common.prometheus.MetricLabels;
 import org.tron.common.prometheus.Metrics;
 import org.tron.common.runtime.RuntimeImpl;
+import org.tron.common.runtime.vm.LogInfo;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.JsonUtil;
 import org.tron.common.utils.Pair;
@@ -1650,8 +1652,17 @@ public class Manager {
 
             // Save to db
             chainBaseManager.getContractStateStore().setUsdtRecord(usdt);
-
-            contractCap.addTriggerToCount();
+            byte[] transferTopic =
+                Hex.decode("ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef");
+            byte[] innerUsdtAddr = Hex.decode("a614f803B6FD780986A42c78Ec9c7f77e6DeD13C");
+            long innerTransferCount = 0;
+            for (LogInfo logInfo : trace.getRuntimeResult().getLogInfoList()) {
+              if (Arrays.equals(innerUsdtAddr, logInfo.getAddress())
+                  && Arrays.equals(transferTopic, logInfo.getTopics().get(0).getData())) {
+                innerTransferCount++;
+              }
+            }
+            contractCap.addTriggerToCount(innerTransferCount);
             // Save to db
             chainBaseManager.getContractStateStore().setContractRecord(contractAddress, contractCap);
 

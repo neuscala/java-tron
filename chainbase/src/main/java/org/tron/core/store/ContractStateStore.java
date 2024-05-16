@@ -78,21 +78,6 @@ public class ContractStateStore extends TronStoreWithRevoking<ContractStateCapsu
     revokingDB.put(getCurrentPrefixKey(addr), item.getData());
   }
 
-  public ContractStateCapsule getTRC10Record(byte[] tokenName) {
-    return getUnchecked(getCurrentPrefixKey(getTRC10Key(tokenName)));
-  }
-
-  public void setTRC10Record(byte[] tokenName, ContractStateCapsule item) {
-    revokingDB.put(getCurrentPrefixKey(getTRC10Key(tokenName)), item.getData());
-  }
-
-  private byte[] getTRC10Key(byte[] tokenName) {
-    byte[] key = new byte[tokenName.length + 1];
-    key[0] = (byte) 0x51;
-    System.arraycopy(tokenName, 0, key, 1, tokenName.length);
-    return key;
-  }
-
   private byte[] addPrefix(long cycleNumber, byte[] key) {
     return ByteUtil.merge((cycleNumber + "-").getBytes(), key);
   }
