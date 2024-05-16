@@ -10,7 +10,6 @@ import org.tron.protos.contract.SmartContractOuterClass;
 import org.tron.protos.contract.SmartContractOuterClass.ContractState;
 
 import java.math.BigInteger;
-import java.text.SimpleDateFormat;
 
 @Slf4j(topic = "capsule")
 public class ContractStateCapsule implements ProtoCapsule<ContractState> {
@@ -1386,6 +1385,12 @@ public class ContractStateCapsule implements ProtoCapsule<ContractState> {
         .build();
   }
 
+  public void addTs100To1000ToNewCount(long value) {
+    this.contractState = this.contractState.toBuilder()
+        .setTs100To1000ToNewCount(this.contractState.getTs100To1000ToNewCount() + value)
+        .build();
+  }
+
   public long getTs1000To10000ToNewCount() {
     return this.getInstance().getTs1000To10000ToNewCount();
   }
@@ -1543,6 +1548,233 @@ public class ContractStateCapsule implements ProtoCapsule<ContractState> {
         .build();
 
     return true;
+  }
+
+  public void merge(ContractStateCapsule other)
+      throws IllegalAccessException, NoSuchFieldException {
+    if (other == null) {
+      return;
+    }
+    
+    addEnergyUsageTotal(other.getEnergyUsageTotal());
+    addEnergyUsageFailed(other.getEnergyUsageFailed());
+    addEnergyPenaltyTotal(other.getEnergyPenaltyTotal());
+    addEnergyPenaltyFailed(other.getEnergyPenaltyFailed());
+    addTrxBurn(other.getTrxBurn());
+    addTrxPenalty(other.getTrxPenalty());
+    addTxTotalCount(other.getTxTotalCount());
+    addTxFailedCount(other.getTxFailedCount());
+    addTransferCount(other.getTransferCount());
+    addTransferFromCount(other.getTransferFromCount());
+    addTransferFee(other.getTransferFee());
+    addTransferFromFee(other.getTransferFromFee());
+    addTransferEnergyUsage(other.getTransferEnergyUsage());
+    addTransferEnergyPenalty(other.getTransferEnergyPenalty());
+    addTransferFromEnergyUsage(other.getTransferFromEnergyUsage());
+    addTransferFromEnergyPenalty(other.getTransferFromEnergyPenalty());
+    // transfer
+    addTsFromCount(other.getTsFromCount());
+    addTsToCount(other.getTsToCount());
+    addTsFromFee(other.getTsFromFee());
+    addTsToFee(other.getTsToFee());
+    addTsFromEnergyUsage(other.getTsFromEnergyUsage());
+    addTsToEnergyUsage(other.getTsToEnergyUsage());
+    addTsFromEnergyUsageTotal(other.getTsFromEnergyUsageTotal());
+    addTsToEnergyUsageTotal(other.getTsToEnergyUsageTotal());
+    // transfer from
+    addTsfFromCount(other.getTsfFromCount());
+    addTsfToCount(other.getTsfToCount());
+    addTsfFromFee(other.getTsfFromFee());
+    addTsfToFee(other.getTsfToFee());
+    addTsfFromEnergyUsage(other.getTsfFromEnergyUsage());
+    addTsfToEnergyUsage(other.getTsfToEnergyUsage());
+    addTsfFromEnergyUsageTotal(other.getTsfFromEnergyUsageTotal());
+    addTsfToEnergyUsageTotal(other.getTsfToEnergyUsageTotal());
+    // caller and trigger
+    addCallerCount(other.getCallerCount());
+    addTriggerToCount(other.getTriggerToCount());
+    addCallerFee(other.getCallerFee());
+    addTriggerToFee(other.getTriggerToFee());
+    addCallerEnergyUsage(other.getCallerEnergyUsage());
+    addTriggerToEnergyUsage(other.getTriggerToEnergyUsage());
+    addCallerEnergyUsageTotal(other.getCallerEnergyUsageTotal());
+    addTriggerToEnergyUsageTotal(other.getTriggerToEnergyUsageTotal());
+    // transfer range
+    addTsSmallFromCount(other.getTsSmallFromCount());
+    addTsSmallToCount(other.getTsSmallToCount());
+    addTsSmallFromFee(other.getTsSmallFromFee());
+    addTsSmallToFee(other.getTsSmallToFee());
+    addTsSmallFromEnergyUsage(other.getTsSmallFromEnergyUsage());
+    addTsSmallToEnergyUsage(other.getTsSmallToEnergyUsage());
+    addTsSmallFromEnergyUsageTotal(other.getTsSmallFromEnergyUsageTotal());
+    addTsSmallToEnergyUsageTotal(other.getTsSmallToEnergyUsageTotal());
+
+    addTs1To10FromCount(other.getTs1To10FromCount());
+    addTs1To10ToCount(other.getTs1To10ToCount());
+    addTs1To10FromFee(other.getTs1To10FromFee());
+    addTs1To10ToFee(other.getTs1To10ToFee());
+    addTs1To10FromEnergyUsage(other.getTs1To10FromEnergyUsage());
+    addTs1To10ToEnergyUsage(other.getTs1To10ToEnergyUsage());
+    addTs1To10FromEnergyUsageTotal(other.getTs1To10FromEnergyUsageTotal());
+    addTs1To10ToEnergyUsageTotal(other.getTs1To10ToEnergyUsageTotal());
+
+    addTs10To100FromCount(other.getTs10To100FromCount());
+    addTs10To100ToCount(other.getTs10To100ToCount());
+    addTs10To100FromFee(other.getTs10To100FromFee());
+    addTs10To100ToFee(other.getTs10To100ToFee());
+    addTs10To100FromEnergyUsage(other.getTs10To100FromEnergyUsage());
+    addTs10To100ToEnergyUsage(other.getTs10To100ToEnergyUsage());
+    addTs10To100FromEnergyUsageTotal(other.getTs10To100FromEnergyUsageTotal());
+    addTs10To100ToEnergyUsageTotal(other.getTs10To100ToEnergyUsageTotal());
+
+    addTs100To1000FromCount(other.getTs100To1000FromCount());
+    addTs100To1000ToCount(other.getTs100To1000ToCount());
+    addTs100To1000FromFee(other.getTs100To1000FromFee());
+    addTs100To1000ToFee(other.getTs100To1000ToFee());
+    addTs100To1000FromEnergyUsage(other.getTs100To1000FromEnergyUsage());
+    addTs100To1000ToEnergyUsage(other.getTs100To1000ToEnergyUsage());
+    addTs100To1000FromEnergyUsageTotal(other.getTs100To1000FromEnergyUsageTotal());
+    addTs100To1000ToEnergyUsageTotal(other.getTs100To1000ToEnergyUsageTotal());
+
+    addTs1000To10000FromCount(other.getTs1000To10000FromCount());
+    addTs1000To10000ToCount(other.getTs1000To10000ToCount());
+    addTs1000To10000FromFee(other.getTs1000To10000FromFee());
+    addTs1000To10000ToFee(other.getTs1000To10000ToFee());
+    addTs1000To10000FromEnergyUsage(other.getTs1000To10000FromEnergyUsage());
+    addTs1000To10000ToEnergyUsage(other.getTs1000To10000ToEnergyUsage());
+    addTs1000To10000FromEnergyUsageTotal(other.getTs1000To10000FromEnergyUsageTotal());
+    addTs1000To10000ToEnergyUsageTotal(other.getTs1000To10000ToEnergyUsageTotal());
+
+    addTsBigFromCount(other.getTsBigFromCount());
+    addTsBigToCount(other.getTsBigToCount());
+    addTsBigFromFee(other.getTsBigFromFee());
+    addTsBigToFee(other.getTsBigToFee());
+    addTsBigFromEnergyUsage(other.getTsBigFromEnergyUsage());
+    addTsBigToEnergyUsage(other.getTsBigToEnergyUsage());
+    addTsBigFromEnergyUsageTotal(other.getTsBigFromEnergyUsageTotal());
+    addTsBigToEnergyUsageTotal(other.getTsBigToEnergyUsageTotal());
+  }
+
+  public long getTsTotalFromCount() {
+    return getTsSmallFromCount()
+        + getTs1To10FromCount()
+        + getTs10To100FromCount()
+        + getTs100To1000FromCount()
+        + getTs1000To10000FromCount()
+        + getTsBigFromCount();
+  }
+
+  public long getTsTotalFromFee() {
+    return getTsSmallFromFee()
+        + getTs1To10FromFee()
+        + getTs10To100FromFee()
+        + getTs100To1000FromFee()
+        + getTs1000To10000FromFee()
+        + getTsBigFromFee();
+  }
+
+  public long getTsTotalFromEnergyUsage() {
+    return getTsSmallFromEnergyUsage()
+        + getTs1To10FromEnergyUsage()
+        + getTs10To100FromEnergyUsage()
+        + getTs100To1000FromEnergyUsage()
+        + getTs1000To10000FromEnergyUsage()
+        + getTsBigFromEnergyUsage();
+  }
+
+  public long getTsTotalToCount() {
+    return getTsSmallToCount()
+        + getTs1To10ToCount()
+        + getTs10To100ToCount()
+        + getTs100To1000ToCount()
+        + getTs1000To10000ToCount()
+        + getTsBigToCount();
+  }
+
+  public long getTsTotalToFee() {
+    return getTsSmallToFee()
+        + getTs1To10ToFee()
+        + getTs10To100ToFee()
+        + getTs100To1000ToFee()
+        + getTs1000To10000ToFee()
+        + getTsBigToFee();
+  }
+
+  public long getTsTotalToEnergyUsage() {
+    return getTsSmallToEnergyUsage()
+        + getTs1To10ToEnergyUsage()
+        + getTs10To100ToEnergyUsage()
+        + getTs100To1000ToEnergyUsage()
+        + getTs1000To10000ToEnergyUsage()
+        + getTsBigToEnergyUsage();
+  }
+
+  public String getUsdtOutput() {
+    return "{\n"
+        + "\"transfer_count\":"
+        + getTransferCount()
+        + ", \"transfer_fee\":"
+        + getTransferFee()
+        + ", \"transfer_energy_usage\":"
+        + getTransferEnergyUsage()
+        + ", \"transfer_from_count\":"
+        + getTransferFromCount()
+        + ", \"transfer_from_fee\":"
+        + getTransferFromFee()
+        + ", \"transfer_from_energy_usage\":"
+        + getTransferFromEnergyUsage()
+        + ", \"average_trx\":"
+        + ((double) (getTransferFee() + getTransferFromFee())
+            / (getTransferCount() + getTransferFromCount()))
+        + "}";
+  }
+
+  public String getTriggerOutput() {
+    return "{\n"
+        + "\"transfer_count\":"
+        + getTriggerToCount()
+        + ", \"transfer_fee\":"
+        + getTriggerToFee()
+        + ", \"transfer_energy_usage\":"
+        + getTriggerToEnergyUsage()
+        + ", \"transfer_energy_usage_total\":"
+        + getTriggerToEnergyUsageTotal()
+        + ", \"average_trx\":"
+        + ((double) getTriggerToFee()
+        / getTriggerToCount())
+        + "}";
+  }
+
+  public String getTransferFromToOutput() {
+    return "{\n"
+        + "\"transfer_from_count\":"
+        + getTsTotalFromCount()
+        + ", \"transfer_from_fee\":"
+        + getTsTotalFromFee()
+        + ", \"transfer_from_energy_usage\":"
+        + getTsTotalFromEnergyUsage()
+        + ", \"from_average_trx\":"
+        + ((double) getTsTotalFromFee()
+        / getTsTotalFromCount())
+        + ", \"transfer_to_count\":"
+        + getTsTotalToCount()
+        + ", \"transfer_to_fee\":"
+        + getTsTotalToFee()
+        + ", \"transfer_to_energy_usage\":"
+        + getTsTotalToEnergyUsage()
+        + ", \"to_average_trx\":"
+        + ((double) getTsTotalToFee()
+        / getTsTotalToCount())
+        + ", \"transfer_count\":"
+        + (getTsTotalFromCount() + getTsTotalToCount())
+        + ", \"transfer_fee\":"
+        + (getTsTotalFromFee() + getTsTotalToFee())
+        + ", \"transfer_energy_usage\":"
+        + (getTsTotalFromEnergyUsage() + getTsTotalToEnergyUsage())
+        + ", \"average_trx\":"
+        + ((double) (getTsTotalFromFee() + getTsTotalToFee())
+        / (getTsTotalFromCount() + getTsTotalToCount()))
+        + "}";
   }
 
   public void reset(long latestCycle) {

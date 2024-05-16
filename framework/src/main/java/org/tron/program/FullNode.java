@@ -130,6 +130,7 @@ public class FullNode {
       appT.addService(jsonRpcServiceOnPBFT);
     }
     appT.startup();
-    appT.blockUntilShutdown();
+//    appT.blockUntilShutdown();
+    logger.info("Started");
   }
 }
