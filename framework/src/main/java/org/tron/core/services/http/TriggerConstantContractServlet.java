@@ -8,20 +8,15 @@ import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Commons;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.HeaderNotFound;
-import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
@@ -85,41 +80,5 @@ public class TriggerConstantContractServlet extends RateLimiterServlet {
     }
     trxExtBuilder.setResult(retBuilder);
     response.getWriter().println(Util.printTransactionExtention(trxExtBuilder.build(), visible));
-  }
-
-  public long getUSDTBalance(String address) {
-    TriggerSmartContract.Builder build = TriggerSmartContract.newBuilder();
-    TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
-    Return.Builder retBuilder = Return.newBuilder();
-
-    try {
-      byte[] contractAddress = Commons.decodeFromBase58Check("TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t");
-      byte[] ownerAddress = Commons.decodeFromBase58Check("TKGRE6oiU3rEzasue4MsB6sCXXSTx9BAe3");
-      String methodStr = "balanceOf(address)";
-      String argsStr = "\"" + address + "\"";
-      boolean isHex = false;
-      byte[] input = Hex.decode(AbiUtil.parseMethod(methodStr, argsStr, isHex));
-      build.setOwnerAddress(ByteString.copyFrom(ownerAddress));
-      build.setContractAddress(ByteString.copyFrom(contractAddress));
-
-      build.setData(ByteString.copyFrom(input));
-      build.setCallValue(0);
-      TriggerSmartContract triggerContract = build.build();
-
-      TransactionCapsule trxCap =
-          wallet.createTransactionCapsule(triggerContract, ContractType.TriggerSmartContract);
-
-      Transaction trx =
-          wallet.triggerConstantContract(triggerContract, trxCap, trxExtBuilder, retBuilder);
-      //      trx = Util.setTransactionPermissionId(jsonObject, trx);
-      //      trx = Util.setTransactionExtraData(jsonObject, trx, visible);
-      String hexBalance = ByteArray.toHexString(trxExtBuilder.getConstantResult(0).toByteArray());
-      return Long.parseLong(hexBalance, 16);
-      //      trxExtBuilder.setTransaction(trx);
-      //      retBuilder.setResult(true).setCode(response_code.SUCCESS);
-    } catch (Exception e) {
-      System.out.println(e);
-      throw new RuntimeException(e);
-    }
   }
 }
