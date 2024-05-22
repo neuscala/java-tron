@@ -184,7 +184,7 @@ public class FullNode {
         if (cap == null) {
           cap = new ContractStateCapsule(0);
         }
-        cap.setOwnedUsdt(true);
+        cap.setSentUsdt(true);
         contractStateStore.setAccountRecord(key, cap);
         count++;
 
