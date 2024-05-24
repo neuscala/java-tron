@@ -192,7 +192,7 @@ public class QueryAccountServlet extends RateLimiterServlet {
     ContractStateCapsule cap = getCap(key, isContract, startCycle);
 
     for (long cycle = 1; cycle < cycleCount; cycle++) {
-      ContractStateCapsule curCap = getCap(key, isContract, cycle);
+      ContractStateCapsule curCap = getCap(key, isContract, startCycle + cycle);
 
       cap.merge(curCap);
     }
