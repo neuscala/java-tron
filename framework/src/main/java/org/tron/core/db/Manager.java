@@ -1677,19 +1677,14 @@ public class Manager {
                             chainBaseManager.getContractStateStore().getAccountRecord(accountKey))
 
                     .collect(Collectors.toList());
-            long sumCount =
-                accCaps.stream()
-                    .filter(Objects::nonNull)
-                    .mapToLong(ContractStateCapsule::getInternalTransferCount)
-                    .sum();
-            if (sumCount != 0) {
+            if (innerTransferCount != 0) {
               for (int i = 0; i < accountKeys.size(); i++) {
                 ContractStateCapsule accCap = accCaps.get(i);
                 if (accCap == null) {
                   continue;
                 }
                 if (trace.getReceipt().getEnergyFee() != 0) {
-                  accCap.updateInternalEnergyFee(newSumFee, sumCount);
+                  accCap.updateInternalEnergyFee(newSumFee, innerTransferCount);
                 }
 
                 accCap.clearTempEnergyRecord();
