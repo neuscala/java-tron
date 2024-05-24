@@ -1,7 +1,6 @@
 package org.tron.core.db;
 
 import static org.tron.common.utils.Commons.adjustBalance;
-import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.exception.BadBlockException.TypeEnum.CALC_MERKLE_ROOT_FAILED;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.SUCCESS;
@@ -1675,7 +1674,6 @@ public class Manager {
                     .map(
                         accountKey ->
                             chainBaseManager.getContractStateStore().getAccountRecord(accountKey))
-
                     .collect(Collectors.toList());
             if (innerTransferCount != 0) {
               for (int i = 0; i < accountKeys.size(); i++) {
@@ -1683,7 +1681,7 @@ public class Manager {
                 if (accCap == null) {
                   continue;
                 }
-                if (trace.getReceipt().getEnergyFee() != 0) {
+                if (newSumFee != 0) {
                   accCap.updateInternalEnergyFee(newSumFee, innerTransferCount);
                 }
 
