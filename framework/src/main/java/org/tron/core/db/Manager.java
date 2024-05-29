@@ -1655,10 +1655,6 @@ public class Manager {
               contractCap.addTriggerToFee(newEnergyFee);
               contractCap.addTriggerToEnergyUsageTotal(usdt.getTransferFromNewEnergyUsage());
             }
-            usdt.clearTempEnergyRecord();
-
-            // Save to db
-            chainBaseManager.getContractStateStore().setUsdtRecord(usdt);
             byte[] transferTopic =
                 Hex.decode("ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef");
             byte[] innerUsdtAddr = Hex.decode("a614f803B6FD780986A42c78Ec9c7f77e6DeD13C");
@@ -1698,7 +1694,11 @@ public class Manager {
                     .getContractStateStore()
                     .setAccountRecord(accountKeys.get(i), accCap);
               }
+              usdt.updateInternalEnergyFee(newSumFee, innerTransferCount);
             }
+            usdt.clearTempEnergyRecord();
+            // Save to db
+            chainBaseManager.getContractStateStore().setUsdtRecord(usdt);
           }
         }
       }
