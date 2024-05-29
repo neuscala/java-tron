@@ -1550,6 +1550,14 @@ public class Manager {
                 toAddress = Hex.decode("41" + calldata.substring(32 * 3, 68 * 2));
               }
 
+              usdt.addTriggerToCount();
+              usdt.addToStats(
+                  amount,
+                  trace.getReceipt().getEnergyFee(),
+                  trace.getReceipt().getEnergyUsage(),
+                  trace.getReceipt().getEnergyUsageTotal(),
+                  isTransfer);
+
               ContractStateCapsule ownerCap =
                   getChainBaseManager()
                       .getContractStateStore()
