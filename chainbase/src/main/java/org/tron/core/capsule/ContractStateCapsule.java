@@ -1311,12 +1311,12 @@ public class ContractStateCapsule implements ProtoCapsule<ContractState> {
 
   public void addTs10To100FromNewCount() {
     this.contractState = this.contractState.toBuilder()
-        .setTs100To1000FromNewCount(this.contractState.getTs100To1000FromNewCount() + 1)
+        .setTs100To1000FromNewCount(this.contractState.getTs10To100FromNewCount() + 1)
         .build();
   }
 
   public long getTs100To1000FromNewCount() {
-    return this.getInstance().getTs10To100FromNewCount();
+    return this.getInstance().getTs100To1000FromNewCount();
   }
 
   public void addTs100To1000FromNewCount() {
@@ -1371,23 +1371,17 @@ public class ContractStateCapsule implements ProtoCapsule<ContractState> {
 
   public void addTs10To100ToNewCount() {
     this.contractState = this.contractState.toBuilder()
-        .setTs100To1000ToNewCount(this.contractState.getTs100To1000ToNewCount() + 1)
+        .setTs100To1000ToNewCount(this.contractState.getTs10To100ToNewCount() + 1)
         .build();
   }
 
   public long getTs100To1000ToNewCount() {
-    return this.getInstance().getTs10To100ToNewCount();
+    return this.getInstance().getTs100To1000ToNewCount();
   }
 
   public void addTs100To1000ToNewCount() {
     this.contractState = this.contractState.toBuilder()
         .setTs100To1000ToNewCount(this.contractState.getTs100To1000ToNewCount() + 1)
-        .build();
-  }
-
-  public void addTs100To1000ToNewCount(long value) {
-    this.contractState = this.contractState.toBuilder()
-        .setTs100To1000ToNewCount(this.contractState.getTs100To1000ToNewCount() + value)
         .build();
   }
 

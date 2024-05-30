@@ -1,7 +1,6 @@
 package org.tron.core.db;
 
 import static org.tron.common.utils.Commons.adjustBalance;
-import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.exception.BadBlockException.TypeEnum.CALC_MERKLE_ROOT_FAILED;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.SUCCESS;
@@ -21,6 +20,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -73,6 +73,7 @@ import org.tron.common.prometheus.MetricKeys;
 import org.tron.common.prometheus.MetricLabels;
 import org.tron.common.prometheus.Metrics;
 import org.tron.common.runtime.RuntimeImpl;
+import org.tron.common.runtime.vm.LogInfo;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.JsonUtil;
 import org.tron.common.utils.Pair;
@@ -1549,6 +1550,14 @@ public class Manager {
                 toAddress = Hex.decode("41" + calldata.substring(32 * 3, 68 * 2));
               }
 
+              usdt.addTriggerToCount();
+              usdt.addToStats(
+                  amount,
+                  trace.getReceipt().getEnergyFee(),
+                  trace.getReceipt().getEnergyUsage(),
+                  trace.getReceipt().getEnergyUsageTotal(),
+                  isTransfer);
+
               ContractStateCapsule ownerCap =
                   getChainBaseManager()
                       .getContractStateStore()
@@ -1646,12 +1655,17 @@ public class Manager {
               contractCap.addTriggerToFee(newEnergyFee);
               contractCap.addTriggerToEnergyUsageTotal(usdt.getTransferFromNewEnergyUsage());
             }
-            usdt.clearTempEnergyRecord();
-
-            // Save to db
-            chainBaseManager.getContractStateStore().setUsdtRecord(usdt);
-
-            contractCap.addTriggerToCount();
+            byte[] transferTopic =
+                Hex.decode("ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef");
+            byte[] innerUsdtAddr = Hex.decode("a614f803B6FD780986A42c78Ec9c7f77e6DeD13C");
+            long innerTransferCount = 0;
+            for (LogInfo logInfo : trace.getRuntimeResult().getLogInfoList()) {
+              if (Arrays.equals(innerUsdtAddr, logInfo.getAddress())
+                  && Arrays.equals(transferTopic, logInfo.getTopics().get(0).getData())) {
+                innerTransferCount++;
+              }
+            }
+            contractCap.addTriggerToCount(innerTransferCount);
             // Save to db
             chainBaseManager.getContractStateStore().setContractRecord(contractAddress, contractCap);
 
@@ -1664,21 +1678,15 @@ public class Manager {
                     .map(
                         accountKey ->
                             chainBaseManager.getContractStateStore().getAccountRecord(accountKey))
-
                     .collect(Collectors.toList());
-            long sumCount =
-                accCaps.stream()
-                    .filter(Objects::nonNull)
-                    .mapToLong(ContractStateCapsule::getInternalTransferCount)
-                    .sum();
-            if (sumCount != 0) {
+            if (innerTransferCount != 0) {
               for (int i = 0; i < accountKeys.size(); i++) {
                 ContractStateCapsule accCap = accCaps.get(i);
                 if (accCap == null) {
                   continue;
                 }
-                if (trace.getReceipt().getEnergyFee() != 0) {
-                  accCap.updateInternalEnergyFee(newSumFee, sumCount);
+                if (newSumFee != 0) {
+                  accCap.updateInternalEnergyFee(newSumFee, innerTransferCount);
                 }
 
                 accCap.clearTempEnergyRecord();
@@ -1686,7 +1694,11 @@ public class Manager {
                     .getContractStateStore()
                     .setAccountRecord(accountKeys.get(i), accCap);
               }
+              usdt.updateInternalEnergyFee(newSumFee, innerTransferCount);
             }
+            usdt.clearTempEnergyRecord();
+            // Save to db
+            chainBaseManager.getContractStateStore().setUsdtRecord(usdt);
           }
         }
       }

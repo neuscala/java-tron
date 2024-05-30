@@ -1056,17 +1056,15 @@ public class Program {
             BigInteger amount;
             byte[] fromAddress;
             byte[] toAddress;
+            ContractStateCapsule usdt = getContractState().getUsdtState();
             if (calldata.startsWith("a9059cbb")) {
               isTransfer = true;
-              ContractStateCapsule usdt = getContractState().getUsdtState();
 
               usdt.addTransferCount();
               usdt.addTransferEnergyUsage(callResult.getEnergyUsed());
               usdt.addTransferEnergyPenalty(callResult.getEnergyPenaltyTotal());
 
               usdt.addTransferNewEnergyUsage(callResult.getEnergyUsed());
-
-              getContractState().updateUsdtState(usdt);
 
               if (calldata.length() < 136) {
                 amount = BigInteger.valueOf(0);
@@ -1077,15 +1075,12 @@ public class Program {
               toAddress = Hex.decode("41" + calldata.substring(32, 36 * 2));
             } else {
               isTransfer = false;
-              ContractStateCapsule usdt = getContractState().getUsdtState();
 
               usdt.addTransferFromCount();
               usdt.addTransferFromEnergyUsage(callResult.getEnergyUsed());
               usdt.addTransferFromEnergyPenalty(callResult.getEnergyPenaltyTotal());
 
               usdt.addTransferFromNewEnergyUsage(callResult.getEnergyUsed());
-
-              getContractState().updateUsdtState(usdt);
 
               if (calldata.length() < 200) {
                 amount = BigInteger.valueOf(0);
@@ -1095,6 +1090,9 @@ public class Program {
               fromAddress = Hex.decode("41" + calldata.substring(32, 36 * 2));
               toAddress = Hex.decode("41" + calldata.substring(32 * 3, 68 * 2));
             }
+
+            usdt.addTempToStats(amount, callResult.getEnergyUsed(), isTransfer);
+            getContractState().updateUsdtState(usdt);
 
             ContractStateCapsule fromCap = getContractState().getAccountUsdtState(fromAddress);
             fromCap.addTempFromStats(amount, callResult.getEnergyUsed(), isTransfer);

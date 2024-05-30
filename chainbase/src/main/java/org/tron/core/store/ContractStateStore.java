@@ -1,11 +1,13 @@
 package org.tron.core.store;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.capsule.ContractStateCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
@@ -52,18 +54,21 @@ public class ContractStateStore extends TronStoreWithRevoking<ContractStateCapsu
   }
 
   public ContractStateCapsule getAccountRecord(byte[] addr) {
-    addr[0] = (byte) 0x42;
-    return getUnchecked(getCurrentPrefixKey(addr));
+    byte[] addrKey = addr.clone();
+    addrKey[0] = (byte) 0x42;
+    return getUnchecked(getCurrentPrefixKey(addrKey));
   }
 
   public ContractStateCapsule getAccountRecord(long cycleNumber, byte[] addr) {
-    addr[0] = (byte) 0x42;
-    return getUnchecked(addPrefix(cycleNumber, addr));
+    byte[] addrKey = addr.clone();
+    addrKey[0] = (byte) 0x42;
+    return getUnchecked(addPrefix(cycleNumber, addrKey));
   }
 
   public void setAccountRecord(byte[] addr, ContractStateCapsule item) {
-    addr[0] = (byte) 0x42;
-    revokingDB.put(getCurrentPrefixKey(addr), item.getData());
+    byte[] addrKey = addr.clone();
+    addrKey[0] = (byte) 0x42;
+    revokingDB.put(getCurrentPrefixKey(addrKey), item.getData());
   }
 
   public ContractStateCapsule getContractRecord(byte[] addr) {
