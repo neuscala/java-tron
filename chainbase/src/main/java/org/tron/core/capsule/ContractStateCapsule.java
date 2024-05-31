@@ -1933,6 +1933,28 @@ public class ContractStateCapsule implements ProtoCapsule<ContractState> {
     addTsBigToEnergyUsage(other.getTsBigToEnergyUsage());
     addTsBigFromEnergyUsageTotal(other.getTsBigFromEnergyUsageTotal());
     addTsBigToEnergyUsageTotal(other.getTsBigToEnergyUsageTotal());
+
+    addTriggerSmallCount(other.getTriggerSmallCount());
+    addTriggerSmallFee(other.getTriggerSmallFee());
+    addTriggerSmallEnergyUsage(other.getTriggerSmallEnergyUsage());
+    addTrigger05To1Count(other.getTrigger05To1Count());
+    addTrigger05To1Fee(other.getTrigger05To1Fee());
+    addTrigger05To1EnergyUsage(other.getTrigger05To1EnergyUsage());
+    addTrigger1To10Count(other.getTrigger1To10Count());
+    addTrigger1To10Fee(other.getTrigger1To10Fee());
+    addTrigger1To10EnergyUsage(other.getTrigger1To10EnergyUsage());
+    addTrigger10To100Count(other.getTrigger10To100Count());
+    addTrigger10To100Fee(other.getTrigger10To100Fee());
+    addTrigger10To100EnergyUsage(other.getTrigger10To100EnergyUsage());
+    addTrigger100To1000Count(other.getTrigger100To1000Count());
+    addTrigger100To1000Fee(other.getTrigger100To1000Fee());
+    addTrigger100To1000EnergyUsage(other.getTrigger100To1000EnergyUsage());
+    addTrigger1000To10000Count(other.getTrigger1000To10000Count());
+    addTrigger1000To10000Fee(other.getTrigger1000To10000Fee());
+    addTrigger1000To10000EnergyUsage(other.getTrigger1000To10000EnergyUsage());
+    addTriggerBigCount(other.getTriggerBigCount());
+    addTriggerBigFee(other.getTriggerBigFee());
+    addTriggerBigEnergyUsage(other.getTriggerBigEnergyUsage());
   }
 
   public long getTsTotalFromCount() {
