@@ -14,6 +14,7 @@ import java.math.BigInteger;
 @Slf4j(topic = "capsule")
 public class ContractStateCapsule implements ProtoCapsule<ContractState> {
 
+  private static final BigInteger POINT_5 = new BigInteger(String.valueOf(500_1000L));
   private static final BigInteger ONE_TRX = new BigInteger(String.valueOf(1_000_1000L));
   private static final BigInteger TEN_TRX = new BigInteger(String.valueOf(10_000_1000L));
   private static final BigInteger HUNDRED_TRX = new BigInteger(String.valueOf(100_000_1000L));
@@ -582,6 +583,291 @@ public class ContractStateCapsule implements ProtoCapsule<ContractState> {
   public void addTriggerToEnergyUsageTotal(long toAdd) {
     this.contractState = this.contractState.toBuilder()
         .setTriggerToEnergyUsageTotal(this.contractState.getTriggerToEnergyUsageTotal() + toAdd)
+        .build();
+  }
+
+  public void addTriggerFeeDetail(
+      BigInteger amount, long fee, long usage) {
+    if (amount.compareTo(POINT_5) <= 0) {
+      addTriggerSmallCount();
+      addTriggerSmallFee(fee);
+      addTriggerSmallEnergyUsage(usage);
+    } else if (amount.compareTo(ONE_TRX) <= 0) {
+      addTrigger05To1Count();
+      addTrigger05To1Fee(fee);
+      addTrigger05To1EnergyUsage(usage);
+    } else if (amount.compareTo(TEN_TRX) <= 0) {
+      addTrigger1To10Count();
+      addTrigger1To10Fee(fee);
+      addTrigger1To10EnergyUsage(usage);
+    } else if (amount.compareTo(HUNDRED_TRX) <= 0) {
+      addTrigger10To100Count();
+      addTrigger10To100Fee(fee);
+      addTrigger10To100EnergyUsage(usage);
+    } else if (amount.compareTo(THOUSAND_TRX) <= 0) {
+      addTrigger100To1000Count();
+      addTrigger100To1000Fee(fee);
+      addTrigger100To1000EnergyUsage(usage);
+    } else if (amount.compareTo(TEN_THOUSAND_TRX) <= 0) {
+      addTrigger1000To10000Count();
+      addTrigger1000To10000Fee(fee);
+      addTrigger1000To10000EnergyUsage(usage);
+    } else {
+      addTriggerBigCount();
+      addTriggerBigFee(fee);
+      addTriggerBigEnergyUsage(usage);
+    }
+  }
+
+  public long getTriggerSmallCount() {
+    return this.getInstance().getTriggerSmallCount();
+  }
+
+  public void addTriggerSmallCount() {
+    this.contractState = this.contractState.toBuilder()
+        .setTriggerSmallCount(this.contractState.getTriggerSmallCount() + 1)
+        .build();
+  }
+
+  public void addTriggerSmallCount(long toAdd) {
+    this.contractState = this.contractState.toBuilder()
+        .setTriggerSmallCount(this.contractState.getTriggerSmallCount() + toAdd)
+        .build();
+  }
+
+  public long getTriggerSmallFee() {
+    return this.getInstance().getTriggerSmallFee();
+  }
+
+  public void addTriggerSmallFee(long toAdd) {
+    this.contractState = this.contractState.toBuilder()
+        .setTriggerSmallFee(this.contractState.getTriggerSmallFee() + toAdd)
+        .build();
+  }
+
+  public long getTriggerSmallEnergyUsage() {
+    return this.getInstance().getTriggerSmallEnergyUsage();
+  }
+
+  public void addTriggerSmallEnergyUsage(long toAdd) {
+    this.contractState = this.contractState.toBuilder()
+        .setTriggerSmallEnergyUsage(this.contractState.getTriggerSmallEnergyUsage() + toAdd)
+        .build();
+  }
+
+  public long getTrigger05To1Count() {
+    return this.getInstance().getTrigger05To1Count();
+  }
+
+  public void addTrigger05To1Count() {
+    this.contractState = this.contractState.toBuilder()
+        .setTrigger05To1Count(this.contractState.getTrigger05To1Count() + 1)
+        .build();
+  }
+
+  public void addTrigger05To1Count(long toAdd) {
+    this.contractState = this.contractState.toBuilder()
+        .setTrigger05To1Count(this.contractState.getTrigger05To1Count() + toAdd)
+        .build();
+  }
+
+  public long getTrigger05To1Fee() {
+    return this.getInstance().getTrigger05To1Fee();
+  }
+
+  public void addTrigger05To1Fee(long toAdd) {
+    this.contractState = this.contractState.toBuilder()
+        .setTrigger05To1Fee(this.contractState.getTrigger05To1Fee() + toAdd)
+        .build();
+  }
+
+  public long getTrigger05To1EnergyUsage() {
+    return this.getInstance().getTrigger05To1EnergyUsage();
+  }
+
+  public void addTrigger05To1EnergyUsage(long toAdd) {
+    this.contractState = this.contractState.toBuilder()
+        .setTrigger05To1EnergyUsage(this.contractState.getTrigger05To1EnergyUsage() + toAdd)
+        .build();
+  }
+
+  public long getTrigger1To10Count() {
+    return this.getInstance().getTrigger1To10Count();
+  }
+
+  public void addTrigger1To10Count() {
+    this.contractState = this.contractState.toBuilder()
+        .setTrigger1To10Count(this.contractState.getTrigger1To10Count() + 1)
+        .build();
+  }
+
+  public void addTrigger1To10Count(long toAdd) {
+    this.contractState = this.contractState.toBuilder()
+        .setTrigger1To10Count(this.contractState.getTrigger1To10Count() + toAdd)
+        .build();
+  }
+
+  public long getTrigger1To10Fee() {
+    return this.getInstance().getTrigger1To10Fee();
+  }
+
+  public void addTrigger1To10Fee(long toAdd) {
+    this.contractState = this.contractState.toBuilder()
+        .setTrigger1To10Fee(this.contractState.getTrigger1To10Fee() + toAdd)
+        .build();
+  }
+
+  public long getTrigger1To10EnergyUsage() {
+    return this.getInstance().getTrigger1To10EnergyUsage();
+  }
+
+  public void addTrigger1To10EnergyUsage(long toAdd) {
+    this.contractState = this.contractState.toBuilder()
+        .setTrigger1To10EnergyUsage(this.contractState.getTrigger1To10EnergyUsage() + toAdd)
+        .build();
+  }
+
+  public long getTrigger10To100Count() {
+    return this.getInstance().getTrigger10To100Count();
+  }
+
+  public void addTrigger10To100Count() {
+    this.contractState = this.contractState.toBuilder()
+        .setTrigger10To100Count(this.contractState.getTrigger10To100Count() + 1)
+        .build();
+  }
+
+  public void addTrigger10To100Count(long toAdd) {
+    this.contractState = this.contractState.toBuilder()
+        .setTrigger10To100Count(this.contractState.getTrigger10To100Count() + toAdd)
+        .build();
+  }
+
+  public long getTrigger10To100Fee() {
+    return this.getInstance().getTrigger10To100Fee();
+  }
+
+  public void addTrigger10To100Fee(long toAdd) {
+    this.contractState = this.contractState.toBuilder()
+        .setTrigger10To100Fee(this.contractState.getTrigger10To100Fee() + toAdd)
+        .build();
+  }
+
+  public long getTrigger10To100EnergyUsage() {
+    return this.getInstance().getTrigger10To100EnergyUsage();
+  }
+
+  public void addTrigger10To100EnergyUsage(long toAdd) {
+    this.contractState = this.contractState.toBuilder()
+        .setTrigger10To100EnergyUsage(this.contractState.getTrigger10To100EnergyUsage() + toAdd)
+        .build();
+  }
+
+  public long getTrigger100To1000Count() {
+    return this.getInstance().getTrigger100To1000Count();
+  }
+
+  public void addTrigger100To1000Count() {
+    this.contractState = this.contractState.toBuilder()
+        .setTrigger100To1000Count(this.contractState.getTrigger100To1000Count() + 1)
+        .build();
+  }
+
+  public void addTrigger100To1000Count(long toAdd) {
+    this.contractState = this.contractState.toBuilder()
+        .setTrigger100To1000Count(this.contractState.getTrigger100To1000Count() + toAdd)
+        .build();
+  }
+
+  public long getTrigger100To1000Fee() {
+    return this.getInstance().getTrigger100To1000Fee();
+  }
+
+  public void addTrigger100To1000Fee(long toAdd) {
+    this.contractState = this.contractState.toBuilder()
+        .setTrigger100To1000Fee(this.contractState.getTrigger100To1000Fee() + toAdd)
+        .build();
+  }
+
+  public long getTrigger100To1000EnergyUsage() {
+    return this.getInstance().getTrigger100To1000EnergyUsage();
+  }
+
+  public void addTrigger100To1000EnergyUsage(long toAdd) {
+    this.contractState = this.contractState.toBuilder()
+        .setTrigger100To1000EnergyUsage(this.contractState.getTrigger100To1000EnergyUsage() + toAdd)
+        .build();
+  }
+
+  public long getTrigger1000To10000Count() {
+    return this.getInstance().getTrigger1000To10000Count();
+  }
+
+  public void addTrigger1000To10000Count() {
+    this.contractState = this.contractState.toBuilder()
+        .setTrigger1000To10000Count(this.contractState.getTrigger1000To10000Count() + 1)
+        .build();
+  }
+
+  public void addTrigger1000To10000Count(long toAdd) {
+    this.contractState = this.contractState.toBuilder()
+        .setTrigger1000To10000Count(this.contractState.getTrigger1000To10000Count() + toAdd)
+        .build();
+  }
+
+  public long getTrigger1000To10000Fee() {
+    return this.getInstance().getTrigger1000To10000Fee();
+  }
+
+  public void addTrigger1000To10000Fee(long toAdd) {
+    this.contractState = this.contractState.toBuilder()
+        .setTrigger1000To10000Fee(this.contractState.getTrigger1000To10000Fee() + toAdd)
+        .build();
+  }
+
+  public long getTrigger1000To10000EnergyUsage() {
+    return this.getInstance().getTrigger1000To10000EnergyUsage();
+  }
+
+  public void addTrigger1000To10000EnergyUsage(long toAdd) {
+    this.contractState = this.contractState.toBuilder()
+        .setTrigger1000To10000EnergyUsage(this.contractState.getTrigger1000To10000EnergyUsage() + toAdd)
+        .build();
+  }
+
+  public long getTriggerBigCount() {
+    return this.getInstance().getTriggerBigCount();
+  }
+
+  public void addTriggerBigCount() {
+    this.contractState = this.contractState.toBuilder()
+        .setTriggerBigCount(this.contractState.getTriggerBigCount() + 1)
+        .build();
+  }
+
+  public void addTriggerBigCount(long toAdd) {
+    this.contractState = this.contractState.toBuilder()
+        .setTriggerBigCount(this.contractState.getTriggerBigCount() + toAdd)
+        .build();
+  }
+
+  public long getTriggerBigFee() {
+    return this.getInstance().getTriggerBigFee();
+  }
+
+  public void addTriggerBigFee(long toAdd) {
+    this.contractState = this.contractState.toBuilder()
+        .setTriggerBigFee(this.contractState.getTriggerBigFee() + toAdd)
+        .build();
+  }
+
+  public long getTriggerBigEnergyUsage() {
+    return this.getInstance().getTriggerBigEnergyUsage();
+  }
+
+  public void addTriggerBigEnergyUsage(long toAdd) {
+    this.contractState = this.contractState.toBuilder()
+        .setTriggerBigEnergyUsage(this.contractState.getTriggerBigEnergyUsage() + toAdd)
         .build();
   }
 
