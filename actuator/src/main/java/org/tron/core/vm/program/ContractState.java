@@ -124,11 +124,6 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
-  public List<byte[]> getAllAccountUsdtKeys() {
-    return repository.getAllAccountUsdtKeys();
-  }
-
-  @Override
   public void updateContract(byte[] address, ContractCapsule contractCapsule) {
     repository.updateContract(address, contractCapsule);
   }

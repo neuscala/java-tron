@@ -52,7 +52,6 @@ public interface Repository {
   ContractStateCapsule getContractState(byte[] address);
   ContractStateCapsule getUsdtState();
   ContractStateCapsule getAccountUsdtState(byte[] address);
-  List<byte[]> getAllAccountUsdtKeys();
 
   void updateContract(byte[] address, ContractCapsule contractCapsule);
 

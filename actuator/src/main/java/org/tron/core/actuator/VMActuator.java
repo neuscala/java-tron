@@ -165,11 +165,6 @@ public class VMActuator implements Actuator2 {
   }
 
   @Override
-  public List<byte[]> getAllAccountKeys() {
-    return rootRepository.getAllAccountUsdtKeys();
-  }
-
-  @Override
   public void execute(Object object) throws ContractExeException {
     TransactionContext context = (TransactionContext) object;
     if (Objects.isNull(context)) {

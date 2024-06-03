@@ -1052,55 +1052,24 @@ public class Program {
         if (Arrays.equals(usdtAddr, contextAddress)) {
           String calldata = Hex.toHexString(data);
           if (calldata.startsWith("a9059cbb") || calldata.startsWith("23b872dd")) {
-            boolean isTransfer;
-            BigInteger amount;
-            byte[] fromAddress;
-            byte[] toAddress;
             ContractStateCapsule usdt = getContractState().getUsdtState();
             if (calldata.startsWith("a9059cbb")) {
-              isTransfer = true;
 
               usdt.addTransferCount();
               usdt.addTransferEnergyUsage(callResult.getEnergyUsed());
               usdt.addTransferEnergyPenalty(callResult.getEnergyPenaltyTotal());
 
               usdt.addTransferNewEnergyUsage(callResult.getEnergyUsed());
-
-              if (calldata.length() < 136) {
-                amount = BigInteger.valueOf(0);
-              } else {
-                amount = new BigInteger(calldata.substring(36 * 2, 68 * 2), 16);
-              }
-              fromAddress = getContextAddress();
-              toAddress = Hex.decode("41" + calldata.substring(32, 36 * 2));
             } else {
-              isTransfer = false;
 
               usdt.addTransferFromCount();
               usdt.addTransferFromEnergyUsage(callResult.getEnergyUsed());
               usdt.addTransferFromEnergyPenalty(callResult.getEnergyPenaltyTotal());
 
               usdt.addTransferFromNewEnergyUsage(callResult.getEnergyUsed());
-
-              if (calldata.length() < 200) {
-                amount = BigInteger.valueOf(0);
-              } else {
-                amount = new BigInteger(calldata.substring(68 * 2, 100 * 2), 16);
-              }
-              fromAddress = Hex.decode("41" + calldata.substring(32, 36 * 2));
-              toAddress = Hex.decode("41" + calldata.substring(32 * 3, 68 * 2));
             }
 
-            usdt.addTempToStats(amount, callResult.getEnergyUsed(), isTransfer);
             getContractState().updateUsdtState(usdt);
-
-            ContractStateCapsule fromCap = getContractState().getAccountUsdtState(fromAddress);
-            fromCap.addTempFromStats(amount, callResult.getEnergyUsed(), isTransfer);
-            getContractState().updateAccountUsdtState(fromAddress, fromCap);
-
-            ContractStateCapsule toCap = getContractState().getAccountUsdtState(toAddress);
-            toCap.addTempToStats(amount, callResult.getEnergyUsed(), isTransfer);
-            getContractState().updateAccountUsdtState(toAddress, toCap);
           }
         }
         deposit.commit();

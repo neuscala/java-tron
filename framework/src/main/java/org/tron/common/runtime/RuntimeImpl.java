@@ -80,15 +80,6 @@ public class RuntimeImpl implements Runtime {
     return context.getProgramResult().getRuntimeError();
   }
 
-  @Override
-  public List<byte[]> getAllAccountKeys() {
-    if (Objects.nonNull(actuator2)) {
-      return actuator2.getAllAccountKeys();
-    }
-    return new ArrayList<>();
-  }
-
-
   private void setResultCode(ProgramResult result) {
     RuntimeException exception = result.getException();
     if (Objects.isNull(exception) && StringUtils

@@ -550,14 +550,6 @@ public class RepositoryImpl implements Repository {
   }
 
   @Override
-  public List<byte[]> getAllAccountUsdtKeys() {
-    return usdtCache.keySet().stream()
-        .map(Key::getData)
-        .filter(data -> !Arrays.equals(data, USDT_ADDR))
-        .collect(Collectors.toList());
-  }
-
-  @Override
   public void updateContract(byte[] address, ContractCapsule contractCapsule) {
     contractCache.put(Key.create(address),
         Value.create(contractCapsule, Type.DIRTY));

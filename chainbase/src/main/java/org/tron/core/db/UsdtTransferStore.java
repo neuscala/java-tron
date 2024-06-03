@@ -1,5 +1,6 @@
-package org.tron.core.store;
+package org.tron.core.db;
 
+import com.google.protobuf.ByteString;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -7,43 +8,37 @@ import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.locks.ReentrantLock;
-
-import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.es.ExecutorServiceManager;
-import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
-import org.tron.core.capsule.ContractStateCapsule;
-import org.tron.core.db.TronStoreWithRevoking;
+import org.tron.core.capsule.UsdtTransferCapsule;
 import org.tron.core.db2.common.WrappedByteArray;
+import org.tron.core.store.DynamicPropertiesStore;
 
 @Slf4j(topic = "DB")
 @Component
-public class ContractStateStore extends TronStoreWithRevoking<ContractStateCapsule> {
+public class UsdtTransferStore extends TronStoreWithRevoking<UsdtTransferCapsule> {
 
-  private ExecutorService queryThreadPool = ExecutorServiceManager.newFixedThreadPool("ContractStateStore-query", 16);
+  private ExecutorService queryThreadPool = ExecutorServiceManager.newFixedThreadPool("UsdtTransferStore-query", 16);
 
   @Autowired
   private DynamicPropertiesStore dps;
 
   @Autowired
-  private ContractStore cs;
-
-  @Autowired
-  private ContractStateStore(@Value("contract-state") String dbName) {
+  private UsdtTransferStore(@Value("usdt-transfer") String dbName) {
     super(dbName);
   }
 
   @Override
-  public ContractStateCapsule get(byte[] key) {
+  public UsdtTransferCapsule get(byte[] key) {
     return getUnchecked(key);
   }
 
   @Override
-  public void put(byte[] key, ContractStateCapsule item) {
+  public void put(byte[] key, UsdtTransferCapsule item) {
     if (Objects.isNull(key) || Objects.isNull(item)) {
       return;
     }
@@ -51,46 +46,16 @@ public class ContractStateStore extends TronStoreWithRevoking<ContractStateCapsu
     revokingDB.put(key, item.getData());
   }
 
-  public ContractStateCapsule getUsdtRecord(long cycleNumber) {
-    return getUnchecked(addPrefix(cycleNumber, "usdt".getBytes()));
+  public UsdtTransferCapsule getRecord(byte[] txID) {
+    return getUnchecked(getCurrentPrefixKey(txID));
   }
 
-  public ContractStateCapsule getUsdtRecord() {
-    return getUnchecked(getCurrentPrefixKey("usdt".getBytes()));
+  public UsdtTransferCapsule getRecord(long cycleNumber, byte[] txID) {
+    return getUnchecked(addPrefix(cycleNumber, txID));
   }
 
-  public void setUsdtRecord(ContractStateCapsule item) {
-    revokingDB.put(getCurrentPrefixKey("usdt".getBytes()), item.getData());
-  }
-
-  public ContractStateCapsule getAccountRecord(byte[] addr) {
-    byte[] addrKey = addr.clone();
-    addrKey[0] = (byte) 0x42;
-    return getUnchecked(getCurrentPrefixKey(addrKey));
-  }
-
-  public ContractStateCapsule getAccountRecord(long cycleNumber, byte[] addr) {
-    byte[] addrKey = addr.clone();
-    addrKey[0] = (byte) 0x42;
-    return getUnchecked(addPrefix(cycleNumber, addrKey));
-  }
-
-  public void setAccountRecord(byte[] addr, ContractStateCapsule item) {
-    byte[] addrKey = addr.clone();
-    addrKey[0] = (byte) 0x42;
-    revokingDB.put(getCurrentPrefixKey(addrKey), item.getData());
-  }
-
-  public ContractStateCapsule getContractRecord(byte[] addr) {
-    return getUnchecked(getCurrentPrefixKey(addr));
-  }
-
-  public ContractStateCapsule getContractRecord(long cycleNumber, byte[] addr) {
-    return getUnchecked(addPrefix(cycleNumber, addr));
-  }
-
-  public void setContractRecord(byte[] addr, ContractStateCapsule item) {
-    revokingDB.put(getCurrentPrefixKey(addr), item.getData());
+  public void setRecord(byte[] txID, UsdtTransferCapsule item) {
+    revokingDB.put(getCurrentPrefixKey(txID), item.getData());
   }
 
   private byte[] addPrefix(long cycleNumber, byte[] key) {
@@ -100,13 +65,13 @@ public class ContractStateStore extends TronStoreWithRevoking<ContractStateCapsu
     return addPrefix(dps.getCurrentCycleNumber(), key);
   }
 
-  public Map<WrappedByteArray, ContractStateCapsule> getCycleData(long cycleNumber) {
+  public Map<WrappedByteArray, UsdtTransferCapsule> getCycleData(long cycleNumber) {
     return this.prefixQuery((cycleNumber + "-").getBytes());
   }
 
-  public Map<ByteString, ContractStateCapsule> getMergedDataWithinCycles(
+  public Map<ByteString, UsdtTransferCapsule> getMergedDataWithinCycles(
       long cycleNumber, long cycleCount, boolean isContract) {
-    Map<ByteString, ContractStateCapsule> result = new HashMap<>();
+    Map<ByteString, UsdtTransferCapsule> result = new HashMap<>();
     CountDownLatch cdl = new CountDownLatch((int) cycleCount);
     ReentrantLock lock = new ReentrantLock();
     for (int i = 0; i < cycleCount; i++) {
@@ -116,15 +81,15 @@ public class ContractStateStore extends TronStoreWithRevoking<ContractStateCapsu
         byte[] key = new byte[cycleBytes.length + 1];
         System.arraycopy(cycleBytes, 0, key, 0, cycleBytes.length);
         key[key.length - 1] = (byte) (isContract ? 0x41 : 0x42);
-        Map<WrappedByteArray, ContractStateCapsule> data = this.prefixQuery(key);
+        Map<WrappedByteArray, UsdtTransferCapsule> data = this.prefixQuery(key);
         lock.lock();
         try {
           data.forEach((k, v) -> {
-            ByteString addr = ByteString.copyFrom(Arrays.copyOfRange(k.getBytes(), 5, 26));
-            if (result.containsKey(addr)) {
-              result.get(addr).merge(v);
+            ByteString txID = ByteString.copyFrom(Arrays.copyOfRange(k.getBytes(), 5, 26));
+            if (result.containsKey(txID)) {
+              result.get(txID).merge(v);
             } else {
-              result.put(addr, v);
+              result.put(txID, v);
             }
           });
         } finally {
@@ -141,9 +106,9 @@ public class ContractStateStore extends TronStoreWithRevoking<ContractStateCapsu
     return result;
   }
 
-  public ContractStateCapsule getAllMergedDataWithinCycles(
+  public UsdtTransferCapsule getAllMergedDataWithinCycles(
       long cycleNumber, long cycleCount, boolean isContract) {
-    ContractStateCapsule result = new ContractStateCapsule(cycleNumber + cycleCount -1);
+    UsdtTransferCapsule result = new UsdtTransferCapsule();
     CountDownLatch cdl = new CountDownLatch((int) cycleCount);
     ReentrantLock lock = new ReentrantLock();
     for (int i = 0; i < cycleCount; i++) {
@@ -153,7 +118,7 @@ public class ContractStateStore extends TronStoreWithRevoking<ContractStateCapsu
         byte[] key = new byte[cycleBytes.length + 1];
         System.arraycopy(cycleBytes, 0, key, 0, cycleBytes.length);
         key[key.length - 1] = (byte) (isContract ? 0x41 : 0x42);
-        Map<WrappedByteArray, ContractStateCapsule> data = this.prefixQuery(key);
+        Map<WrappedByteArray, UsdtTransferCapsule> data = this.prefixQuery(key);
         lock.lock();
         try {
           data.forEach((k, v) -> result.merge(v));

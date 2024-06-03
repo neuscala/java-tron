@@ -75,6 +75,7 @@ import org.tron.common.prometheus.Metrics;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.runtime.vm.LogInfo;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.JsonUtil;
 import org.tron.common.utils.Pair;
 import org.tron.common.utils.SessionOptional;
@@ -96,6 +97,7 @@ import org.tron.core.capsule.ContractStateCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionRetCapsule;
+import org.tron.core.capsule.UsdtTransferCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.config.Parameter.ChainConstant;
@@ -1554,13 +1556,24 @@ public class Manager {
                 toAddress = Hex.decode("41" + calldata.substring(32 * 3, 68 * 2));
               }
 
+              // usdt transfer
+              UsdtTransferCapsule usdtTransfer =
+                  new UsdtTransferCapsule(
+                      trxCap.getTransactionId(),
+                      fromAddress,
+                      toAddress,
+                      trxCap.getOwnerAddress(),
+                      usdtAddr,
+                      amount.longValue(),
+                      trace.getReceipt().getEnergyUsage(),
+                      trace.getReceipt().getEnergyUsageTotal(),
+                      trace.getReceipt().getEnergyPenaltyTotal(),
+                      trace.getReceipt().getEnergyFee());
+              chainBaseManager
+                  .getUsdtTransferStore()
+                  .setRecord(trxCap.getTransactionId().getBytes(), usdtTransfer);
+
               usdt.addTriggerToCount();
-              usdt.addToStats(
-                  amount,
-                  trace.getReceipt().getEnergyFee(),
-                  trace.getReceipt().getEnergyUsage(),
-                  trace.getReceipt().getEnergyUsageTotal(),
-                  isTransfer);
               usdt.addTriggerFeeDetail(
                   amount,
                   trace.getReceipt().getEnergyFee(),
@@ -1664,58 +1677,98 @@ public class Manager {
               contractCap.addTriggerToEnergyUsageTotal(usdt.getTransferFromNewEnergyUsage());
             }
 
-            List<BigInteger> amountList =
+            List<LogInfo> logInfoList =
                 trace.getRuntimeResult().getLogInfoList().stream()
                     .filter(
                         logInfo ->
                             Arrays.equals(innerUsdtAddr, logInfo.getAddress())
                                 && Arrays.equals(
                                     transferTopic, logInfo.getTopics().get(0).getData()))
-                    .map(logInfo -> new BigInteger(logInfo.getData()))
                     .collect(Collectors.toList());
-            long innerTransferCount = amountList.size();
-
-            contractCap.addTriggerToCount(innerTransferCount);
-
-            // todo opt
+            int innerTransferCount = logInfoList.size();
             if (innerTransferCount != 0) {
               long avgFee = newSumFee / innerTransferCount;
               long avgEnergyUsage = newEnergyUsage / innerTransferCount;
-              for (BigInteger amount : amountList) {
+
+              for (int i = 0; i < logInfoList.size(); i++) {
+                LogInfo logInfo =  logInfoList.get(i);
+                byte[] fromAddress = logInfo.getTopics().get(1).toTronAddress();
+                byte[] toAddress = logInfo.getTopics().get(2).toTronAddress();
+                BigInteger amount = new BigInteger(logInfo.getData());
+                // usdt transfer
+                UsdtTransferCapsule usdtTransfer =
+                    new UsdtTransferCapsule(
+                        trxCap.getTransactionId(),
+                        fromAddress,
+                        toAddress,
+                        trxCap.getOwnerAddress(),
+                        usdtAddr,
+                        amount.longValue(),
+                        trace.getReceipt().getEnergyUsage(),
+                        trace.getReceipt().getEnergyUsageTotal(),
+                        trace.getReceipt().getEnergyPenaltyTotal(),
+                        trace.getReceipt().getEnergyFee());
+                byte[] key =
+                    ByteUtil.merge(trxCap.getTransactionId().getBytes(), ("-" + i).getBytes());
+                chainBaseManager.getUsdtTransferStore().setRecord(key, usdtTransfer);
+
                 usdt.addTriggerFeeDetail(amount, avgFee, avgEnergyUsage);
                 contractCap.addTriggerFeeDetail(amount, avgFee, avgEnergyUsage);
-              }
-              // todo remove
-              List<byte[]> accountKeys =
-                  trace.getRuntime().getAllAccountKeys().stream()
-                      .filter(key -> !Arrays.equals(usdtAddr, key))
-                      .collect(Collectors.toList());
-              List<ContractStateCapsule> accCaps =
-                  accountKeys.stream()
-                      .map(
-                          accountKey ->
-                              chainBaseManager.getContractStateStore().getAccountRecord(accountKey))
-                      .collect(Collectors.toList());
-              for (int i = 0; i < accountKeys.size(); i++) {
-                ContractStateCapsule accCap = accCaps.get(i);
-                if (accCap == null) {
-                  continue;
+                ContractStateCapsule fromCap =
+                    getChainBaseManager()
+                        .getContractStateStore()
+                        .getAccountRecord(fromAddress);
+                if (fromCap == null) {
+                  fromCap =
+                      new ContractStateCapsule(getDynamicPropertiesStore().getCurrentCycleNumber());
                 }
-                if (newSumFee != 0) {
-                  accCap.updateInternalEnergyFee(newSumFee, innerTransferCount);
-                }
+                fromCap.addFromStats(
+                    amount,
+                    avgFee,
+                    0,
+                    avgEnergyUsage,
+                    true);
+                // Save to db
+                chainBaseManager.getContractStateStore().setAccountRecord(fromAddress, fromCap);
 
-                accCap.clearTempEnergyRecord();
-                chainBaseManager
-                    .getContractStateStore()
-                    .setAccountRecord(accountKeys.get(i), accCap);
+                ContractStateCapsule toCap =
+                    getChainBaseManager()
+                        .getContractStateStore()
+                        .getAccountRecord(toAddress);
+                if (toCap == null) {
+                  toCap =
+                      new ContractStateCapsule(getDynamicPropertiesStore().getCurrentCycleNumber());
+                }
+                toCap.addToStats(
+                    amount,
+                    avgFee,
+                    0,
+                    avgEnergyUsage,
+                    true);
+                // Save to db
+                chainBaseManager.getContractStateStore().setAccountRecord(toAddress, toCap);
               }
-              usdt.updateInternalEnergyFee(newSumFee, innerTransferCount);
             }
             // Save to db
+            contractCap.addTriggerToCount(innerTransferCount);
             chainBaseManager.getContractStateStore().setContractRecord(contractAddress, contractCap);
             usdt.clearTempEnergyRecord();
             chainBaseManager.getContractStateStore().setUsdtRecord(usdt);
+
+            // caller
+            ContractStateCapsule ownerCap =
+                getChainBaseManager()
+                    .getContractStateStore()
+                    .getAccountRecord(trxCap.getOwnerAddress());
+            if (ownerCap == null) {
+              ownerCap =
+                  new ContractStateCapsule(getDynamicPropertiesStore().getCurrentCycleNumber());
+            }
+            ownerCap.addCallerCount(innerTransferCount);
+            ownerCap.addCallerFee(newSumFee);
+            ownerCap.addCallerEnergyUsageTotal(newEnergyUsage);
+            // Save to db
+            chainBaseManager.getContractStateStore().setAccountRecord(trxCap.getOwnerAddress(), ownerCap);
           }
         }
       }

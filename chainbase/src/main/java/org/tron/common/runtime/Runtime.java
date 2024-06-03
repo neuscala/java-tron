@@ -16,6 +16,4 @@ public interface Runtime {
 
   String getRuntimeError();
 
-  List<byte[]> getAllAccountKeys();
-
 }

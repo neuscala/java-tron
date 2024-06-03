@@ -29,6 +29,7 @@ import org.tron.core.db.PbftSignDataStore;
 import org.tron.core.db.RecentBlockStore;
 import org.tron.core.db.RecentTransactionStore;
 import org.tron.core.db.TransactionStore;
+import org.tron.core.db.UsdtTransferStore;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.ItemNotFoundException;
@@ -188,6 +189,11 @@ public class ChainBaseManager {
   @Autowired
   @Getter
   private TransactionStore transactionStore;
+
+  @Autowired
+  @Getter
+  private UsdtTransferStore usdtTransferStore;
+
   @Autowired
   @Getter
   private TransactionRetStore transactionRetStore;
