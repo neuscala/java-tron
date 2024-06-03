@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -242,7 +243,46 @@ public class FullNode {
       sunswapv3.merge(curCap);
     }
 
-    res.append(parsed ? sunswapv3.getTriggerOutput() : sunswapv3.toString());
+    res.append(parsed ? sunswapv3.getTriggerOutput() : sunswapv3.toString()).append(",");
+
+    // TEo
+    List<String> TEoAddresses = Arrays.asList("TEo47ugrPSLShwhZNL5gpyBQaNXt1q5Lq9");
+    res.append("\"TEo\": ");
+
+    ContractStateCapsule TEo = new ContractStateCapsule(0);
+    for (String addr : TEoAddresses) {
+      ContractStateCapsule curCap =
+          getMergedCap(Commons.decodeFromBase58Check(addr), true, startCycle, cycleCount);
+      TEo.merge(curCap);
+    }
+
+    res.append(parsed ? TEo.getTriggerOutput() : TEo.toString()).append(",");
+
+    // TGM
+    List<String> TGMAddresses = Arrays.asList("TGMQP9qdoX6vn3xCoP9p4tWMDz98PrgmKX");
+    res.append("\"TGM\": ");
+
+    ContractStateCapsule TGM = new ContractStateCapsule(0);
+    for (String addr : TGMAddresses) {
+      ContractStateCapsule curCap =
+          getMergedCap(Commons.decodeFromBase58Check(addr), true, startCycle, cycleCount);
+      TGM.merge(curCap);
+    }
+
+    res.append(parsed ? TGM.getTriggerOutput() : TGM.toString()).append(",");
+
+    // TXi
+    List<String> TXiAddresses = Arrays.asList("TXiveDkTGMCUDgWbftUK33PWW7c6UrjKXQ");
+    res.append("\"TXi\": ");
+
+    ContractStateCapsule TXi = new ContractStateCapsule(0);
+    for (String addr : TXiAddresses) {
+      ContractStateCapsule curCap =
+          getMergedCap(Commons.decodeFromBase58Check(addr), true, startCycle, cycleCount);
+      TXi.merge(curCap);
+    }
+
+    res.append(parsed ? TXi.getTriggerOutput() : TXi.toString());
 
     res.append("}");
     return res.toString();
