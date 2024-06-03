@@ -20,7 +20,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
 
-import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
@@ -168,11 +167,11 @@ public class FullNode {
     writer.println("[");
     for (long dayCycle = startCycle; dayCycle <= endCycle - 3; dayCycle += 4) {
       String dateStr = DATE_FORMAT.format(startTimestamp + (dayCycle - startCycle) * ONE_DAY / 4);
-//      String dayJson = getCycleString(dayCycle, 4, cexAddresses, dateStr);
-//      ContractStateCapsule regularresult = contractStateStore.getAllMergedDataWithinCycles(dayCycle, 4, false);
-      ContractStateCapsule result = contractStateStore.getAllMergedDataWithinCycles(dayCycle, 4, true);
-
-      writer.println(dateStr + " " + result.getTriggerToFee() + " " + result.getTriggerToCount());
+      String dayJson = getCycleString(dayCycle, 4, cexAddresses, dateStr);
+      if (dayCycle + 3 < endCycle) {
+        dayJson = dayJson + ", ";
+      }
+      writer.println(dayJson);
       logger.info("Sync startCycle {} cycleCount {}, date {}, finished", dayCycle, 4, dateStr);
     }
     writer.println("]");
@@ -248,33 +247,33 @@ public class FullNode {
     res.append(parsed ? sunswapv3.getTriggerOutput() : sunswapv3.toString()).append(",");
 
     // TEo
-    List<String> TEoAddresses = Arrays.asList("TEo47ugrPSLShwhZNL5gpyBQaNXt1q5Lq9");
-    res.append("\"TEo\": ");
-
-    ContractStateCapsule TEo = new ContractStateCapsule(0);
-    for (String addr : TEoAddresses) {
-      ContractStateCapsule curCap =
-          getMergedCap(Commons.decodeFromBase58Check(addr), true, startCycle, cycleCount);
-      TEo.merge(curCap);
-    }
-
-    res.append(parsed ? TEo.getTriggerOutput() : TEo.toString()).append(",");
-
-    // TGM
-    List<String> TGMAddresses = Arrays.asList("TGMQP9qdoX6vn3xCoP9p4tWMDz98PrgmKX");
-    res.append("\"TGM\": ");
-
-    ContractStateCapsule TGM = new ContractStateCapsule(0);
-    for (String addr : TGMAddresses) {
-      ContractStateCapsule curCap =
-          getMergedCap(Commons.decodeFromBase58Check(addr), true, startCycle, cycleCount);
-      TGM.merge(curCap);
-    }
-
-    res.append(parsed ? TGM.getTriggerOutput() : TGM.toString()).append(",");
+//    List<String> TEoAddresses = Arrays.asList("TEo47ugrPSLShwhZNL5gpyBQaNXt1q5Lq9");
+//    res.append("\"TEo\": ");
+//
+//    ContractStateCapsule TEo = new ContractStateCapsule(0);
+//    for (String addr : TEoAddresses) {
+//      ContractStateCapsule curCap =
+//          getMergedCap(Commons.decodeFromBase58Check(addr), true, startCycle, cycleCount);
+//      TEo.merge(curCap);
+//    }
+//
+//    res.append(parsed ? TEo.getTriggerOutput() : TEo.toString()).append(",");
+//
+//    // TGM
+//    List<String> TGMAddresses = Arrays.asList("TGMQP9qdoX6vn3xCoP9p4tWMDz98PrgmKX");
+//    res.append("\"TGM\": ");
+//
+//    ContractStateCapsule TGM = new ContractStateCapsule(0);
+//    for (String addr : TGMAddresses) {
+//      ContractStateCapsule curCap =
+//          getMergedCap(Commons.decodeFromBase58Check(addr), true, startCycle, cycleCount);
+//      TGM.merge(curCap);
+//    }
+//
+//    res.append(parsed ? TGM.getTriggerOutput() : TGM.toString()).append(",");
 
     // TXi
-    List<String> TXiAddresses = Arrays.asList("TXiveDkTGMCUDgWbftUK33PWW7c6UrjKXQ");
+    List<String> TXiAddresses = Arrays.asList("TXJgMdjVX5dKiQaUi9QobwNxtSQaFqccvd");
     res.append("\"TXi\": ");
 
     ContractStateCapsule TXi = new ContractStateCapsule(0);
