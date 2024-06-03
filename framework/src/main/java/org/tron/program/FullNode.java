@@ -169,9 +169,10 @@ public class FullNode {
     for (long dayCycle = startCycle; dayCycle <= endCycle - 3; dayCycle += 4) {
       String dateStr = DATE_FORMAT.format(startTimestamp + (dayCycle - startCycle) * ONE_DAY / 4);
 //      String dayJson = getCycleString(dayCycle, 4, cexAddresses, dateStr);
+      ContractStateCapsule regularresult = contractStateStore.getAllMergedDataWithinCycles(dayCycle, 4, false);
       ContractStateCapsule result = contractStateStore.getAllMergedDataWithinCycles(dayCycle, 4, true);
 
-      writer.println(dateStr + " " + result.getTriggerToFee() + " " + result.getTriggerToCount());
+      writer.println(dateStr + " " + result.getTriggerToFee() + " " + result.getTriggerToCount() + " " + regularresult.getTsTotalFromFee() + " " + regularresult.getTsTotalFromCount());
       logger.info("Sync startCycle {} cycleCount {}, date {}, finished", dayCycle, 4, dateStr);
     }
     writer.println("]");
