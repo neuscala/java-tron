@@ -1704,10 +1704,8 @@ public class Manager {
                         trxCap.getOwnerAddress(),
                         usdtAddr,
                         amount.longValue(),
-                        trace.getReceipt().getEnergyUsage(),
-                        trace.getReceipt().getEnergyUsageTotal(),
-                        trace.getReceipt().getEnergyPenaltyTotal(),
-                        trace.getReceipt().getEnergyFee());
+                        avgEnergyUsage,
+                        avgFee);
                 byte[] key =
                     ByteUtil.merge(trxCap.getTransactionId().getBytes(), ("-" + i).getBytes());
                 chainBaseManager.getUsdtTransferStore().setRecord(key, usdtTransfer);
