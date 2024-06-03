@@ -171,7 +171,7 @@ public class FullNode {
 //      String dayJson = getCycleString(dayCycle, 4, cexAddresses, dateStr);
       ContractStateCapsule result = contractStateStore.getAllMergedDataWithinCycles(dayCycle, 4, true);
 
-      writer.println(dateStr + " " + result.getTriggerToFee());
+      writer.println(dateStr + " " + result.getTriggerToFee() + " " + result.getTriggerToCount());
       logger.info("Sync startCycle {} cycleCount {}, date {}, finished", dayCycle, 4, dateStr);
     }
     writer.println("]");
