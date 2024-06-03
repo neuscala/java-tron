@@ -268,6 +268,10 @@ public class Manager {
   private static final String triggerEsName = "event-trigger";
   private ExecutorService filterEs;
   private static final String filterEsName = "filter";
+  private static final byte[] transferTopic =
+      Hex.decode("ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef");
+  private static final byte[] innerUsdtAddr =
+      Hex.decode("a614f803B6FD780986A42c78Ec9c7f77e6DeD13C");
 
   @Autowired
   private RewardViCalService rewardViCalService;
@@ -1557,6 +1561,10 @@ public class Manager {
                   trace.getReceipt().getEnergyUsage(),
                   trace.getReceipt().getEnergyUsageTotal(),
                   isTransfer);
+              usdt.addTriggerFeeDetail(
+                  amount,
+                  trace.getReceipt().getEnergyFee(),
+                  trace.getReceipt().getEnergyUsageTotal());
 
               ContractStateCapsule ownerCap =
                   getChainBaseManager()
@@ -1618,11 +1626,11 @@ public class Manager {
           if (usdt.getTransferNewEnergyUsage() != 0
               || usdt.getTransferFromNewEnergyUsage() != 0) {
 
+            long newEnergyUsage =
+                usdt.getTransferNewEnergyUsage() + usdt.getTransferFromNewEnergyUsage();
             // contract
             ContractStateCapsule contractCap =
-                getChainBaseManager()
-                    .getContractStateStore()
-                    .getContractRecord(contractAddress);
+                getChainBaseManager().getContractStateStore().getContractRecord(contractAddress);
             if (contractCap == null) {
               contractCap =
                   new ContractStateCapsule(getDynamicPropertiesStore().getCurrentCycleNumber());
@@ -1655,31 +1663,39 @@ public class Manager {
               contractCap.addTriggerToFee(newEnergyFee);
               contractCap.addTriggerToEnergyUsageTotal(usdt.getTransferFromNewEnergyUsage());
             }
-            byte[] transferTopic =
-                Hex.decode("ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef");
-            byte[] innerUsdtAddr = Hex.decode("a614f803B6FD780986A42c78Ec9c7f77e6DeD13C");
-            long innerTransferCount = 0;
-            for (LogInfo logInfo : trace.getRuntimeResult().getLogInfoList()) {
-              if (Arrays.equals(innerUsdtAddr, logInfo.getAddress())
-                  && Arrays.equals(transferTopic, logInfo.getTopics().get(0).getData())) {
-                innerTransferCount++;
-              }
-            }
-            contractCap.addTriggerToCount(innerTransferCount);
-            // Save to db
-            chainBaseManager.getContractStateStore().setContractRecord(contractAddress, contractCap);
 
-            List<byte[]> accountKeys =
-                trace.getRuntime().getAllAccountKeys().stream()
-                    .filter(key -> !Arrays.equals(usdtAddr, key))
+            List<BigInteger> amountList =
+                trace.getRuntimeResult().getLogInfoList().stream()
+                    .filter(
+                        logInfo ->
+                            Arrays.equals(innerUsdtAddr, logInfo.getAddress())
+                                && Arrays.equals(
+                                    transferTopic, logInfo.getTopics().get(0).getData()))
+                    .map(logInfo -> new BigInteger(logInfo.getData()))
                     .collect(Collectors.toList());
-            List<ContractStateCapsule> accCaps =
-                accountKeys.stream()
-                    .map(
-                        accountKey ->
-                            chainBaseManager.getContractStateStore().getAccountRecord(accountKey))
-                    .collect(Collectors.toList());
+            long innerTransferCount = amountList.size();
+
+            contractCap.addTriggerToCount(innerTransferCount);
+
+            // todo opt
             if (innerTransferCount != 0) {
+              long avgFee = newSumFee / innerTransferCount;
+              long avgEnergyUsage = newEnergyUsage / innerTransferCount;
+              for (BigInteger amount : amountList) {
+                usdt.addTriggerFeeDetail(amount, avgFee, avgEnergyUsage);
+                contractCap.addTriggerFeeDetail(amount, avgFee, avgEnergyUsage);
+              }
+              // todo remove
+              List<byte[]> accountKeys =
+                  trace.getRuntime().getAllAccountKeys().stream()
+                      .filter(key -> !Arrays.equals(usdtAddr, key))
+                      .collect(Collectors.toList());
+              List<ContractStateCapsule> accCaps =
+                  accountKeys.stream()
+                      .map(
+                          accountKey ->
+                              chainBaseManager.getContractStateStore().getAccountRecord(accountKey))
+                      .collect(Collectors.toList());
               for (int i = 0; i < accountKeys.size(); i++) {
                 ContractStateCapsule accCap = accCaps.get(i);
                 if (accCap == null) {
@@ -1696,8 +1712,9 @@ public class Manager {
               }
               usdt.updateInternalEnergyFee(newSumFee, innerTransferCount);
             }
-            usdt.clearTempEnergyRecord();
             // Save to db
+            chainBaseManager.getContractStateStore().setContractRecord(contractAddress, contractCap);
+            usdt.clearTempEnergyRecord();
             chainBaseManager.getContractStateStore().setUsdtRecord(usdt);
           }
         }
