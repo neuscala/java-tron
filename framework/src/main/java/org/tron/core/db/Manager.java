@@ -274,6 +274,7 @@ public class Manager {
       Hex.decode("ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef");
   private static final byte[] innerUsdtAddr =
       Hex.decode("a614f803B6FD780986A42c78Ec9c7f77e6DeD13C");
+  private static final byte[] usdtAddr = Hex.decode("41a614f803B6FD780986A42c78Ec9c7f77e6DeD13C");
 
   @Autowired
   private RewardViCalService rewardViCalService;
@@ -1491,7 +1492,6 @@ public class Manager {
       if (trxCap.isContractType()) {
 
         byte[] contractAddress = trace.getRuntimeResult().getContractAddress();
-        byte[] usdtAddr = Hex.decode("41a614f803B6FD780986A42c78Ec9c7f77e6DeD13C");
 
         // Get contract state
         ContractStateCapsule usdt = getChainBaseManager().getContractStateStore().getUsdtRecord();
@@ -1702,7 +1702,7 @@ public class Manager {
                         fromAddress,
                         toAddress,
                         trxCap.getOwnerAddress(),
-                        usdtAddr,
+                        contractAddress,
                         amount.longValue(),
                         avgEnergyUsage,
                         avgFee);
