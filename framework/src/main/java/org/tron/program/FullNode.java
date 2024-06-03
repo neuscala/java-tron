@@ -157,8 +157,8 @@ public class FullNode {
     //    appT.blockUntilShutdown();
     long startCycle = 5847;
     long startTimestamp = 1698796800000L;
-    long endCycle = 6574;
-//    long endCycle = 6158;
+//    long endCycle = 6574;
+    long endCycle = 6158;
 //    long endCycle = 5854;
     DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
     contractStateStore = ChainBaseManager.getInstance().getContractStateStore();
@@ -169,10 +169,10 @@ public class FullNode {
     for (long dayCycle = startCycle; dayCycle <= endCycle - 3; dayCycle += 4) {
       String dateStr = DATE_FORMAT.format(startTimestamp + (dayCycle - startCycle) * ONE_DAY / 4);
 //      String dayJson = getCycleString(dayCycle, 4, cexAddresses, dateStr);
-      ContractStateCapsule regularresult = contractStateStore.getAllMergedDataWithinCycles(dayCycle, 4, false);
+//      ContractStateCapsule regularresult = contractStateStore.getAllMergedDataWithinCycles(dayCycle, 4, false);
       ContractStateCapsule result = contractStateStore.getAllMergedDataWithinCycles(dayCycle, 4, true);
 
-      writer.println(dateStr + " " + result.getTriggerToFee() + " " + result.getTriggerToCount() + " " + regularresult.getTsTotalFromFee() + " " + regularresult.getTsTotalFromCount());
+      writer.println(dateStr + " " + result.getTriggerToFee() + " " + result.getTriggerToCount());
       logger.info("Sync startCycle {} cycleCount {}, date {}, finished", dayCycle, 4, dateStr);
     }
     writer.println("]");
