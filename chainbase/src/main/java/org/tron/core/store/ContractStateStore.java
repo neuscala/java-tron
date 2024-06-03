@@ -1,20 +1,30 @@
 package org.tron.core.store;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.locks.ReentrantLock;
 
+import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.capsule.ContractStateCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
+import org.tron.core.db2.common.WrappedByteArray;
 
 @Slf4j(topic = "DB")
 @Component
 public class ContractStateStore extends TronStoreWithRevoking<ContractStateCapsule> {
+
+  private ExecutorService queryThreadPool = ExecutorServiceManager.newFixedThreadPool("ContractStateStore-query", 16);
 
   @Autowired
   private DynamicPropertiesStore dps;
@@ -88,5 +98,46 @@ public class ContractStateStore extends TronStoreWithRevoking<ContractStateCapsu
   }
   private byte[] getCurrentPrefixKey(byte[] key) {
     return addPrefix(dps.getCurrentCycleNumber(), key);
+  }
+
+  public Map<WrappedByteArray, ContractStateCapsule> getCycleData(long cycleNumber) {
+    return this.prefixQuery((cycleNumber + "-").getBytes());
+  }
+
+  public Map<ByteString, ContractStateCapsule> getMergedDataWithinCycles(
+      long cycleNumber, long cycleCount, boolean isContract) {
+    Map<ByteString, ContractStateCapsule> result = new HashMap<>();
+    CountDownLatch cdl = new CountDownLatch((int) cycleCount);
+    ReentrantLock lock = new ReentrantLock();
+    for (int i = 0; i < cycleCount; i++) {
+      final int index = i;
+      queryThreadPool.submit(() -> {
+        byte[] cycleBytes = ((cycleNumber + index) + "-").getBytes();
+        byte[] key = new byte[cycleBytes.length + 1];
+        System.arraycopy(cycleBytes, 0, key, 0, cycleBytes.length);
+        key[key.length - 1] = (byte) (isContract ? 0x41 : 0x42);
+        Map<WrappedByteArray, ContractStateCapsule> data = this.prefixQuery(key);
+        lock.lock();
+        try {
+          data.forEach((k, v) -> {
+            ByteString addr = ByteString.copyFrom(Arrays.copyOfRange(k.getBytes(), 5, 26));
+            if (result.containsKey(addr)) {
+              result.get(addr).merge(v);
+            } else {
+              result.put(addr, v);
+            }
+          });
+        } finally {
+          lock.unlock();
+        }
+        cdl.countDown();
+      });
+    }
+    try {
+      cdl.await();
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
+    return result;
   }
 }

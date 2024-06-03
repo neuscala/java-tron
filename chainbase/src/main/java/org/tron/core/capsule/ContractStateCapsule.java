@@ -1830,8 +1830,7 @@ public class ContractStateCapsule implements ProtoCapsule<ContractState> {
     return true;
   }
 
-  public void merge(ContractStateCapsule other)
-      throws IllegalAccessException, NoSuchFieldException {
+  public void merge(ContractStateCapsule other) {
     if (other == null) {
       return;
     }
