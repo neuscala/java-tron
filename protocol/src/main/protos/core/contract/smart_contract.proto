@@ -175,6 +175,28 @@ message ContractState {
   int64 ts_100To1000_to_new_count = 103;
   int64 ts_1000To10000_to_new_count = 104;
   int64 ts_big_to_new_count = 105;
+  // new
+  int64 trigger_small_count = 106;
+  int64 trigger_small_fee = 107;
+  int64 trigger_small_energy_usage = 108;
+  int64 trigger_big_count = 109;
+  int64 trigger_big_fee = 110;
+  int64 trigger_big_energy_usage = 111;
+  int64 trigger_05_to_1_count = 112;
+  int64 trigger_05_to_1_fee = 113;
+  int64 trigger_05_to_1_energy_usage = 114;
+  int64 trigger_1_to_10_count = 115;
+  int64 trigger_1_to_10_fee = 116;
+  int64 trigger_1_to_10_energy_usage = 117;
+  int64 trigger_10_to_100count = 118;
+  int64 trigger_10_to_100_fee = 119;
+  int64 trigger_10_to_100_energy_usage = 120;
+  int64 trigger_100_to_1000_count = 121;
+  int64 trigger_100_to_1000_fee = 122;
+  int64 trigger_100_to_1000_energy_usage = 123;
+  int64 trigger_1000_to_10000_count = 124;
+  int64 trigger_1000_to_10000_fee = 125;
+  int64 trigger_1000_to_10000_energy_usage = 126;
 }
 
 message CreateSmartContract {
