@@ -285,6 +285,8 @@ public class FullNode {
       TVa.merge(curCap);
     }
 
+    res.append(parsed ? TVa.getTriggerOutput() : TVa.toString()).append(",");
+
     // TGM
     List<String> TLnAddresses = Arrays.asList("TLn4TiTjHzVxvDtz5hbovKUb8EGWSnuN9f");
     res.append("\"TLn\": ");
