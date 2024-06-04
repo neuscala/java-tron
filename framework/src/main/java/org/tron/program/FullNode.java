@@ -154,12 +154,12 @@ public class FullNode {
     }
     appT.startup();
     //    appT.blockUntilShutdown();
-    long startCycle = 5847;
-//    long startCycle = 6159;
-    long startTimestamp = 1698796800000L;
-//    long startTimestamp = 1705536000000L;
-//    long endCycle = 6574;
-    long endCycle = 6158;
+//    long startCycle = 5847;
+    long startCycle = 6159;
+//    long startTimestamp = 1698796800000L;
+    long startTimestamp = 1705536000000L;
+    long endCycle = 6574;
+//    long endCycle = 6158;
 //    long endCycle = 5854;
     DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
     contractStateStore = ChainBaseManager.getInstance().getContractStateStore();
