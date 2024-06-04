@@ -262,8 +262,8 @@ public class FullNode {
     res.append(parsed ? TEo.getTriggerOutput() : TEo.toString()).append(",");
 
     // TGM
-    List<String> TGMAddresses = Arrays.asList("TEorZTZ5MHx8SrvsYs1R3Ds5WvY1pVoMSA");
-    res.append("\"TEo\": ");
+    List<String> TGMAddresses = Arrays.asList("TDKG6QZLSWx416pb8PHmAMRyLr3JXTPvbC");
+    res.append("\"TDK\": ");
 
     ContractStateCapsule TGM = new ContractStateCapsule(0);
     for (String addr : TGMAddresses) {
@@ -275,8 +275,8 @@ public class FullNode {
     res.append(parsed ? TGM.getTriggerOutput() : TGM.toString()).append(",");
 
     // TGM
-    List<String> TVaAddresses = Arrays.asList("TVaV2BBs8tpthbp19QAy7ibmXLoYsomKDD");
-    res.append("\"TVa\": ");
+    List<String> TVaAddresses = Arrays.asList("TEimgwLnNpbMaXFPQDa4K5as1fumGqWrNv");
+    res.append("\"TEi\": ");
 
     ContractStateCapsule TVa = new ContractStateCapsule(0);
     for (String addr : TVaAddresses) {
@@ -288,8 +288,8 @@ public class FullNode {
     res.append(parsed ? TVa.getTriggerOutput() : TVa.toString()).append(",");
 
     // TGM
-    List<String> TLnAddresses = Arrays.asList("TLn4TiTjHzVxvDtz5hbovKUb8EGWSnuN9f");
-    res.append("\"TLn\": ");
+    List<String> TLnAddresses = Arrays.asList("TY8W5PPeuvm5WHmMUTqkTL7B3C5tGUMhgb");
+    res.append("\"TY8\": ");
 
     ContractStateCapsule TLn = new ContractStateCapsule(0);
     for (String addr : TLnAddresses) {
