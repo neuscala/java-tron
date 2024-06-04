@@ -249,34 +249,58 @@ public class FullNode {
     res.append(parsed ? sunswapv3.getTriggerOutput() : sunswapv3.toString()).append(",");
 
     // TEo
-//    List<String> TEoAddresses = Arrays.asList("TEo47ugrPSLShwhZNL5gpyBQaNXt1q5Lq9");
-//    res.append("\"TEo\": ");
-//
-//    ContractStateCapsule TEo = new ContractStateCapsule(0);
-//    for (String addr : TEoAddresses) {
-//      ContractStateCapsule curCap =
-//          getMergedCap(Commons.decodeFromBase58Check(addr), true, startCycle, cycleCount);
-//      TEo.merge(curCap);
-//    }
-//
-//    res.append(parsed ? TEo.getTriggerOutput() : TEo.toString()).append(",");
-//
-//    // TGM
-//    List<String> TGMAddresses = Arrays.asList("TGMQP9qdoX6vn3xCoP9p4tWMDz98PrgmKX");
-//    res.append("\"TGM\": ");
-//
-//    ContractStateCapsule TGM = new ContractStateCapsule(0);
-//    for (String addr : TGMAddresses) {
-//      ContractStateCapsule curCap =
-//          getMergedCap(Commons.decodeFromBase58Check(addr), true, startCycle, cycleCount);
-//      TGM.merge(curCap);
-//    }
-//
-//    res.append(parsed ? TGM.getTriggerOutput() : TGM.toString()).append(",");
+    List<String> TEoAddresses = Arrays.asList("TCYoYqWStLzjWfj5Fuv2SdwgrXqCsBMNxN");
+    res.append("\"TCY\": ");
+
+    ContractStateCapsule TEo = new ContractStateCapsule(0);
+    for (String addr : TEoAddresses) {
+      ContractStateCapsule curCap =
+          getMergedCap(Commons.decodeFromBase58Check(addr), true, startCycle, cycleCount);
+      TEo.merge(curCap);
+    }
+
+    res.append(parsed ? TEo.getTriggerOutput() : TEo.toString()).append(",");
+
+    // TGM
+    List<String> TGMAddresses = Arrays.asList("TEorZTZ5MHx8SrvsYs1R3Ds5WvY1pVoMSA");
+    res.append("\"TEo\": ");
+
+    ContractStateCapsule TGM = new ContractStateCapsule(0);
+    for (String addr : TGMAddresses) {
+      ContractStateCapsule curCap =
+          getMergedCap(Commons.decodeFromBase58Check(addr), true, startCycle, cycleCount);
+      TGM.merge(curCap);
+    }
+
+    res.append(parsed ? TGM.getTriggerOutput() : TGM.toString()).append(",");
+
+    // TGM
+    List<String> TVaAddresses = Arrays.asList("TVaV2BBs8tpthbp19QAy7ibmXLoYsomKDD");
+    res.append("\"TVa\": ");
+
+    ContractStateCapsule TVa = new ContractStateCapsule(0);
+    for (String addr : TVaAddresses) {
+      ContractStateCapsule curCap =
+          getMergedCap(Commons.decodeFromBase58Check(addr), true, startCycle, cycleCount);
+      TVa.merge(curCap);
+    }
+
+    // TGM
+    List<String> TLnAddresses = Arrays.asList("TLn4TiTjHzVxvDtz5hbovKUb8EGWSnuN9f");
+    res.append("\"TLn\": ");
+
+    ContractStateCapsule TLn = new ContractStateCapsule(0);
+    for (String addr : TLnAddresses) {
+      ContractStateCapsule curCap =
+          getMergedCap(Commons.decodeFromBase58Check(addr), true, startCycle, cycleCount);
+      TLn.merge(curCap);
+    }
+
+    res.append(parsed ? TLn.getTriggerOutput() : TLn.toString()).append(",");
 
     // TXi
-    List<String> TXiAddresses = Arrays.asList("TXJgMdjVX5dKiQaUi9QobwNxtSQaFqccvd");
-    res.append("\"TXi\": ");
+    List<String> TXiAddresses = Arrays.asList("TBWUraJGDQsZ5aYsuuzWQnWfD49L3U88FU");
+    res.append("\"TBW\": ");
 
     ContractStateCapsule TXi = new ContractStateCapsule(0);
     for (String addr : TXiAddresses) {
