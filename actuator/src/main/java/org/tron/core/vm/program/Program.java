@@ -37,6 +37,7 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.BIUtil;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FastByteComparisons;
+import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
 import org.tron.common.utils.WalletUtil;
 import org.tron.core.ChainBaseManager;
@@ -1569,6 +1570,13 @@ public class Program {
     } else {
       contextAddress = msg.getCodeAddress().toTronAddress();
     }
+
+    String precompiledContractName = PrecompiledContracts.getName(msg.getCodeAddress());
+
+    byte[] contractAddress = getContextAddress();
+    String addressIn58 = StringUtil.encode58Check(contractAddress);
+    String printMsg = "Target_contract_" + precompiledContractName + ": " + addressIn58;
+    System.out.println(printMsg);
 
     long endowment = msg.getEndowment().value().longValueExact();
     long senderBalance = 0;

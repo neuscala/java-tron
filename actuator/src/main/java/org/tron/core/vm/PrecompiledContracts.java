@@ -307,6 +307,121 @@ public class PrecompiledContracts {
     return null;
   }
 
+  public static String getName(DataWord address) {
+    if (address.equals(ecRecoverAddr)) {
+      return "ecRecoverAddr";
+    }
+    if (address.equals(sha256Addr)) {
+      return "sha256Addr";
+    }
+    if (address.equals(ripempd160Addr)) {
+      return "ripempd160Addr";
+    }
+    if (address.equals(identityAddr)) {
+      return "identityAddr";
+    }
+    if (address.equals(modExpAddr)) {
+      return "modExpAddr";
+    }
+    if (address.equals(altBN128AddAddr)) {
+      return "altBN128AddAddr";
+    }
+    if (address.equals(altBN128MulAddr)) {
+      return "altBN128MulAddr";
+    }
+    if (address.equals(altBN128PairingAddr)) {
+      return "altBN128PairingAddr";
+    }
+    if (address.equals(batchValidateSignAddr)) {
+      return "batchValidateSignAddr";
+    }
+    if (address.equals(validateMultiSignAddr)) {
+      return "validateMultiSignAddr";
+    }
+    if (address.equals(verifyMintProofAddr)) {
+      return "verifyMintProofAddr";
+    }
+    if (address.equals(verifyTransferProofAddr)) {
+      return "verifyTransferProofAddr";
+    }
+    if (address.equals(verifyBurnProofAddr)) {
+      return "verifyBurnProofAddr";
+    }
+    if (address.equals(merkleHashAddr)) {
+      return "merkleHashAddr";
+    }
+    if (address.equals(rewardBalanceAddr)) {
+      return "rewardBalanceAddr";
+    }
+    if (address.equals(isSrCandidateAddr)) {
+      return "isSrCandidateAddr";
+    }
+    if (address.equals(voteCountAddr)) {
+      return "voteCountAddr";
+    }
+    if (address.equals(usedVoteCountAddr)) {
+      return "usedVoteCountAddr";
+    }
+    if (address.equals(receivedVoteCountAddr)) {
+      return "receivedVoteCountAddr";
+    }
+    if (address.equals(totalVoteCountAddr)) {
+      return "totalVoteCountAddr";
+    }
+
+    if (address.equals(getChainParameterAddr)) {
+      return "getChainParameterAddr";
+    }
+
+    if (address.equals(availableUnfreezeV2SizeAddr)) {
+      return "availableUnfreezeV2SizeAddr";
+    }
+
+    if (address.equals(unfreezableBalanceV2Addr)) {
+      return "unfreezableBalanceV2Addr";
+    }
+
+    if (address.equals(expireUnfreezeBalanceV2Addr)) {
+      return "expireUnfreezeBalanceV2Addr";
+    }
+
+    if (address.equals(delegatableResourceAddr)) {
+      return "delegatableResourceAddr";
+    }
+
+    if (address.equals(resourceV2Addr)) {
+      return "resourceV2Addr";
+    }
+
+    if (address.equals(checkUnDelegateResourceAddr)) {
+      return "checkUnDelegateResourceAddr";
+    }
+
+    if (address.equals(resourceUsageAddr)) {
+      return "resourceUsageAddr";
+    }
+
+    if (address.equals(totalResourceAddr)) {
+      return "totalResourceAddr";
+    }
+
+    if (address.equals(totalDelegatedResourceAddr)) {
+      return "totalDelegatedResourceAddr";
+    }
+
+    if (address.equals(totalAcquiredResourceAddr)) {
+      return "totalAcquiredResourceAddr";
+    }
+
+    if (address.equals(ethRipemd160Addr)) {
+      return "ethRipemd160Addr";
+    }
+    if (address.equals(blake2FAddr)) {
+      return "blake2FAddr";
+    }
+    return "null";
+  }
+
   private static byte[] encodeRes(byte[] w1, byte[] w2) {
 
     byte[] res = new byte[64];
