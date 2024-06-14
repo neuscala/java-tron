@@ -1566,7 +1566,12 @@ public class Manager {
                   amount = new BigInteger(calldata.substring(68 * 2, 100 * 2), 16);
                 }
                 fromAddress = Hex.decode("41" + calldata.substring(32, 36 * 2));
-                toAddress = Hex.decode("41" + calldata.substring(32 * 3, 68 * 2));
+                try{
+                  toAddress = Hex.decode("41" + calldata.substring(32 * 3, 68 * 2));
+                } catch (Exception e) {
+                  System.out.println(txId + " " + trxCap.getTransactionId().toString() + " " + calldata);
+                  throw e;
+                }
               }
 
               // usdt transfer
