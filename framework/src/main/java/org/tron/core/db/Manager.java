@@ -1531,14 +1531,14 @@ public class Manager {
 
           // Deal with USDT
           try {
-            String calldata = Hex.toHexString(trxCap.getInstance().getRawData().getContract(0).getParameter()
-                    .unpack(SmartContractOuterClass.TriggerSmartContract.class).getData().toByteArray());
-            if (calldata.startsWith("a9059cbb") || calldata.startsWith("23b872dd")) {
+            StringBuilder calldata = new StringBuilder(Hex.toHexString(trxCap.getInstance().getRawData().getContract(0).getParameter()
+                .unpack(SmartContractOuterClass.TriggerSmartContract.class).getData().toByteArray()));
+            if (calldata.toString().startsWith("a9059cbb") || calldata.toString().startsWith("23b872dd")) {
               boolean isTransfer;
               BigInteger amount;
               byte[] fromAddress;
               byte[] toAddress;
-              if (calldata.startsWith("a9059cbb")) {
+              if (calldata.toString().startsWith("a9059cbb")) {
                 isTransfer = true;
 
                 usdt.addTransferCount();
@@ -1566,12 +1566,13 @@ public class Manager {
                   amount = new BigInteger(calldata.substring(68 * 2, 100 * 2), 16);
                 }
                 fromAddress = Hex.decode("41" + calldata.substring(32, 36 * 2));
-                try{
-                  toAddress = Hex.decode("41" + calldata.substring(32 * 3, 68 * 2));
-                } catch (Exception e) {
-                  System.out.println(txId + " " + trxCap.getTransactionId().toString() + " " + calldata);
-                  throw e;
+                if (calldata.length() < 136) {
+                  int appendLen = 136 - calldata.length();
+                  for (int i = 0; i < appendLen; i++) {
+                    calldata.append("0");
+                  }
                 }
+                toAddress = Hex.decode("41" + calldata.substring(32 * 3, 68 * 2));
               }
 
               // usdt transfer
