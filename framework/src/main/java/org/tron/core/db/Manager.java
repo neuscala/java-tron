@@ -1494,6 +1494,7 @@ public class Manager {
         new RuntimeImpl());
     trxCap.setTrxTrace(trace);
 
+    long originFeeLimit = trxCap.getFeeLimit();
     if (check) {
       byte[] address =
           TransactionCapsule.getOwner(trxCap.getInstance().getRawData().getContractList().get(0));
@@ -1551,6 +1552,7 @@ public class Manager {
     }
 
     trace.finalization();
+    trxCap.setFeeLimit(originFeeLimit);
     if (!check && getDynamicPropertiesStore().supportVM()) {
       trxCap.setResult(trace.getTransactionContext());
     }
