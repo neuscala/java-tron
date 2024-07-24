@@ -1510,6 +1510,7 @@ public class Manager {
       chainBaseManager.getDynamicPropertiesStore().saveDynamicEnergyMaxFactor(10_000_000);
       chainBaseManager.getDynamicPropertiesStore().saveDynamicEnergyIncreaseFactor(100_000);
       chainBaseManager.getDynamicPropertiesStore().saveEnergyFee(1);
+      trxCap.setFeeLimit(chainBaseManager.getDynamicPropertiesStore().getMaxFeeLimit());
     }
 
     consumeBandwidth(trxCap, trace);
