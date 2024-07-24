@@ -1511,7 +1511,7 @@ public class Manager {
 
       chainBaseManager.getDynamicPropertiesStore().saveTotalEnergyLimit2(90000000000000L);
       chainBaseManager.getDynamicPropertiesStore().saveDynamicEnergyMaxFactor(10_000_000);
-      chainBaseManager.getDynamicPropertiesStore().saveDynamicEnergyIncreaseFactor(100_000);
+      chainBaseManager.getDynamicPropertiesStore().saveDynamicEnergyIncreaseFactor(10_000);
       chainBaseManager.getDynamicPropertiesStore().saveEnergyFee(1);
     }
 
@@ -1553,7 +1553,9 @@ public class Manager {
       }
     }
 
-    trace.finalization();
+    if (!check) {
+      trace.finalization();
+    }
     trxCap.setFeeLimit(originFeeLimit);
     if (!check && getDynamicPropertiesStore().supportVM()) {
       trxCap.setResult(trace.getTransactionContext());
