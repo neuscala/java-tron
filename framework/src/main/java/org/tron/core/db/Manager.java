@@ -1539,7 +1539,7 @@ public class Manager {
       if (blockCap.hasWitnessSignature()) {
         if (check) {
           try {
-            trace.check();
+            trace.check(txId);
           } catch (ReceiptCheckErrException errException) {
             System.out.println(errException.getMessage());
             if (Objects.nonNull(trace.getRuntimeResult().getException())) {
@@ -1548,7 +1548,7 @@ public class Manager {
             }
           }
         } else {
-          trace.check();
+          trace.check(txId);
         }
       }
     }

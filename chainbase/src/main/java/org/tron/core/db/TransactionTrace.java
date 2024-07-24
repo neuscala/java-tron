@@ -336,17 +336,21 @@ public class TransactionTrace {
   }
 
   public void check() throws ReceiptCheckErrException {
+    check(trx.getTransactionId());
+  }
+
+  public void check(Sha256Hash txId) throws ReceiptCheckErrException {
     if (!needVM()) {
       return;
     }
     if (Objects.isNull(trx.getContractRet())) {
       throw new ReceiptCheckErrException(
-          String.format("null resultCode id: %s", trx.getTransactionId()));
+          String.format("null resultCode id: %s", txId));
     }
     if (!trx.getContractRet().equals(receipt.getResult())) {
       throw new ReceiptCheckErrException(String.format(
           "different resultCode txId: %s, expect: %s, actual: %s",
-          trx.getTransactionId(), trx.getContractRet(), receipt.getResult()));
+          txId, trx.getContractRet(), receipt.getResult()));
     }
   }
 
