@@ -36,7 +36,7 @@ public class VM {
         try {
           Operation op = jumpTable.get(program.getCurrentOpIntValue());
           if (!op.isEnabled()) {
-            System.out.println("Opcodde: " + op.getOpcode());
+            System.out.println("Opcodde: " + program.getCurrentOpIntValue());
             throw Program.Exception.invalidOpCode(program.getCurrentOp());
           }
           program.setLastOp((byte) op.getOpcode());
