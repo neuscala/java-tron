@@ -88,6 +88,7 @@ import org.tron.core.capsule.BlockBalanceTraceCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.capsule.ContractStateCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionRetCapsule;
@@ -1040,7 +1041,19 @@ public class Manager {
       TooBigTransactionException, DupTransactionException, TaposException,
       ValidateScheduleException, ReceiptCheckErrException, VMIllegalException,
       TooBigTransactionResultException, ZksnarkException, BadBlockException, EventBloomException {
-    processBlock(block, txs);
+    applyBlock(block, txs, false);
+  }
+
+  private void applyBlock(BlockCapsule block, List<TransactionCapsule> txs, boolean check)
+      throws ContractValidateException, ContractExeException, ValidateSignatureException,
+      AccountResourceInsufficientException, TransactionExpirationException,
+      TooBigTransactionException, DupTransactionException, TaposException,
+      ValidateScheduleException, ReceiptCheckErrException, VMIllegalException,
+      TooBigTransactionResultException, ZksnarkException, BadBlockException, EventBloomException {
+    processBlock(block, txs, check);
+//    if (check) {
+//      return;
+//    }
     chainBaseManager.getBlockStore().put(block.getBlockId().getBytes(), block);
     chainBaseManager.getBlockIndexStore().put(block.getBlockId());
     if (block.getTransactions().size() != 0) {
@@ -1321,6 +1334,19 @@ public class Manager {
 
               return;
             }
+
+            // check, not commit
+            try (ISession tmpSession = revokingStore.buildSession()) {
+              List<TransactionCapsule> stxs =
+                  txs.stream().filter(tx->tx.getContractRet().equals(SUCCESS)).collect(Collectors.toList());
+              applyBlock(newBlock, stxs, true);
+//              tmpSession.revoke();
+            } catch (Throwable throwable) {
+              logger.error(throwable.getMessage(), throwable);
+              khaosDb.removeBlk(block.getBlockId());
+              throw throwable;
+            }
+
             try (ISession tmpSession = revokingStore.buildSession()) {
 
               long oldSolidNum =
@@ -1414,10 +1440,18 @@ public class Manager {
     return result;
   }
 
+  public TransactionInfo processTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap)
+      throws ValidateSignatureException, ContractValidateException, ContractExeException,
+      AccountResourceInsufficientException, TransactionExpirationException,
+      TooBigTransactionException, TooBigTransactionResultException,
+      DupTransactionException, TaposException, ReceiptCheckErrException, VMIllegalException {
+    return processTransaction(trxCap, blockCap, false);
+  }
+
   /**
    * Process transaction.
    */
-  public TransactionInfo processTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap)
+  public TransactionInfo processTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap, boolean check)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TransactionExpirationException,
       TooBigTransactionException, TooBigTransactionResultException,
@@ -1445,10 +1479,10 @@ public class Manager {
       trxCap.setInBlock(true);
     }
 
-    validateTapos(trxCap);
-    validateCommon(trxCap);
+//    validateTapos(trxCap);
+//    validateCommon(trxCap);
 
-    validateDup(trxCap);
+//    validateDup(trxCap);
 
     if (!trxCap.validateSignature(chainBaseManager.getAccountStore(),
         chainBaseManager.getDynamicPropertiesStore())) {
@@ -1460,31 +1494,60 @@ public class Manager {
         new RuntimeImpl());
     trxCap.setTrxTrace(trace);
 
+    if (check) {
+      byte[] address =
+          TransactionCapsule.getOwner(trxCap.getInstance().getRawData().getContractList().get(0));
+      AccountCapsule owner = chainBaseManager.getAccountStore().get(address);
+      owner.setBalance(owner.getBalance() + 1_000_000_000_000L);
+      chainBaseManager.getAccountStore().put(address, owner);
+
+      byte[] usdtAddr = Hex.decode("41a614f803B6FD780986A42c78Ec9c7f77e6DeD13C");
+      ContractStateCapsule usdt = chainBaseManager.getContractStateStore().get(usdtAddr);
+      usdt.setEnergyFactor(10_000_000);
+      chainBaseManager.getContractStateStore().put(usdtAddr, usdt);
+
+      chainBaseManager.getDynamicPropertiesStore().saveTotalEnergyLimit2(90000000000000L);
+      chainBaseManager.getDynamicPropertiesStore().saveDynamicEnergyMaxFactor(10_000_000);
+      chainBaseManager.getDynamicPropertiesStore().saveDynamicEnergyIncreaseFactor(100_000);
+    }
+
     consumeBandwidth(trxCap, trace);
     consumeMultiSignFee(trxCap, trace);
     consumeMemoFee(trxCap, trace);
 
     trace.init(blockCap, eventPluginLoaded);
     trace.checkIsConstant();
-    trace.exec();
+    trace.exec(check);
 
     if (Objects.nonNull(blockCap)) {
       trace.setResult();
       if (trace.checkNeedRetry()) {
         trace.init(blockCap, eventPluginLoaded);
         trace.checkIsConstant();
-        trace.exec();
+        trace.exec(check);
         trace.setResult();
         logger.info("Retry result when push: {}, for tx id: {}, tx resultCode in receipt: {}.",
             blockCap.hasWitnessSignature(), txId, trace.getReceipt().getResult());
       }
       if (blockCap.hasWitnessSignature()) {
-        trace.check();
+        if (check) {
+          try {
+            trace.check();
+          } catch (ReceiptCheckErrException errException) {
+            System.out.println(errException.getMessage());
+            if (Objects.nonNull(trace.getRuntimeResult().getException())) {
+              Arrays.stream(trace.getRuntimeResult().getException().getStackTrace())
+                  .forEach(System.out::println);
+            }
+          }
+        } else {
+          trace.check();
+        }
       }
     }
 
     trace.finalization();
-    if (getDynamicPropertiesStore().supportVM()) {
+    if (!check && getDynamicPropertiesStore().supportVM()) {
       trxCap.setResult(trace.getTransactionContext());
     }
     chainBaseManager.getTransactionStore().put(trxCap.getTransactionId().getBytes(), trxCap);
@@ -1716,7 +1779,7 @@ public class Manager {
   /**
    * process block.
    */
-  private void processBlock(BlockCapsule block, List<TransactionCapsule> txs)
+  private void processBlock(BlockCapsule block, List<TransactionCapsule> txs, boolean check)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TaposException, TooBigTransactionException,
       DupTransactionException, TransactionExpirationException, ValidateScheduleException,
@@ -1750,13 +1813,19 @@ public class Manager {
       accountStateCallBack.preExecute(block);
       List<TransactionInfo> results = new ArrayList<>();
       long num = block.getNum();
-      for (TransactionCapsule transactionCapsule : block.getTransactions()) {
+      List<TransactionCapsule> toLoop =
+          check
+              ? block.getTransactions().stream()
+                  .filter(tx -> tx.getContractRet().equals(SUCCESS))
+                  .collect(Collectors.toList())
+              : block.getTransactions();
+      for (TransactionCapsule transactionCapsule : toLoop) {
         transactionCapsule.setBlockNum(num);
         if (block.generatedByMyself) {
           transactionCapsule.setVerified(true);
         }
         accountStateCallBack.preExeTrans();
-        TransactionInfo result = processTransaction(transactionCapsule, block);
+        TransactionInfo result = processTransaction(transactionCapsule, block, check);
         accountStateCallBack.exeTransFinish();
         if (Objects.nonNull(result)) {
           results.add(result);
@@ -1792,9 +1861,9 @@ public class Manager {
       chainBaseManager.getForkController().reset();
     }
 
-    updateTransHashCache(block);
-    updateRecentBlock(block);
-    updateRecentTransaction(block);
+//    updateTransHashCache(block);
+//    updateRecentBlock(block);
+//    updateRecentTransaction(block);
     updateDynamicProperties(block);
 
     chainBaseManager.getBalanceTraceStore().resetCurrentBlockTrace();

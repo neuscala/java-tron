@@ -1,5 +1,6 @@
 package org.tron.common.runtime;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -39,6 +40,12 @@ public class RuntimeImpl implements Runtime {
   @Override
   public void execute(TransactionContext context)
       throws ContractValidateException, ContractExeException {
+    execute(context, false);
+  }
+
+  @Override
+  public void execute(TransactionContext context, boolean check)
+      throws ContractValidateException, ContractExeException {
     this.context = context;
 
     ContractType contractType = context.getTrxCap().getInstance().getRawData().getContract(0)
@@ -56,8 +63,8 @@ public class RuntimeImpl implements Runtime {
         actuatorList = ActuatorCreator.getINSTANCE().createActuator(context.getTrxCap());
     }
     if (actuator2 != null) {
-      actuator2.validate(context);
-      actuator2.execute(context);
+      actuator2.validate(context, check);
+      actuator2.execute(context, check);
     } else {
       for (Actuator act : actuatorList) {
         act.validate();
@@ -66,7 +73,6 @@ public class RuntimeImpl implements Runtime {
     }
 
     setResultCode(context.getProgramResult());
-
   }
 
   @Override

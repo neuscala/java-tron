@@ -111,6 +111,11 @@ public class VMActuator implements Actuator2 {
 
   @Override
   public void validate(Object object) throws ContractValidateException {
+    validate(object, false);
+  }
+
+  @Override
+  public void validate(Object object, boolean check) throws ContractValidateException {
 
     TransactionContext context = (TransactionContext) object;
     if (Objects.isNull(context)) {
@@ -154,11 +159,11 @@ public class VMActuator implements Actuator2 {
     switch (contractType.getNumber()) {
       case ContractType.TriggerSmartContract_VALUE:
         trxType = TrxType.TRX_CONTRACT_CALL_TYPE;
-        call();
+        call(check);
         break;
       case ContractType.CreateSmartContract_VALUE:
         trxType = TrxType.TRX_CONTRACT_CREATION_TYPE;
-        create();
+        create(check);
         break;
       default:
         throw new ContractValidateException("Unknown contract type");
@@ -167,6 +172,11 @@ public class VMActuator implements Actuator2 {
 
   @Override
   public void execute(Object object) throws ContractExeException {
+    execute(object, false);
+  }
+
+  @Override
+  public void execute(Object object, boolean check) throws ContractExeException {
     TransactionContext context = (TransactionContext) object;
     if (Objects.isNull(context)) {
       throw new RuntimeException("TransactionContext is null");
@@ -308,7 +318,7 @@ public class VMActuator implements Actuator2 {
 
   }
 
-  private void create()
+  private void create(boolean check)
       throws ContractValidateException {
     if (!rootRepository.getDynamicPropertiesStore().supportVM()) {
       throw new ContractValidateException("vm work is off, need to be opened by the committee");
@@ -372,7 +382,7 @@ public class VMActuator implements Actuator2 {
       long energyLimit;
       // according to version
 
-      if (isConstantCall) {
+      if (isConstantCall || check) {
         energyLimit = maxEnergyLimit;
       } else {
         if (StorageUtils.getEnergyLimitHardFork()) {
@@ -447,7 +457,7 @@ public class VMActuator implements Actuator2 {
    * **
    */
 
-  private void call()
+  private void call(boolean check)
       throws ContractValidateException {
 
     if (!rootRepository.getDynamicPropertiesStore().supportVM()) {
@@ -502,7 +512,7 @@ public class VMActuator implements Actuator2 {
       }
       AccountCapsule caller = rootRepository.getAccount(callerAddress);
       long energyLimit;
-      if (isConstantCall) {
+      if (isConstantCall || check) {
         energyLimit = maxEnergyLimit;
       } else {
         AccountCapsule creator = rootRepository
