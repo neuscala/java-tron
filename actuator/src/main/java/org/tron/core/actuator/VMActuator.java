@@ -382,7 +382,10 @@ public class VMActuator implements Actuator2 {
       long energyLimit;
       // according to version
 
-      if (isConstantCall || check) {
+      if (check) {
+        energyLimit = CommonParameter.getInstance().maxEnergyLimitForConstant;
+      }
+      else if (isConstantCall) {
         energyLimit = maxEnergyLimit;
       } else {
         if (StorageUtils.getEnergyLimitHardFork()) {
@@ -512,7 +515,10 @@ public class VMActuator implements Actuator2 {
       }
       AccountCapsule caller = rootRepository.getAccount(callerAddress);
       long energyLimit;
-      if (isConstantCall || check) {
+      if (check) {
+        energyLimit = CommonParameter.getInstance().maxEnergyLimitForConstant;
+      }
+      else if (isConstantCall) {
         energyLimit = maxEnergyLimit;
       } else {
         AccountCapsule creator = rootRepository
