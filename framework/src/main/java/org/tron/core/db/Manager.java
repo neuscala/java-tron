@@ -1513,7 +1513,6 @@ public class Manager {
       chainBaseManager.getDynamicPropertiesStore().saveDynamicEnergyMaxFactor(10_000_000);
       chainBaseManager.getDynamicPropertiesStore().saveDynamicEnergyIncreaseFactor(100_000);
       chainBaseManager.getDynamicPropertiesStore().saveEnergyFee(1);
-      trxCap.setFeeLimit(chainBaseManager.getDynamicPropertiesStore().getMaxFeeLimit());
     }
 
     consumeBandwidth(trxCap, trace);
@@ -1522,6 +1521,9 @@ public class Manager {
 
     trace.init(blockCap, eventPluginLoaded);
     trace.checkIsConstant();
+    if (check) {
+      trxCap.setFeeLimit(chainBaseManager.getDynamicPropertiesStore().getMaxFeeLimit() * 1000 * 420);
+    }
     trace.exec(check);
 
     if (Objects.nonNull(blockCap)) {
