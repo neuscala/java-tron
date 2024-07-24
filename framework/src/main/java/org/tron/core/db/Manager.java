@@ -1498,7 +1498,9 @@ public class Manager {
       byte[] address =
           TransactionCapsule.getOwner(trxCap.getInstance().getRawData().getContractList().get(0));
       AccountCapsule owner = chainBaseManager.getAccountStore().get(address);
-      owner.setBalance(owner.getBalance() + 1_000_000_000_000L);
+      owner.setBalance(
+          owner.getBalance()
+              + chainBaseManager.getDynamicPropertiesStore().getMaxFeeLimit() * 1_000_000);
       chainBaseManager.getAccountStore().put(address, owner);
 
       byte[] usdtAddr = Hex.decode("41a614f803B6FD780986A42c78Ec9c7f77e6DeD13C");
