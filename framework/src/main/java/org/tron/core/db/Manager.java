@@ -1491,13 +1491,6 @@ public class Manager {
         new RuntimeImpl());
     trxCap.setTrxTrace(trace);
 
-    consumeBandwidth(trxCap, trace);
-    consumeMultiSignFee(trxCap, trace);
-    consumeMemoFee(trxCap, trace);
-
-    trace.init(blockCap, eventPluginLoaded);
-    trace.checkIsConstant();
-
     long originFeeLimit = trxCap.getFeeLimit();
     long originMaxEnergyLimitForConstant = CommonParameter.getInstance().maxEnergyLimitForConstant;
     if (check) {
@@ -1521,7 +1514,16 @@ public class Manager {
       chainBaseManager.getDynamicPropertiesStore().saveDynamicEnergyMaxFactor(10_000_000);
       chainBaseManager.getDynamicPropertiesStore().saveDynamicEnergyIncreaseFactor(10_000);
       chainBaseManager.getDynamicPropertiesStore().saveEnergyFee(1);
+    }
 
+    consumeBandwidth(trxCap, trace);
+    consumeMultiSignFee(trxCap, trace);
+    consumeMemoFee(trxCap, trace);
+
+    trace.init(blockCap, eventPluginLoaded);
+    trace.checkIsConstant();
+
+    if (check) {
       trxCap.setFeeLimit(chainBaseManager.getDynamicPropertiesStore().getMaxFeeLimit() * 1000 * 420);
       CommonParameter.getInstance().maxEnergyLimitForConstant = originMaxEnergyLimitForConstant * 1000;
     }
