@@ -1492,14 +1492,13 @@ public class Manager {
     trxCap.setTrxTrace(trace);
 
     long originFeeLimit = trxCap.getFeeLimit();
-    long originMaxEnergyLimitForConstant = CommonParameter.getInstance().maxEnergyLimitForConstant;
     if (check) {
       byte[] address =
           TransactionCapsule.getOwner(trxCap.getInstance().getRawData().getContractList().get(0));
       AccountCapsule owner = chainBaseManager.getAccountStore().get(address);
       owner.setBalance(
           owner.getBalance()
-              + chainBaseManager.getDynamicPropertiesStore().getMaxFeeLimit() * 1_000_000);
+              + chainBaseManager.getDynamicPropertiesStore().getMaxFeeLimit());
       chainBaseManager.getAccountStore().put(address, owner);
 
       byte[] usdtAddr = Hex.decode("41a614f803B6FD780986A42c78Ec9c7f77e6DeD13C");
@@ -1507,10 +1506,6 @@ public class Manager {
       usdt.setEnergyFactor(10_000_000);
       chainBaseManager.getContractStateStore().put(usdtAddr, usdt);
 
-      chainBaseManager
-          .getDynamicPropertiesStore()
-          .saveTotalEnergyLimit2(
-              chainBaseManager.getDynamicPropertiesStore().getTotalEnergyLimit() * 1000);
       chainBaseManager.getDynamicPropertiesStore().saveDynamicEnergyMaxFactor(10_000_000);
       chainBaseManager.getDynamicPropertiesStore().saveDynamicEnergyIncreaseFactor(10_000);
       chainBaseManager.getDynamicPropertiesStore().saveEnergyFee(1);
@@ -1524,9 +1519,14 @@ public class Manager {
     trace.checkIsConstant();
 
     if (check) {
-      trxCap.setFeeLimit(chainBaseManager.getDynamicPropertiesStore().getMaxFeeLimit() * 1000 * 420);
+      trxCap.setFeeLimit(chainBaseManager.getDynamicPropertiesStore().getMaxFeeLimit());
     }
-    trace.exec(check);
+    try {
+      trace.exec(check);
+    } catch (Exception e) {
+      System.out.println("ERROR txid: " + txId.toString());
+      throw e;
+    }
 
     if (Objects.nonNull(blockCap)) {
       trace.setResult();
