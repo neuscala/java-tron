@@ -1487,10 +1487,6 @@ public class Manager {
           String.format(" %s transaction signature validate failed", txId));
     }
 
-    TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
-        new RuntimeImpl());
-    trxCap.setTrxTrace(trace);
-
     long originFeeLimit = trxCap.getFeeLimit();
     if (check) {
       byte[] address =
@@ -1510,6 +1506,10 @@ public class Manager {
       chainBaseManager.getDynamicPropertiesStore().saveDynamicEnergyIncreaseFactor(10_000);
       chainBaseManager.getDynamicPropertiesStore().saveEnergyFee(1);
     }
+
+    TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
+        new RuntimeImpl());
+    trxCap.setTrxTrace(trace);
 
     consumeBandwidth(trxCap, trace);
     consumeMultiSignFee(trxCap, trace);
