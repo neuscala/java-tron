@@ -1525,7 +1525,6 @@ public class Manager {
 
     if (check) {
       trxCap.setFeeLimit(chainBaseManager.getDynamicPropertiesStore().getMaxFeeLimit() * 1000 * 420);
-      CommonParameter.getInstance().maxEnergyLimitForConstant = originMaxEnergyLimitForConstant * 1000;
     }
     trace.exec(check);
 
@@ -1560,7 +1559,6 @@ public class Manager {
       trace.finalization();
     }
     trxCap.setFeeLimit(originFeeLimit);
-    CommonParameter.getInstance().maxEnergyLimitForConstant = originMaxEnergyLimitForConstant;
     if (!check && getDynamicPropertiesStore().supportVM()) {
       trxCap.setResult(trace.getTransactionContext());
     }
