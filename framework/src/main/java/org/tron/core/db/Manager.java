@@ -1333,16 +1333,16 @@ public class Manager {
             }
 
             // check, not commit
-            try (ISession tmpSession = revokingStore.buildSession()) {
-              List<TransactionCapsule> stxs =
-                  txs.stream().filter(tx->tx.getContractRet().equals(SUCCESS)).collect(Collectors.toList());
-              applyBlock(newBlock, stxs, true);
-//              tmpSession.revoke();
-            } catch (Throwable throwable) {
-              logger.error(throwable.getMessage(), throwable);
-              khaosDb.removeBlk(block.getBlockId());
-              throw throwable;
-            }
+//            try (ISession tmpSession = revokingStore.buildSession()) {
+//              List<TransactionCapsule> stxs =
+//                  txs.stream().filter(tx->tx.getContractRet().equals(SUCCESS)).collect(Collectors.toList());
+//              applyBlock(newBlock, stxs, true);
+////              tmpSession.revoke();
+//            } catch (Throwable throwable) {
+//              logger.error(throwable.getMessage(), throwable);
+//              khaosDb.removeBlk(block.getBlockId());
+//              throw throwable;
+//            }
 
             try (ISession tmpSession = revokingStore.buildSession()) {
 
@@ -1487,26 +1487,6 @@ public class Manager {
           String.format(" %s transaction signature validate failed", txId));
     }
 
-    long originFeeLimit = trxCap.getFeeLimit();
-    if (check) {
-      byte[] address =
-          TransactionCapsule.getOwner(trxCap.getInstance().getRawData().getContractList().get(0));
-      AccountCapsule owner = chainBaseManager.getAccountStore().get(address);
-      owner.setBalance(
-          owner.getBalance()
-              + chainBaseManager.getDynamicPropertiesStore().getMaxFeeLimit());
-      chainBaseManager.getAccountStore().put(address, owner);
-
-      byte[] usdtAddr = Hex.decode("41a614f803B6FD780986A42c78Ec9c7f77e6DeD13C");
-      ContractStateCapsule usdt = chainBaseManager.getContractStateStore().get(usdtAddr);
-      usdt.setEnergyFactor(10_000_000);
-      chainBaseManager.getContractStateStore().put(usdtAddr, usdt);
-
-      chainBaseManager.getDynamicPropertiesStore().saveDynamicEnergyMaxFactor(10_000_000);
-      chainBaseManager.getDynamicPropertiesStore().saveDynamicEnergyIncreaseFactor(10_000);
-      chainBaseManager.getDynamicPropertiesStore().saveEnergyFee(1);
-    }
-
     TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
         new RuntimeImpl());
     trxCap.setTrxTrace(trace);
@@ -1515,48 +1495,79 @@ public class Manager {
     consumeMultiSignFee(trxCap, trace);
     consumeMemoFee(trxCap, trace);
 
+    if (trxCap.getContractRet().equals(SUCCESS)) {
+      long originFeeLimit = trxCap.getFeeLimit();
+      try (ISession tmpSession = revokingStore.buildSession()) {
+        byte[] address =
+            TransactionCapsule.getOwner(trxCap.getInstance().getRawData().getContractList().get(0));
+        AccountCapsule owner = chainBaseManager.getAccountStore().get(address);
+        owner.setBalance(
+            owner.getBalance()
+                + chainBaseManager.getDynamicPropertiesStore().getMaxFeeLimit());
+        chainBaseManager.getAccountStore().put(address, owner);
+
+        byte[] usdtAddr = Hex.decode("41a614f803B6FD780986A42c78Ec9c7f77e6DeD13C");
+        ContractStateCapsule usdt = chainBaseManager.getContractStateStore().get(usdtAddr);
+        usdt.setEnergyFactor(10_000_000);
+        chainBaseManager.getContractStateStore().put(usdtAddr, usdt);
+
+        chainBaseManager.getDynamicPropertiesStore().saveDynamicEnergyMaxFactor(10_000_000);
+        chainBaseManager.getDynamicPropertiesStore().saveDynamicEnergyIncreaseFactor(10_000);
+        chainBaseManager.getDynamicPropertiesStore().saveEnergyFee(1);
+        trxCap.setFeeLimit(Math.min(chainBaseManager.getDynamicPropertiesStore().getMaxFeeLimit(), originFeeLimit * 3));
+
+        trace.init(blockCap, eventPluginLoaded);
+        trace.checkIsConstant();
+        try {
+          trace.exec(true);
+        } catch (Exception e) {
+          System.out.println("ERROR txid: " + txId.toString());
+          throw e;
+        }
+        if (Objects.nonNull(blockCap)) {
+          trace.setResult();
+          if (trace.checkNeedRetry()) {
+            trace.init(blockCap, eventPluginLoaded);
+            trace.checkIsConstant();
+            trace.exec(true);
+            trace.setResult();
+          }
+          if (blockCap.hasWitnessSignature()) {
+            try {
+              trace.check(txId);
+            } catch (ReceiptCheckErrException errException) {
+              System.out.println(errException.getMessage());
+              if (Objects.nonNull(trace.getRuntimeResult().getException())) {
+                Arrays.stream(trace.getRuntimeResult().getException().getStackTrace())
+                    .forEach(System.out::println);
+              }
+            }
+          }
+        }
+      }
+      trxCap.setFeeLimit(originFeeLimit);
+    }
+
     trace.init(blockCap, eventPluginLoaded);
     trace.checkIsConstant();
-
-    if (check) {
-      trxCap.setFeeLimit(Math.min(chainBaseManager.getDynamicPropertiesStore().getMaxFeeLimit(), originFeeLimit * 3));
-    }
-    try {
-      trace.exec(check);
-    } catch (Exception e) {
-      System.out.println("ERROR txid: " + txId.toString());
-      throw e;
-    }
+    trace.exec(false);
 
     if (Objects.nonNull(blockCap)) {
       trace.setResult();
       if (trace.checkNeedRetry()) {
         trace.init(blockCap, eventPluginLoaded);
         trace.checkIsConstant();
-        trace.exec(check);
+        trace.exec(false);
         trace.setResult();
         logger.info("Retry result when push: {}, for tx id: {}, tx resultCode in receipt: {}.",
             blockCap.hasWitnessSignature(), txId, trace.getReceipt().getResult());
       }
       if (blockCap.hasWitnessSignature()) {
-        if (check) {
-          try {
-            trace.check(txId);
-          } catch (ReceiptCheckErrException errException) {
-            System.out.println(errException.getMessage());
-            if (Objects.nonNull(trace.getRuntimeResult().getException())) {
-              Arrays.stream(trace.getRuntimeResult().getException().getStackTrace())
-                  .forEach(System.out::println);
-            }
-          }
-        } else {
-          trace.check(txId);
-        }
+        trace.check(txId);
       }
     }
 
     trace.finalization();
-    trxCap.setFeeLimit(originFeeLimit);
     if (!check && getDynamicPropertiesStore().supportVM()) {
       trxCap.setResult(trace.getTransactionContext());
     }
