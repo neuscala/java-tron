@@ -1519,7 +1519,7 @@ public class Manager {
     trace.checkIsConstant();
 
     if (check) {
-      trxCap.setFeeLimit(chainBaseManager.getDynamicPropertiesStore().getMaxFeeLimit());
+      trxCap.setFeeLimit(Math.min(chainBaseManager.getDynamicPropertiesStore().getMaxFeeLimit(), originFeeLimit * 3));
     }
     try {
       trace.exec(check);
@@ -1555,9 +1555,7 @@ public class Manager {
       }
     }
 
-    if (!check) {
-      trace.finalization();
-    }
+    trace.finalization();
     trxCap.setFeeLimit(originFeeLimit);
     if (!check && getDynamicPropertiesStore().supportVM()) {
       trxCap.setResult(trace.getTransactionContext());

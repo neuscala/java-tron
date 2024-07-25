@@ -489,6 +489,7 @@ public class VMActuator implements Actuator2 {
     ContractCapsule deployedContract = rootRepository.getContract(contractAddress);
     if (null == deployedContract) {
       logger.info("No contract or not a smart contract");
+      System.out.println("No contract or not a smart contract: " + StringUtil.encode58Check(contractAddress));
       throw new ContractValidateException("No contract or not a smart contract");
     }
 
