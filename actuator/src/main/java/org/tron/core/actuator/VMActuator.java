@@ -128,10 +128,10 @@ public class VMActuator implements Actuator2 {
     OperationRegistry.init();
     trx = context.getTrxCap().getInstance();
     // If tx`s fee limit is set, use it to calc max energy limit for constant call
-    if (check) {
-      maxEnergyLimit = trx.getRawData().getFeeLimit();
-    }
-    else if (isConstantCall && trx.getRawData().getFeeLimit() > 0) {
+//    if (check) {
+//      maxEnergyLimit = trx.getRawData().getFeeLimit();
+//    }
+    if (isConstantCall && trx.getRawData().getFeeLimit() > 0) {
       maxEnergyLimit = Math.min(maxEnergyLimit, trx.getRawData().getFeeLimit()
           / context.getStoreFactory().getChainBaseManager()
           .getDynamicPropertiesStore().getEnergyFee());
@@ -388,11 +388,7 @@ public class VMActuator implements Actuator2 {
 
       long energyLimit;
       // according to version
-
-      if (check) {
-        energyLimit = 1_000L * 420 * rootRepository.getDynamicPropertiesStore().getMaxFeeLimit();
-      }
-      else if (isConstantCall) {
+      if (isConstantCall) {
         energyLimit = maxEnergyLimit;
       } else {
         if (StorageUtils.getEnergyLimitHardFork()) {
@@ -526,10 +522,7 @@ public class VMActuator implements Actuator2 {
       }
       AccountCapsule caller = rootRepository.getAccount(callerAddress);
       long energyLimit;
-      if (check) {
-        energyLimit = 1_000L * 420 * rootRepository.getDynamicPropertiesStore().getMaxFeeLimit();
-      }
-      else if (isConstantCall) {
+      if (isConstantCall) {
         energyLimit = maxEnergyLimit;
       } else {
         AccountCapsule creator = rootRepository

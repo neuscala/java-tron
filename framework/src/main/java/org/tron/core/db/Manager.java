@@ -1051,9 +1051,6 @@ public class Manager {
       ValidateScheduleException, ReceiptCheckErrException, VMIllegalException,
       TooBigTransactionResultException, ZksnarkException, BadBlockException, EventBloomException {
     processBlock(block, txs, check);
-//    if (check) {
-//      return;
-//    }
     chainBaseManager.getBlockStore().put(block.getBlockId().getBytes(), block);
     chainBaseManager.getBlockIndexStore().put(block.getBlockId());
     if (block.getTransactions().size() != 0) {
@@ -1494,7 +1491,15 @@ public class Manager {
         new RuntimeImpl());
     trxCap.setTrxTrace(trace);
 
+    consumeBandwidth(trxCap, trace);
+    consumeMultiSignFee(trxCap, trace);
+    consumeMemoFee(trxCap, trace);
+
+    trace.init(blockCap, eventPluginLoaded);
+    trace.checkIsConstant();
+
     long originFeeLimit = trxCap.getFeeLimit();
+    long originMaxEnergyLimitForConstant = CommonParameter.getInstance().maxEnergyLimitForConstant;
     if (check) {
       byte[] address =
           TransactionCapsule.getOwner(trxCap.getInstance().getRawData().getContractList().get(0));
@@ -1509,20 +1514,16 @@ public class Manager {
       usdt.setEnergyFactor(10_000_000);
       chainBaseManager.getContractStateStore().put(usdtAddr, usdt);
 
-      chainBaseManager.getDynamicPropertiesStore().saveTotalEnergyLimit2(90000000000000L);
+      chainBaseManager
+          .getDynamicPropertiesStore()
+          .saveTotalEnergyLimit2(
+              chainBaseManager.getDynamicPropertiesStore().getTotalEnergyLimit() * 1000);
       chainBaseManager.getDynamicPropertiesStore().saveDynamicEnergyMaxFactor(10_000_000);
       chainBaseManager.getDynamicPropertiesStore().saveDynamicEnergyIncreaseFactor(10_000);
       chainBaseManager.getDynamicPropertiesStore().saveEnergyFee(1);
-    }
 
-    consumeBandwidth(trxCap, trace);
-    consumeMultiSignFee(trxCap, trace);
-    consumeMemoFee(trxCap, trace);
-
-    trace.init(blockCap, eventPluginLoaded);
-    trace.checkIsConstant();
-    if (check) {
       trxCap.setFeeLimit(chainBaseManager.getDynamicPropertiesStore().getMaxFeeLimit() * 1000 * 420);
+      CommonParameter.getInstance().maxEnergyLimitForConstant = originMaxEnergyLimitForConstant * 1000;
     }
     trace.exec(check);
 
@@ -1557,6 +1558,7 @@ public class Manager {
       trace.finalization();
     }
     trxCap.setFeeLimit(originFeeLimit);
+    CommonParameter.getInstance().maxEnergyLimitForConstant = originMaxEnergyLimitForConstant;
     if (!check && getDynamicPropertiesStore().supportVM()) {
       trxCap.setResult(trace.getTransactionContext());
     }
