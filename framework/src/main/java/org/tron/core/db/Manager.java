@@ -1536,7 +1536,13 @@ public class Manager {
             try {
               trace.check(txId);
             } catch (ReceiptCheckErrException errException) {
-              System.out.println(errException.getMessage());
+              String msg = errException.getMessage();
+              if (trxCap.isContractType()) {
+                String contractAddress =
+                    StringUtil.encode58Check(trace.getRuntimeResult().getContractAddress());
+                msg = "Contract: " + contractAddress + " " + msg;
+              }
+              System.out.println(msg);
               if (Objects.nonNull(trace.getRuntimeResult().getException())) {
                 Arrays.stream(trace.getRuntimeResult().getException().getStackTrace())
                     .forEach(System.out::println);
