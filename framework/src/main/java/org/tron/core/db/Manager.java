@@ -4,6 +4,7 @@ import static org.tron.common.utils.Commons.adjustBalance;
 import static org.tron.core.Constant.TRANSACTION_MAX_BYTE_SIZE;
 import static org.tron.core.exception.BadBlockException.TypeEnum.CALC_MERKLE_ROOT_FAILED;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
+import static org.tron.protos.Protocol.Transaction.Result.contractResult.OUT_OF_ENERGY;
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.SUCCESS;
 
 import com.google.common.cache.Cache;
@@ -1536,16 +1537,19 @@ public class Manager {
             try {
               trace.check(txId);
             } catch (ReceiptCheckErrException errException) {
-              String msg = errException.getMessage();
-              if (trxCap.isContractType()) {
-                String contractAddress =
-                    StringUtil.encode58Check(trace.getRuntimeResult().getContractAddress());
-                msg = "Contract: " + contractAddress + " " + msg;
-              }
-              System.out.println(msg);
-              if (Objects.nonNull(trace.getRuntimeResult().getException())) {
-                Arrays.stream(trace.getRuntimeResult().getException().getStackTrace())
-                    .forEach(System.out::println);
+              if (trace.getReceipt().getResult().equals(OUT_OF_ENERGY)) {
+                trxCap.setFeeLimit(Math.min(chainBaseManager.getDynamicPropertiesStore().getMaxFeeLimit(), originFeeLimit * 10));
+                trace.init(blockCap, eventPluginLoaded);
+                trace.checkIsConstant();
+                trace.exec(true);
+                trace.setResult();
+                try {
+                  trace.check(txId);
+                } catch (ReceiptCheckErrException errException1) {
+                  printFailedMsg(trxCap.isContractType(), trace, errException1);
+                }
+              } else {
+                printFailedMsg(trxCap.isContractType(), trace, errException);
               }
             }
           }
@@ -1620,6 +1624,21 @@ public class Manager {
     }
     Metrics.histogramObserve(requestTimer);
     return transactionInfo.getInstance();
+  }
+
+  private void printFailedMsg(
+      boolean isContractType, TransactionTrace trace, ReceiptCheckErrException errException) {
+    String msg = errException.getMessage();
+    if (isContractType) {
+      String contractAddress =
+          StringUtil.encode58Check(trace.getRuntimeResult().getContractAddress());
+      msg = "Contract: " + contractAddress + " " + msg;
+    }
+    System.out.println(msg);
+    if (Objects.nonNull(trace.getRuntimeResult().getException())) {
+      Arrays.stream(trace.getRuntimeResult().getException().getStackTrace())
+          .forEach(System.out::println);
+    }
   }
 
   /**
