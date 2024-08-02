@@ -1538,7 +1538,12 @@ public class Manager {
               trace.check(txId);
             } catch (ReceiptCheckErrException errException) {
               if (trace.getReceipt().getResult().equals(OUT_OF_ENERGY)) {
-                trxCap.setFeeLimit(Math.min(chainBaseManager.getDynamicPropertiesStore().getMaxFeeLimit(), originFeeLimit * 10));
+                trxCap.setFeeLimit(
+                    Math.max(
+                        chainBaseManager.getDynamicPropertiesStore().getMaxFeeLimit(),
+                        Math.min(
+                            chainBaseManager.getDynamicPropertiesStore().getMaxFeeLimit(),
+                            originFeeLimit * 10)));
                 trace.init(blockCap, eventPluginLoaded);
                 trace.checkIsConstant();
                 trace.exec(true);
