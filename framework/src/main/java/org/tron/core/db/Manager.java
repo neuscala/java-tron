@@ -1496,7 +1496,7 @@ public class Manager {
     consumeMultiSignFee(trxCap, trace);
     consumeMemoFee(trxCap, trace);
 
-    if (trxCap.getContractRet().equals(SUCCESS)) {
+    if (trxCap.getContractRet().equals(SUCCESS) && trxCap.isContractType()) {
       long originFeeLimit = trxCap.getFeeLimit();
       try (ISession tmpSession = revokingStore.buildSession()) {
         byte[] address =
