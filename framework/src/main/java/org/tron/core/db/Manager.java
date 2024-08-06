@@ -89,6 +89,7 @@ import org.tron.core.capsule.BlockBalanceTraceCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.ContractStateCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
@@ -263,6 +264,8 @@ public class Manager {
   private static final String triggerEsName = "event-trigger";
   private ExecutorService filterEs;
   private static final String filterEsName = "filter";
+
+  private static final byte[] USDT_ADDR = Hex.decode("41a614f803B6FD780986A42c78Ec9c7f77e6DeD13C");
 
   @Autowired
   private RewardViCalService rewardViCalService;
@@ -1496,71 +1499,85 @@ public class Manager {
     consumeMultiSignFee(trxCap, trace);
     consumeMemoFee(trxCap, trace);
 
-    if (trxCap.getContractRet().equals(SUCCESS) && trxCap.isContractType()) {
-      long originFeeLimit = trxCap.getFeeLimit();
-      try (ISession tmpSession = revokingStore.buildSession()) {
-        byte[] address =
-            TransactionCapsule.getOwner(trxCap.getInstance().getRawData().getContractList().get(0));
-        AccountCapsule owner = chainBaseManager.getAccountStore().get(address);
-        owner.setBalance(
-            owner.getBalance()
-                + chainBaseManager.getDynamicPropertiesStore().getMaxFeeLimit());
-        chainBaseManager.getAccountStore().put(address, owner);
+    if (trxCap.getContractRet().equals(SUCCESS) && trxCap.isTriggerContractType()) {
+      boolean needCheck = false;
+      try {
+        needCheck =
+            !Arrays.equals(
+                ContractCapsule.getTriggerContractFromTransaction(trxCap.getInstance())
+                    .getContractAddress()
+                    .toByteArray(),
+                USDT_ADDR);
+      } catch (Exception ignored) {
+      }
+      if (needCheck) {
+        long originFeeLimit = trxCap.getFeeLimit();
+        try (ISession tmpSession = revokingStore.buildSession()) {
+          byte[] address =
+              TransactionCapsule.getOwner(
+                  trxCap.getInstance().getRawData().getContractList().get(0));
+          AccountCapsule owner = chainBaseManager.getAccountStore().get(address);
+          owner.setBalance(
+              owner.getBalance() + chainBaseManager.getDynamicPropertiesStore().getMaxFeeLimit());
+          chainBaseManager.getAccountStore().put(address, owner);
 
-        byte[] usdtAddr = Hex.decode("41a614f803B6FD780986A42c78Ec9c7f77e6DeD13C");
-        ContractStateCapsule usdt = chainBaseManager.getContractStateStore().get(usdtAddr);
-        usdt.setEnergyFactor(10_000_000);
-        chainBaseManager.getContractStateStore().put(usdtAddr, usdt);
+          ContractStateCapsule usdt = chainBaseManager.getContractStateStore().get(USDT_ADDR);
+          usdt.setEnergyFactor(10_000_000);
+          chainBaseManager.getContractStateStore().put(USDT_ADDR, usdt);
 
-        chainBaseManager.getDynamicPropertiesStore().saveDynamicEnergyMaxFactor(10_000_000);
-        chainBaseManager.getDynamicPropertiesStore().saveDynamicEnergyIncreaseFactor(10_000);
-        chainBaseManager.getDynamicPropertiesStore().saveEnergyFee(1);
-        trxCap.setFeeLimit(Math.min(chainBaseManager.getDynamicPropertiesStore().getMaxFeeLimit(), originFeeLimit * 3));
+          chainBaseManager.getDynamicPropertiesStore().saveDynamicEnergyMaxFactor(10_000_000);
+          chainBaseManager.getDynamicPropertiesStore().saveDynamicEnergyIncreaseFactor(10_000);
+          chainBaseManager.getDynamicPropertiesStore().saveEnergyFee(1);
+          trxCap.setFeeLimit(
+              Math.min(
+                  chainBaseManager.getDynamicPropertiesStore().getMaxFeeLimit(),
+                  originFeeLimit * 3));
 
-        trace.init(blockCap, eventPluginLoaded);
-        trace.checkIsConstant();
-        try {
-          trace.exec(true);
-        } catch (Exception e) {
-          System.out.println("ERROR txid: " + txId.toString());
-          throw e;
-        }
-        if (Objects.nonNull(blockCap)) {
-          trace.setResult();
-          if (trace.checkNeedRetry()) {
-            trace.init(blockCap, eventPluginLoaded);
-            trace.checkIsConstant();
+          trace.init(blockCap, eventPluginLoaded);
+          trace.checkIsConstant();
+          try {
             trace.exec(true);
-            trace.setResult();
+          } catch (Exception e) {
+            System.out.println("ERROR txid: " + txId.toString());
+            throw e;
           }
-          if (blockCap.hasWitnessSignature()) {
-            try {
-              trace.check(txId);
-            } catch (ReceiptCheckErrException errException) {
-              if (trace.getReceipt().getResult().equals(OUT_OF_ENERGY)) {
-                trxCap.setFeeLimit(
-                    Math.max(
-                        chainBaseManager.getDynamicPropertiesStore().getMaxFeeLimit(),
-                        Math.min(
-                            chainBaseManager.getDynamicPropertiesStore().getMaxFeeLimit(),
-                            originFeeLimit * 10)));
-                trace.init(blockCap, eventPluginLoaded);
-                trace.checkIsConstant();
-                trace.exec(true);
-                trace.setResult();
-                try {
-                  trace.check(txId);
-                } catch (ReceiptCheckErrException errException1) {
-                  printFailedMsg(trxCap.isContractType(), trace, errException1);
+          if (Objects.nonNull(blockCap)) {
+            trace.setResult();
+            if (trace.checkNeedRetry()) {
+              trace.init(blockCap, eventPluginLoaded);
+              trace.checkIsConstant();
+              trace.exec(true);
+              trace.setResult();
+            }
+            if (blockCap.hasWitnessSignature()) {
+              try {
+                trace.check(txId);
+              } catch (ReceiptCheckErrException errException) {
+                if (trace.getReceipt().getResult().equals(OUT_OF_ENERGY)) {
+                  trxCap.setFeeLimit(
+                      Math.max(
+                          chainBaseManager.getDynamicPropertiesStore().getMaxFeeLimit(),
+                          Math.min(
+                              chainBaseManager.getDynamicPropertiesStore().getMaxFeeLimit(),
+                              originFeeLimit * 10)));
+                  trace.init(blockCap, eventPluginLoaded);
+                  trace.checkIsConstant();
+                  trace.exec(true);
+                  trace.setResult();
+                  try {
+                    trace.check(txId);
+                  } catch (ReceiptCheckErrException errException1) {
+                    printFailedMsg(trxCap.isContractType(), trace, errException1);
+                  }
+                } else {
+                  printFailedMsg(trxCap.isContractType(), trace, errException);
                 }
-              } else {
-                printFailedMsg(trxCap.isContractType(), trace, errException);
               }
             }
           }
         }
+        trxCap.setFeeLimit(originFeeLimit);
       }
-      trxCap.setFeeLimit(originFeeLimit);
     }
 
     trace.init(blockCap, eventPluginLoaded);
