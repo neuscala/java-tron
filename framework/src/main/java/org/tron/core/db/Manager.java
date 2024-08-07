@@ -1553,24 +1553,20 @@ public class Manager {
               try {
                 trace.check(txId);
               } catch (ReceiptCheckErrException errException) {
-                if (trace.getReceipt().getResult().equals(OUT_OF_ENERGY)) {
-                  trxCap.setFeeLimit(
-                      Math.max(
-                          chainBaseManager.getDynamicPropertiesStore().getMaxFeeLimit(),
-                          Math.min(
-                              chainBaseManager.getDynamicPropertiesStore().getMaxFeeLimit(),
-                              originFeeLimit * 10)));
-                  trace.init(blockCap, eventPluginLoaded);
-                  trace.checkIsConstant();
-                  trace.exec(true);
-                  trace.setResult();
-                  try {
-                    trace.check(txId);
-                  } catch (ReceiptCheckErrException errException1) {
-                    printFailedMsg(trxCap.isContractType(), trace, errException1);
-                  }
-                } else {
-                  printFailedMsg(trxCap.isContractType(), trace, errException);
+                trxCap.setFeeLimit(
+                    Math.max(
+                        chainBaseManager.getDynamicPropertiesStore().getMaxFeeLimit(),
+                        Math.min(
+                            chainBaseManager.getDynamicPropertiesStore().getMaxFeeLimit(),
+                            originFeeLimit * 10)));
+                trace.init(blockCap, eventPluginLoaded);
+                trace.checkIsConstant();
+                trace.exec(true);
+                trace.setResult();
+                try {
+                  trace.check(txId);
+                } catch (ReceiptCheckErrException errException1) {
+                  printFailedMsg(trxCap.isContractType(), trace, errException1);
                 }
               }
             }
