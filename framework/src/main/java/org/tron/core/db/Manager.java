@@ -2,6 +2,7 @@ package org.tron.core.db;
 
 import static org.tron.common.utils.Commons.adjustBalance;
 import static org.tron.core.Constant.TRANSACTION_MAX_BYTE_SIZE;
+import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import static org.tron.core.exception.BadBlockException.TypeEnum.CALC_MERKLE_ROOT_FAILED;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.OUT_OF_ENERGY;
@@ -1046,7 +1047,16 @@ public class Manager {
       TooBigTransactionException, DupTransactionException, TaposException,
       ValidateScheduleException, ReceiptCheckErrException, VMIllegalException,
       TooBigTransactionResultException, ZksnarkException, BadBlockException, EventBloomException {
-    processBlock(block, txs);
+    applyBlock(block, txs, false);
+  }
+
+  private void applyBlock(BlockCapsule block, List<TransactionCapsule> txs, boolean check)
+      throws ContractValidateException, ContractExeException, ValidateSignatureException,
+      AccountResourceInsufficientException, TransactionExpirationException,
+      TooBigTransactionException, DupTransactionException, TaposException,
+      ValidateScheduleException, ReceiptCheckErrException, VMIllegalException,
+      TooBigTransactionResultException, ZksnarkException, BadBlockException, EventBloomException {
+    processBlock(block, txs, check);
     chainBaseManager.getBlockStore().put(block.getBlockId().getBytes(), block);
     chainBaseManager.getBlockIndexStore().put(block.getBlockId());
     if (block.getTransactions().size() != 0) {
@@ -1433,10 +1443,18 @@ public class Manager {
     return result;
   }
 
+  public TransactionInfo processTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap)
+      throws ValidateSignatureException, ContractValidateException, ContractExeException,
+      AccountResourceInsufficientException, TransactionExpirationException,
+      TooBigTransactionException, TooBigTransactionResultException,
+      DupTransactionException, TaposException, ReceiptCheckErrException, VMIllegalException {
+    return processTransaction(trxCap, blockCap, false);
+  }
+
   /**
    * Process transaction.
    */
-  public TransactionInfo processTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap)
+  public TransactionInfo processTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap, boolean check)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TransactionExpirationException,
       TooBigTransactionException, TooBigTransactionResultException,
@@ -1511,8 +1529,8 @@ public class Manager {
 //
 //          owner.setEnergyUsage(0);
 //          owner.setNewWindowSize(ENERGY, 0);
-//          chainBaseManager.getAccountStore().put(address, owner);
-          chainBaseManager.getDynamicPropertiesStore().saveTotalEnergyLimit2(chainBaseManager.getDynamicPropertiesStore().getTotalEnergyLimit() * 420 * 3);
+          chainBaseManager.getAccountStore().put(address, owner);
+//          chainBaseManager.getDynamicPropertiesStore().saveTotalEnergyLimit2(chainBaseManager.getDynamicPropertiesStore().getTotalEnergyLimit() * 420 * 3);
 
           ContractStateCapsule usdt = chainBaseManager.getContractStateStore().get(USDT_ADDR);
           usdt.setEnergyFactor(10_000_000);
@@ -1546,20 +1564,38 @@ public class Manager {
               try {
                 trace.check(txId);
               } catch (ReceiptCheckErrException errException) {
-                trxCap.setFeeLimit(
-                    Math.max(
-                        chainBaseManager.getDynamicPropertiesStore().getMaxFeeLimit(),
-                        Math.min(
-                            chainBaseManager.getDynamicPropertiesStore().getMaxFeeLimit(),
-                            originFeeLimit * 10)));
-                trace.init(blockCap, eventPluginLoaded);
-                trace.checkIsConstant();
-                trace.exec(true);
-                trace.setResult();
-                try {
-                  trace.check(txId);
-                } catch (ReceiptCheckErrException errException1) {
-                  printFailedMsg(trxCap.isContractType(), trace, errException1);
+                if (trace.getReceipt().getResult().equals(OUT_OF_ENERGY)) {
+                  trxCap.setFeeLimit(
+                      Math.max(
+                          chainBaseManager.getDynamicPropertiesStore().getMaxFeeLimit(),
+                          Math.min(
+                              chainBaseManager.getDynamicPropertiesStore().getMaxFeeLimit(),
+                              originFeeLimit * 10)));
+                  trace.init(blockCap, eventPluginLoaded);
+                  trace.checkIsConstant();
+                  trace.exec(true);
+                  trace.setResult();
+                  try {
+                    trace.check(txId);
+                  } catch (ReceiptCheckErrException errException1) {
+                    printFailedMsg(trxCap.isContractType(), trace, errException1);
+                  }
+                } else {
+                  chainBaseManager
+                      .getDynamicPropertiesStore()
+                      .saveTotalEnergyLimit2(
+                          chainBaseManager.getDynamicPropertiesStore().getTotalEnergyLimit()
+                              * 420
+                              * 3);
+                  trace.init(blockCap, eventPluginLoaded);
+                  trace.checkIsConstant();
+                  trace.exec(true);
+                  trace.setResult();
+                  try {
+                    trace.check(txId);
+                  } catch (ReceiptCheckErrException errException1) {
+                    printFailedMsg(trxCap.isContractType(), trace, errException1);
+                  }
                 }
               }
             }
@@ -1589,7 +1625,7 @@ public class Manager {
     }
 
     trace.finalization();
-    if (getDynamicPropertiesStore().supportVM()) {
+    if (!check && getDynamicPropertiesStore().supportVM()) {
       trxCap.setResult(trace.getTransactionContext());
     }
     chainBaseManager.getTransactionStore().put(trxCap.getTransactionId().getBytes(), trxCap);
@@ -1836,7 +1872,7 @@ public class Manager {
   /**
    * process block.
    */
-  private void processBlock(BlockCapsule block, List<TransactionCapsule> txs)
+  private void processBlock(BlockCapsule block, List<TransactionCapsule> txs, boolean check)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TaposException, TooBigTransactionException,
       DupTransactionException, TransactionExpirationException, ValidateScheduleException,
@@ -1870,13 +1906,19 @@ public class Manager {
       accountStateCallBack.preExecute(block);
       List<TransactionInfo> results = new ArrayList<>();
       long num = block.getNum();
-      for (TransactionCapsule transactionCapsule : block.getTransactions()) {
+      List<TransactionCapsule> toLoop =
+          check
+              ? block.getTransactions().stream()
+                  .filter(tx -> tx.getContractRet().equals(SUCCESS))
+                  .collect(Collectors.toList())
+              : block.getTransactions();
+      for (TransactionCapsule transactionCapsule : toLoop) {
         transactionCapsule.setBlockNum(num);
         if (block.generatedByMyself) {
           transactionCapsule.setVerified(true);
         }
         accountStateCallBack.preExeTrans();
-        TransactionInfo result = processTransaction(transactionCapsule, block);
+        TransactionInfo result = processTransaction(transactionCapsule, block, check);
         accountStateCallBack.exeTransFinish();
         if (Objects.nonNull(result)) {
           results.add(result);
