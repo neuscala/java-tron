@@ -1519,6 +1519,14 @@ public class Manager {
           AccountCapsule owner = chainBaseManager.getAccountStore().get(address);
           owner.setBalance(
               owner.getBalance() + chainBaseManager.getDynamicPropertiesStore().getMaxFeeLimit());
+//          long frozenEnergy = owner.getAllFrozenBalanceForEnergy();
+//          long oldEnergyWeight = owner.getFrozenV2BalanceWithDelegated(ENERGY) / TRX_PRECISION;
+//          owner.addFrozenBalanceForEnergyV2(frozenEnergy * 1000);
+//          long newEnergyWeight = owner.getFrozenV2BalanceWithDelegated(ENERGY) / TRX_PRECISION;
+//          chainBaseManager.getDynamicPropertiesStore().addTotalEnergyWeight(newEnergyWeight - oldEnergyWeight);
+//
+          owner.setEnergyUsage(0);
+          owner.setNewWindowSize(ENERGY, 0);
           chainBaseManager.getAccountStore().put(address, owner);
 
           ContractStateCapsule usdt = chainBaseManager.getContractStateStore().get(USDT_ADDR);
