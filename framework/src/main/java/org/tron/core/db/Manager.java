@@ -1507,9 +1507,10 @@ public class Manager {
 //          long newEnergyWeight = owner.getFrozenV2BalanceWithDelegated(ENERGY) / TRX_PRECISION;
 //          chainBaseManager.getDynamicPropertiesStore().addTotalEnergyWeight(newEnergyWeight - oldEnergyWeight);
 //
-          owner.setEnergyUsage(0);
-          owner.setNewWindowSize(ENERGY, 0);
-          chainBaseManager.getAccountStore().put(address, owner);
+//          owner.setEnergyUsage(0);
+//          owner.setNewWindowSize(ENERGY, 0);
+//          chainBaseManager.getAccountStore().put(address, owner);
+          chainBaseManager.getDynamicPropertiesStore().saveTotalEnergyLimit2(chainBaseManager.getDynamicPropertiesStore().getTotalEnergyLimit() * 420 * 3);
 
           ContractStateCapsule usdt = chainBaseManager.getContractStateStore().get(usdtAddr);
           usdt.setEnergyFactor(10_000_000);

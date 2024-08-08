@@ -533,14 +533,14 @@ public class VMActuator implements Actuator2 {
           energyLimit = maxEnergyLimit;
         }
       } else {
-        if (check) {
-          energyLimit = trx.getRawData().getFeeLimit();
-        } else {
+//        if (check) {
+//          energyLimit = trx.getRawData().getFeeLimit();
+//        } else {
           AccountCapsule creator =
               rootRepository.getAccount(
                   deployedContract.getInstance().getOriginAddress().toByteArray());
           energyLimit = getTotalEnergyLimit(creator, caller, contract, feeLimit, callValue);
-        }
+//        }
       }
 
       long maxCpuTimeOfOneTx = rootRepository.getDynamicPropertiesStore()
