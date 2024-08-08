@@ -4,12 +4,13 @@ import org.tron.core.db.TransactionContext;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 
-import java.util.List;
-
 
 public interface Runtime {
 
   void execute(TransactionContext context)
+      throws ContractValidateException, ContractExeException;
+
+  void execute(TransactionContext context, boolean check)
       throws ContractValidateException, ContractExeException;
 
   ProgramResult getResult();

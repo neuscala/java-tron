@@ -111,6 +111,11 @@ public class VMActuator implements Actuator2 {
 
   @Override
   public void validate(Object object) throws ContractValidateException {
+    validate(object, false);
+  }
+
+  @Override
+  public void validate(Object object, boolean check) throws ContractValidateException {
 
     TransactionContext context = (TransactionContext) object;
     if (Objects.isNull(context)) {
@@ -123,7 +128,10 @@ public class VMActuator implements Actuator2 {
     OperationRegistry.init();
     trx = context.getTrxCap().getInstance();
     // If tx`s fee limit is set, use it to calc max energy limit for constant call
-    if (isConstantCall && trx.getRawData().getFeeLimit() > 0) {
+    if (check) {
+      maxEnergyLimit = trx.getRawData().getFeeLimit();
+    }
+    else if (isConstantCall && trx.getRawData().getFeeLimit() > 0) {
       maxEnergyLimit = Math.min(maxEnergyLimit, trx.getRawData().getFeeLimit()
           / context.getStoreFactory().getChainBaseManager()
           .getDynamicPropertiesStore().getEnergyFee());
@@ -154,11 +162,11 @@ public class VMActuator implements Actuator2 {
     switch (contractType.getNumber()) {
       case ContractType.TriggerSmartContract_VALUE:
         trxType = TrxType.TRX_CONTRACT_CALL_TYPE;
-        call();
+        call(check);
         break;
       case ContractType.CreateSmartContract_VALUE:
         trxType = TrxType.TRX_CONTRACT_CREATION_TYPE;
-        create();
+        create(check);
         break;
       default:
         throw new ContractValidateException("Unknown contract type");
@@ -167,6 +175,11 @@ public class VMActuator implements Actuator2 {
 
   @Override
   public void execute(Object object) throws ContractExeException {
+    execute(object, false);
+  }
+
+  @Override
+  public void execute(Object object, boolean check) throws ContractExeException {
     TransactionContext context = (TransactionContext) object;
     if (Objects.isNull(context)) {
       throw new RuntimeException("TransactionContext is null");
@@ -308,7 +321,7 @@ public class VMActuator implements Actuator2 {
 
   }
 
-  private void create()
+  private void create(boolean check)
       throws ContractValidateException {
     if (!rootRepository.getDynamicPropertiesStore().supportVM()) {
       throw new ContractValidateException("vm work is off, need to be opened by the committee");
@@ -361,19 +374,26 @@ public class VMActuator implements Actuator2 {
     // create vm to constructor smart contract
     try {
       long feeLimit = trx.getRawData().getFeeLimit();
-      if (feeLimit < 0 || feeLimit > rootRepository.getDynamicPropertiesStore().getMaxFeeLimit()) {
-        logger.info("invalid feeLimit {}", feeLimit);
-        throw new ContractValidateException("feeLimit must be >= 0 and <= "
-            + rootRepository.getDynamicPropertiesStore().getMaxFeeLimit());
+      if (!check) {
+        if (feeLimit < 0
+            || feeLimit > rootRepository.getDynamicPropertiesStore().getMaxFeeLimit()) {
+          logger.info("invalid feeLimit {}", feeLimit);
+          throw new ContractValidateException(
+              "feeLimit must be >= 0 and <= "
+                  + rootRepository.getDynamicPropertiesStore().getMaxFeeLimit());
+        }
       }
       AccountCapsule creator = rootRepository
           .getAccount(newSmartContract.getOriginAddress().toByteArray());
 
       long energyLimit;
       // according to version
-
       if (isConstantCall) {
-        energyLimit = maxEnergyLimit;
+        if (check) {
+          energyLimit = trx.getRawData().getFeeLimit();
+        } else {
+          energyLimit = maxEnergyLimit;
+        }
       } else {
         if (StorageUtils.getEnergyLimitHardFork()) {
           if (callValue < 0) {
@@ -447,7 +467,7 @@ public class VMActuator implements Actuator2 {
    * **
    */
 
-  private void call()
+  private void call(boolean check)
       throws ContractValidateException {
 
     if (!rootRepository.getDynamicPropertiesStore().supportVM()) {
@@ -495,19 +515,32 @@ public class VMActuator implements Actuator2 {
     byte[] code = rootRepository.getCode(contractAddress);
     if (isNotEmpty(code)) {
       long feeLimit = trx.getRawData().getFeeLimit();
-      if (feeLimit < 0 || feeLimit > rootRepository.getDynamicPropertiesStore().getMaxFeeLimit()) {
-        logger.info("invalid feeLimit {}", feeLimit);
-        throw new ContractValidateException("feeLimit must be >= 0 and <= "
-            + rootRepository.getDynamicPropertiesStore().getMaxFeeLimit());
+      if (!check) {
+        if (feeLimit < 0
+            || feeLimit > rootRepository.getDynamicPropertiesStore().getMaxFeeLimit()) {
+          logger.info("invalid feeLimit {}", feeLimit);
+          throw new ContractValidateException(
+              "feeLimit must be >= 0 and <= "
+                  + rootRepository.getDynamicPropertiesStore().getMaxFeeLimit());
+        }
       }
       AccountCapsule caller = rootRepository.getAccount(callerAddress);
       long energyLimit;
       if (isConstantCall) {
-        energyLimit = maxEnergyLimit;
+        if (check) {
+          energyLimit = trx.getRawData().getFeeLimit();
+        } else {
+          energyLimit = maxEnergyLimit;
+        }
       } else {
-        AccountCapsule creator = rootRepository
-            .getAccount(deployedContract.getInstance().getOriginAddress().toByteArray());
-        energyLimit = getTotalEnergyLimit(creator, caller, contract, feeLimit, callValue);
+        if (check) {
+          energyLimit = trx.getRawData().getFeeLimit();
+        } else {
+          AccountCapsule creator =
+              rootRepository.getAccount(
+                  deployedContract.getInstance().getOriginAddress().toByteArray());
+          energyLimit = getTotalEnergyLimit(creator, caller, contract, feeLimit, callValue);
+        }
       }
 
       long maxCpuTimeOfOneTx = rootRepository.getDynamicPropertiesStore()

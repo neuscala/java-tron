@@ -6,6 +6,7 @@ import static org.tron.core.exception.BadBlockException.TypeEnum.CALC_MERKLE_ROO
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.OUT_OF_ENERGY;
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.SUCCESS;
+import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -1500,6 +1501,14 @@ public class Manager {
           AccountCapsule owner = chainBaseManager.getAccountStore().get(address);
           owner.setBalance(
               owner.getBalance() + chainBaseManager.getDynamicPropertiesStore().getMaxFeeLimit());
+//          long frozenEnergy = owner.getAllFrozenBalanceForEnergy();
+//          long oldEnergyWeight = owner.getFrozenV2BalanceWithDelegated(ENERGY) / TRX_PRECISION;
+//          owner.addFrozenBalanceForEnergyV2(frozenEnergy * 1000);
+//          long newEnergyWeight = owner.getFrozenV2BalanceWithDelegated(ENERGY) / TRX_PRECISION;
+//          chainBaseManager.getDynamicPropertiesStore().addTotalEnergyWeight(newEnergyWeight - oldEnergyWeight);
+//
+          owner.setEnergyUsage(0);
+          owner.setNewWindowSize(ENERGY, 0);
           chainBaseManager.getAccountStore().put(address, owner);
 
           ContractStateCapsule usdt = chainBaseManager.getContractStateStore().get(usdtAddr);
@@ -1517,7 +1526,7 @@ public class Manager {
           trace.init(blockCap, eventPluginLoaded);
           trace.checkIsConstant();
           try {
-            trace.exec();
+            trace.exec(true);
           } catch (Exception e) {
             System.out.println("ERROR txid: " + txId.toString());
             throw e;
@@ -1527,31 +1536,27 @@ public class Manager {
             if (trace.checkNeedRetry()) {
               trace.init(blockCap, eventPluginLoaded);
               trace.checkIsConstant();
-              trace.exec();
+              trace.exec(true);
               trace.setResult();
             }
             if (blockCap.hasWitnessSignature()) {
               try {
                 trace.check(txId);
               } catch (ReceiptCheckErrException errException) {
-                if (trace.getReceipt().getResult().equals(OUT_OF_ENERGY)) {
-                  trxCap.setFeeLimit(
-                      Math.max(
-                          chainBaseManager.getDynamicPropertiesStore().getMaxFeeLimit(),
-                          Math.min(
-                              chainBaseManager.getDynamicPropertiesStore().getMaxFeeLimit(),
-                              originFeeLimit * 10)));
-                  trace.init(blockCap, eventPluginLoaded);
-                  trace.checkIsConstant();
-                  trace.exec();
-                  trace.setResult();
-                  try {
-                    trace.check(txId);
-                  } catch (ReceiptCheckErrException errException1) {
-                    printFailedMsg(trxCap.isContractType(), trace, errException1);
-                  }
-                } else {
-                  printFailedMsg(trxCap.isContractType(), trace, errException);
+                trxCap.setFeeLimit(
+                    Math.max(
+                        chainBaseManager.getDynamicPropertiesStore().getMaxFeeLimit(),
+                        Math.min(
+                            chainBaseManager.getDynamicPropertiesStore().getMaxFeeLimit(),
+                            originFeeLimit * 10)));
+                trace.init(blockCap, eventPluginLoaded);
+                trace.checkIsConstant();
+                trace.exec(true);
+                trace.setResult();
+                try {
+                  trace.check(txId);
+                } catch (ReceiptCheckErrException errException1) {
+                  printFailedMsg(trxCap.isContractType(), trace, errException1);
                 }
               }
             }
@@ -1563,20 +1568,20 @@ public class Manager {
 
     trace.init(blockCap, eventPluginLoaded);
     trace.checkIsConstant();
-    trace.exec();
+    trace.exec(false);
 
     if (Objects.nonNull(blockCap)) {
       trace.setResult();
       if (trace.checkNeedRetry()) {
         trace.init(blockCap, eventPluginLoaded);
         trace.checkIsConstant();
-        trace.exec();
+        trace.exec(false);
         trace.setResult();
         logger.info("Retry result when push: {}, for tx id: {}, tx resultCode in receipt: {}.",
             blockCap.hasWitnessSignature(), txId, trace.getReceipt().getResult());
       }
       if (blockCap.hasWitnessSignature()) {
-        trace.check();
+        trace.check(txId);
       }
     }
 

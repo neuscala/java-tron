@@ -185,8 +185,13 @@ public class TransactionTrace {
 
   public void exec()
       throws ContractExeException, ContractValidateException, VMIllegalException {
+    exec(false);
+  }
+
+  public void exec(boolean check)
+      throws ContractExeException, ContractValidateException, VMIllegalException {
     /*  VM execute  */
-    runtime.execute(transactionContext);
+    runtime.execute(transactionContext, check);
     setBill(transactionContext.getProgramResult().getEnergyUsed());
     setPenalty(transactionContext.getProgramResult().getEnergyPenaltyTotal());
 
