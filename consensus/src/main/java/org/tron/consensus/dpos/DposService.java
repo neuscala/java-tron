@@ -96,7 +96,7 @@ public class DposService implements ConsensusInterface {
       });
     }
     maintenanceManager.init();
-//    dposTask.init();
+    dposTask.init();
   }
 
   @Override
