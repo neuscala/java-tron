@@ -6,6 +6,7 @@ import static org.tron.core.exception.BadBlockException.TypeEnum.CALC_MERKLE_ROO
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.OUT_OF_ENERGY;
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.SUCCESS;
+import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
