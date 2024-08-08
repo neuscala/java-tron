@@ -1046,16 +1046,7 @@ public class Manager {
       TooBigTransactionException, DupTransactionException, TaposException,
       ValidateScheduleException, ReceiptCheckErrException, VMIllegalException,
       TooBigTransactionResultException, ZksnarkException, BadBlockException, EventBloomException {
-    applyBlock(block, txs, false);
-  }
-
-  private void applyBlock(BlockCapsule block, List<TransactionCapsule> txs, boolean check)
-      throws ContractValidateException, ContractExeException, ValidateSignatureException,
-      AccountResourceInsufficientException, TransactionExpirationException,
-      TooBigTransactionException, DupTransactionException, TaposException,
-      ValidateScheduleException, ReceiptCheckErrException, VMIllegalException,
-      TooBigTransactionResultException, ZksnarkException, BadBlockException, EventBloomException {
-    processBlock(block, txs, check);
+    processBlock(block, txs);
     chainBaseManager.getBlockStore().put(block.getBlockId().getBytes(), block);
     chainBaseManager.getBlockIndexStore().put(block.getBlockId());
     if (block.getTransactions().size() != 0) {
@@ -1442,18 +1433,10 @@ public class Manager {
     return result;
   }
 
-  public TransactionInfo processTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap)
-      throws ValidateSignatureException, ContractValidateException, ContractExeException,
-      AccountResourceInsufficientException, TransactionExpirationException,
-      TooBigTransactionException, TooBigTransactionResultException,
-      DupTransactionException, TaposException, ReceiptCheckErrException, VMIllegalException {
-    return processTransaction(trxCap, blockCap, false);
-  }
-
   /**
    * Process transaction.
    */
-  public TransactionInfo processTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap, boolean check)
+  public TransactionInfo processTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TransactionExpirationException,
       TooBigTransactionException, TooBigTransactionResultException,
@@ -1605,7 +1588,7 @@ public class Manager {
     }
 
     trace.finalization();
-    if (!check && getDynamicPropertiesStore().supportVM()) {
+    if (getDynamicPropertiesStore().supportVM()) {
       trxCap.setResult(trace.getTransactionContext());
     }
     chainBaseManager.getTransactionStore().put(trxCap.getTransactionId().getBytes(), trxCap);
@@ -1852,7 +1835,7 @@ public class Manager {
   /**
    * process block.
    */
-  private void processBlock(BlockCapsule block, List<TransactionCapsule> txs, boolean check)
+  private void processBlock(BlockCapsule block, List<TransactionCapsule> txs)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TaposException, TooBigTransactionException,
       DupTransactionException, TransactionExpirationException, ValidateScheduleException,
@@ -1886,19 +1869,13 @@ public class Manager {
       accountStateCallBack.preExecute(block);
       List<TransactionInfo> results = new ArrayList<>();
       long num = block.getNum();
-      List<TransactionCapsule> toLoop =
-          check
-              ? block.getTransactions().stream()
-                  .filter(tx -> tx.getContractRet().equals(SUCCESS))
-                  .collect(Collectors.toList())
-              : block.getTransactions();
-      for (TransactionCapsule transactionCapsule : toLoop) {
+      for (TransactionCapsule transactionCapsule : block.getTransactions()) {
         transactionCapsule.setBlockNum(num);
         if (block.generatedByMyself) {
           transactionCapsule.setVerified(true);
         }
         accountStateCallBack.preExeTrans();
-        TransactionInfo result = processTransaction(transactionCapsule, block, check);
+        TransactionInfo result = processTransaction(transactionCapsule, block);
         accountStateCallBack.exeTransFinish();
         if (Objects.nonNull(result)) {
           results.add(result);
