@@ -1559,42 +1559,10 @@ public class Program {
 
     byte[] contractAddress = getContextAddress();
     String addressIn58 = StringUtil.encode58Check(contractAddress);
-    String printMsg = "Target_contract_" + precompiledContractName + ": " + addressIn58;
-    logger.info(printMsg);
-    System.out.println(printMsg);
-//      byte[] contractAddress = getContextAddress();
-//      String addressIn58 = StringUtil.encode58Check(contractAddress);
-//      String printMsg =
-//          "ShieldedTRC20Transaction:"
-//              + addressIn58
-//              + ",tx:"
-//              + (Objects.isNull(getTxId()) ? null : getTxId());
-//      logger.info(printMsg);
-//      System.out.println(printMsg);
 
-//      increaseNonce();
-//      try {
-//        addInternalTx(
-//            null,
-//            contractAddress,
-//            contractAddress,
-//            0,
-//            Objects.isNull(getTxId()) ? null : getTxId().getBytes(),
-//            "ShieldedTRC20Transaction",
-//            nonce,
-//            null);
-//      } catch (java.lang.Exception e) {
-//        addInternalTx(
-//            null,
-//            contractAddress,
-//            contractAddress,
-//            0,
-//            null,
-//            "ShieldedTRC20Transaction",
-//            nonce,
-//            null);
-//      }
-//    }
+    long time = contractState.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
+    String printMsg = time + " Target_contract_" + precompiledContractName + ": " + addressIn58;
+    System.out.println(printMsg);
 
     long endowment = msg.getEndowment().value().longValueExact();
     long senderBalance = 0;
