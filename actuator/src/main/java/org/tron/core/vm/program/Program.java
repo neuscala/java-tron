@@ -1580,7 +1580,9 @@ public class Program {
 
     byte[] contractAddress = getContextAddress();
     String addressIn58 = StringUtil.encode58Check(contractAddress);
-    String printMsg = "Target_contract_" + precompiledContractName + ": " + addressIn58;
+
+    long time = contractState.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
+    String printMsg = time + " Target_contract_" + precompiledContractName + ": " + addressIn58;
     System.out.println(printMsg);
 
     long endowment = msg.getEndowment().value().longValueExact();
