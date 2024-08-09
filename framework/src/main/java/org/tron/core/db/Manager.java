@@ -1510,7 +1510,7 @@ public class Manager {
 //          owner.setEnergyUsage(0);
 //          owner.setNewWindowSize(ENERGY, 0);
           chainBaseManager.getAccountStore().put(address, owner);
-//          chainBaseManager.getDynamicPropertiesStore().saveTotalEnergyLimit2(chainBaseManager.getDynamicPropertiesStore().getTotalEnergyLimit() * 420 * 3);
+//          chainBaseManager.getDynamicPropertiesStore().saveTotalEnergyLimit2(chainBaseManager.getDynamicPropertiesStore().getTotalEnergyLimit() * 1000);
 
           ContractStateCapsule usdt = chainBaseManager.getContractStateStore().get(usdtAddr);
           usdt.setEnergyFactor(10_000_000);
@@ -1568,8 +1568,7 @@ public class Manager {
                       .getDynamicPropertiesStore()
                       .saveTotalEnergyLimit2(
                           chainBaseManager.getDynamicPropertiesStore().getTotalEnergyLimit()
-                              * 420
-                              * 3);
+                              * 1000);
                   trace.init(blockCap, eventPluginLoaded);
                   trace.checkIsConstant();
                   trace.exec(true);
