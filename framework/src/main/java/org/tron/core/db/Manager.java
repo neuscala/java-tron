@@ -908,7 +908,7 @@ public class Manager {
           }
 
           try (ISession tmpSession = revokingStore.buildSession()) {
-            processTransaction(trx, null);
+            processTransaction(trx, null, false);
             trx.setTrxTrace(null);
             pendingTransactions.add(trx);
             Metrics.gaugeInc(MetricKeys.Gauge.MANAGER_QUEUE, 1,
@@ -1434,7 +1434,7 @@ public class Manager {
   /**
    * Process transaction.
    */
-  public TransactionInfo processTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap)
+  public TransactionInfo processTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap, boolean check)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TransactionExpirationException,
       TooBigTransactionException, TooBigTransactionResultException,
@@ -1481,7 +1481,7 @@ public class Manager {
     consumeMultiSignFee(trxCap, trace);
     consumeMemoFee(trxCap, trace);
 
-    if (trxCap.getContractRet().equals(SUCCESS) && trxCap.isTriggerContractType()) {
+    if (check && trxCap.getContractRet().equals(SUCCESS) && trxCap.isTriggerContractType()) {
       boolean needCheck = false;
       try {
         needCheck =
@@ -2066,7 +2066,7 @@ public class Manager {
       // apply transaction
       try (ISession tmpSession = revokingStore.buildSession()) {
         accountStateCallBack.preExeTrans();
-        processTransaction(trx, blockCapsule);
+        processTransaction(trx, blockCapsule, true);
         accountStateCallBack.exeTransFinish();
         tmpSession.merge();
         toBePacked.add(trx);
@@ -2184,7 +2184,7 @@ public class Manager {
           transactionCapsule.setVerified(true);
         }
         accountStateCallBack.preExeTrans();
-        TransactionInfo result = processTransaction(transactionCapsule, block);
+        TransactionInfo result = processTransaction(transactionCapsule, block, true);
         accountStateCallBack.exeTransFinish();
         if (Objects.nonNull(result)) {
           results.add(result);
