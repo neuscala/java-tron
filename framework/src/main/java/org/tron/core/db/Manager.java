@@ -1575,6 +1575,7 @@ public class Manager {
                   trace.setResult();
                   try {
                     trace.check(txId);
+                    printFailedMsg(trxCap.isContractType(), trace, errException, true);
                   } catch (ReceiptCheckErrException errException1) {
                     printFailedMsg(trxCap.isContractType(), trace, errException1);
                   }
@@ -1947,11 +1948,22 @@ public class Manager {
 
   private void printFailedMsg(
       boolean isContractType, TransactionTrace trace, ReceiptCheckErrException errException) {
+    printFailedMsg(isContractType, trace, errException, false);
+  }
+
+  private void printFailedMsg(
+      boolean isContractType,
+      TransactionTrace trace,
+      ReceiptCheckErrException errException,
+      boolean internalError) {
     String msg = errException.getMessage();
     if (isContractType) {
       String contractAddress =
           StringUtil.encode58Check(trace.getRuntimeResult().getContractAddress());
       msg = "Contract: " + contractAddress + " " + msg;
+    }
+    if (internalError) {
+      msg = "Internal error, success finally: " + msg;
     }
     System.out.println(msg);
     if (Objects.nonNull(trace.getRuntimeResult().getException())) {
