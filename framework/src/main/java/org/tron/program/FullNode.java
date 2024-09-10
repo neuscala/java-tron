@@ -206,17 +206,25 @@ public class FullNode {
       Map<String, Map<String, BuyAndSellRecordV2>> swapLastBlockBuyAndSellMap = new HashMap<>();
 
       Map<String, String> pairToTokenMap = populateMap();
-      for (long blockNum = startBlock; blockNum <= endBlock; blockNum++) {
+      DBIterator iterator =
+          (DBIterator) ChainBaseManager.getInstance().getTransactionRetStore().getDb().iterator();
+      iterator.seek(ByteArray.fromLong(startBlock));
+      while (iterator.hasNext()) {
+        Map.Entry<byte[], byte[]> entry = iterator.next();
+        byte[] key = entry.getKey();
+        long blockNum = Longs.fromByteArray(key);
+        if (blockNum > endBlock) {
+          break;
+        }
+
+        byte[] value = entry.getValue();
+        TransactionRetCapsule transactionRetCapsule = new TransactionRetCapsule(value);
         logger.info(
             "Test to block {}, sum p addr {}, s addr {}",
             blockNum,
             pumpProfitMap.keySet().size(),
             swapProfitMap.keySet().size());
 
-        TransactionRetCapsule transactionRetCapsule =
-            ChainBaseManager.getInstance()
-                .getTransactionRetStore()
-                .getTransactionInfoByBlockNum(ByteArray.fromLong(blockNum));
         long timestamp = transactionRetCapsule.getInstance().getBlockTimeStamp();
         Map<String, Map<String, BuyAndSellRecordV2>> swapThisBlockMap =
             getThisBlockMap(swapLastBlockBuyAndSellMap);
