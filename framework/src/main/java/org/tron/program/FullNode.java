@@ -195,8 +195,8 @@ public class FullNode {
 
     TransactionStore transactionStore = ChainBaseManager.getInstance().getTransactionStore();
     try {
-      long startBlock = latestBlock - 100;
-      long endBlock = latestBlock;
+      long startBlock = 64271995;
+      long endBlock = 65092826;
       long logBlock = startBlock;
       DBIterator iterator =
           (DBIterator) ChainBaseManager.getInstance().getTransactionRetStore().getDb().iterator();
@@ -473,6 +473,7 @@ public class FullNode {
                     }));
 
         if (blockNum - logBlock >= 10000) {
+          logBlock = blockNum;
           logger.info(
               "Sync to block {} timestamp {}, sum p addr {}, s addr {}",
               blockNum,
