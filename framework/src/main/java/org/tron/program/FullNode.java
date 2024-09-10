@@ -194,8 +194,8 @@ public class FullNode {
     TransactionStore transactionStore = ChainBaseManager.getInstance().getTransactionStore();
     try {
       logger.info("Start To Local Test!!!");
-      long startBlock = ChainBaseManager.getInstance().getHeadBlockNum() - 100;
-      long endBlock = ChainBaseManager.getInstance().getHeadBlockNum();
+      long startBlock = 64493430;
+      long endBlock = 65092826;
       long logBlock = startBlock;
 
       Map<String, Long> pumpSrMap = new HashMap<>();
