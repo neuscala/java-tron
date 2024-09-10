@@ -194,8 +194,8 @@ public class FullNode {
     TransactionStore transactionStore = ChainBaseManager.getInstance().getTransactionStore();
     try {
       logger.info("Start To Local Test!!!");
-      long startBlock = 64493430;
-      long endBlock = 65092826;
+      long startBlock = ChainBaseManager.getInstance().getHeadBlockNum() - 100;
+      long endBlock = ChainBaseManager.getInstance().getHeadBlockNum();
       long logBlock = startBlock;
 
       Map<String, Long> pumpSrMap = new HashMap<>();
@@ -243,7 +243,7 @@ public class FullNode {
               }
               String pair = Hex.toHexString(log.getAddress().toByteArray());
               Map<String, BuyAndSellRecordV2> tokenMap =
-                  pumpThisBlockMap.getOrDefault(caller, new HashMap<>());
+                  swapThisBlockMap.getOrDefault(caller, new HashMap<>());
               BuyAndSellRecordV2 recordV2 = tokenMap.getOrDefault(pair, new BuyAndSellRecordV2());
               String logData = Hex.toHexString(log.getData().toByteArray());
               BigInteger amount0In = new BigInteger(logData.substring(0, 64), 16);
@@ -252,6 +252,9 @@ public class FullNode {
               BigInteger amount1Out = new BigInteger(logData.substring(192, 256), 16);
 
               String token = pairToTokenMap.get(pair);
+              if (pair == null || token == null) {
+                logger.info("pair {} or token {} is null", pair, token);
+              }
               boolean smaller = smallerToWtrx(token, WTRX);
 
               boolean isBuy =
