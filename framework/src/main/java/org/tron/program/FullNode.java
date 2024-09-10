@@ -197,9 +197,7 @@ public class FullNode {
       long startBlock = 64271995;
       long endBlock = 65092826;
       long logBlock = startBlock;
-      DBIterator iterator =
-          (DBIterator) ChainBaseManager.getInstance().getTransactionRetStore().getDb().iterator();
-      iterator.seek(ByteArray.fromLong(startBlock));
+
       Map<String, Long> pumpSrMap = new HashMap<>();
       Map<String, Long> swapSrMap = new HashMap<>();
       Map<String, AddrAllInfoRecord> pumpProfitMap = new HashMap<>();
@@ -208,16 +206,12 @@ public class FullNode {
       Map<String, Map<String, BuyAndSellRecordV2>> swapLastBlockBuyAndSellMap = new HashMap<>();
 
       Map<String, String> pairToTokenMap = populateMap();
-      while (iterator.hasNext()) {
-        Map.Entry<byte[], byte[]> entry = iterator.next();
-        byte[] key = entry.getKey();
-        long blockNum = Longs.fromByteArray(key);
-        if (blockNum > endBlock) {
-          break;
-        }
+      for (long blockNum = startBlock; blockNum <= endBlock; blockNum++) {
 
-        byte[] value = entry.getValue();
-        TransactionRetCapsule transactionRetCapsule = new TransactionRetCapsule(value);
+        TransactionRetCapsule transactionRetCapsule =
+            ChainBaseManager.getInstance()
+                .getTransactionRetStore()
+                .getTransactionInfoByBlockNum(ByteArray.fromLong(blockNum));
         long timestamp = transactionRetCapsule.getInstance().getBlockTimeStamp();
         Map<String, Map<String, BuyAndSellRecordV2>> swapThisBlockMap =
             getThisBlockMap(swapLastBlockBuyAndSellMap);
@@ -435,6 +429,7 @@ public class FullNode {
         swapLastBlockBuyAndSellMap = new HashMap<>(swapThisBlockMap);
         pumpLastBlockBuyAndSellMap = new HashMap<>(pumpThisBlockMap);
 
+        long finalBlockNum = blockNum;
         swapThisBlockMap.forEach(
             (addr, tokenMap) ->
                 tokenMap.forEach(
@@ -445,7 +440,7 @@ public class FullNode {
                         AddrAllInfoRecord addrRecord =
                             swapProfitMap.getOrDefault(addr, new AddrAllInfoRecord());
                         addrRecord.addRecord(
-                            blockNum,
+                            finalBlockNum,
                             StringUtil.encode58Check(Hex.decode("41" + token)),
                             record.recordProfit,
                             record.successCount);
@@ -463,7 +458,7 @@ public class FullNode {
                         AddrAllInfoRecord addrRecord =
                             pumpProfitMap.getOrDefault(addr, new AddrAllInfoRecord());
                         addrRecord.addRecord(
-                            blockNum,
+                            finalBlockNum,
                             StringUtil.encode58Check(Hex.decode("41" + token)),
                             record.recordProfit,
                             record.successCount);
