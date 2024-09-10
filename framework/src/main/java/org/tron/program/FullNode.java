@@ -261,7 +261,7 @@ public class FullNode {
 
               String token = pairToTokenMap.get(pair);
               if (pair == null || token == null) {
-                logger.info("pair {} or token {} is null", pair, token);
+                continue;
               }
               boolean smaller = smallerToWtrx(token, WTRX);
 
