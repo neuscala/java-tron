@@ -194,7 +194,7 @@ public class FullNode {
     TransactionStore transactionStore = ChainBaseManager.getInstance().getTransactionStore();
     try {
       logger.info("Start To Local Test!!!");
-      long startBlock = 64271995;
+      long startBlock = 64493430;
       long endBlock = 65092826;
       long logBlock = startBlock;
 
@@ -224,11 +224,15 @@ public class FullNode {
             getThisBlockMap(pumpLastBlockBuyAndSellMap);
         BlockCapsule blockCapsule = ChainBaseManager.getChainBaseManager().getBlockByNum(blockNum);
         String sr = Hex.toHexString(blockCapsule.getWitnessAddress().toByteArray());
+
+        Map<String, String> txCallerMap = new HashMap<>();
+        for (TransactionCapsule tx : blockCapsule.getTransactions()) {
+          txCallerMap.put(tx.getTransactionId().toString(), Hex.toHexString(tx.getOwnerAddress()));
+        }
         for (Protocol.TransactionInfo transactionInfo :
             transactionRetCapsule.getInstance().getTransactioninfoList()) {
           byte[] txId = transactionInfo.getId().toByteArray();
-          TransactionCapsule tx = transactionStore.get(txId);
-          String caller = Hex.toHexString(tx.getOwnerAddress());
+          String caller = txCallerMap.get(Hex.toHexString(txId));
 
           byte[] contractAddress = transactionInfo.getContractAddress().toByteArray();
           if (Arrays.equals(contractAddress, SWAP_ROUTER)) {
