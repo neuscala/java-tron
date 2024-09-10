@@ -191,10 +191,9 @@ public class FullNode {
         Hex.decode("d78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822");
     String WTRX = "891cdb91d149f23B1a45D9c5Ca78a88d0cB44C18";
 
-    Map<String, String> pairTokenMap = new HashMap<>();
-
     TransactionStore transactionStore = ChainBaseManager.getInstance().getTransactionStore();
     try {
+      logger.info("Start To Local Test!!!");
       long startBlock = 64271995;
       long endBlock = 65092826;
       long logBlock = startBlock;
