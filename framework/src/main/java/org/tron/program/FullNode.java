@@ -207,6 +207,11 @@ public class FullNode {
 
       Map<String, String> pairToTokenMap = populateMap();
       for (long blockNum = startBlock; blockNum <= endBlock; blockNum++) {
+        logger.info(
+            "Test to block {}, sum p addr {}, s addr {}",
+            blockNum,
+            pumpProfitMap.keySet().size(),
+            swapProfitMap.keySet().size());
 
         TransactionRetCapsule transactionRetCapsule =
             ChainBaseManager.getInstance()
