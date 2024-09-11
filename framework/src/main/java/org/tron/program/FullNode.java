@@ -200,12 +200,12 @@ public class FullNode {
       while ((line = reader.readLine()) != null) {
         paddrs.add(Hex.toHexString(Commons.decodeFromBase58Check(line)));
       }
-      reader = new BufferedReader(new FileReader("saddrs.txt"));
+      BufferedReader sreader = new BufferedReader(new FileReader("saddrs.txt"));
       Set<String> saddrs = new HashSet<>();
-      while ((line = reader.readLine()) != null) {
+      while ((line = sreader.readLine()) != null) {
         saddrs.add(Hex.toHexString(Commons.decodeFromBase58Check(line)));
       }
-      long startBlock = 64268679;
+      long startBlock = 64184959;
       long endBlock = 65092826;
       //      long startBlock = latestBlock - 5000;
       //      long endBlock = latestBlock - 1;
@@ -510,11 +510,21 @@ public class FullNode {
       pwriter.println("p_address sum_buy failed_profit");
       pAddrBuyMap.forEach(
           (k, v) ->
-              pwriter.println(k + " " + v.buyCount + " " + (v.sumSellTrx.subtract(v.sumGetTrx))));
+              pwriter.println(
+                  StringUtil.encode58Check(Hex.decode(k))
+                      + " "
+                      + v.buyCount
+                      + " "
+                      + (v.sumSellTrx.subtract(v.sumGetTrx))));
       pwriter.println("s_address sum_buy failed_profit");
       sAddrBuyMap.forEach(
           (k, v) ->
-              pwriter.println(k + " " + v.buyCount + " " + (v.sumSellTrx.subtract(v.sumGetTrx))));
+              pwriter.println(
+                  StringUtil.encode58Check(Hex.decode(k))
+                      + " "
+                      + v.buyCount
+                      + " "
+                      + (v.sumSellTrx.subtract(v.sumGetTrx))));
 
       pwriter.close();
       logger.info(
