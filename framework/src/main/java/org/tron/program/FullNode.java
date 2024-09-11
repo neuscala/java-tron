@@ -232,6 +232,7 @@ public class FullNode {
       Map<String, AddrFailProfit> pAddrBuyMap = new HashMap<>();
       Map<String, AddrFailProfit> pAddrBuyMapRecent = new HashMap<>();
       Map<String, AddrFailProfit> sAddrBuyMap = new HashMap<>();
+      Map<String, AddrFailProfit> sAddrBuyMapRecent = new HashMap<>();
 
       Map<String, Map<String, BuyAndSellRecordV2>> pumpLastBlockBuyAndSellMap = new HashMap<>();
       Map<String, Map<String, BuyAndSellRecordV2>> swapLastBlockBuyAndSellMap = new HashMap<>();
@@ -337,9 +338,6 @@ public class FullNode {
                   sSumBuyCountrecent++;
                 }
               }
-              if (true) {
-                break;
-              }
 
               BigDecimal trxAmount;
               BigDecimal tokenAmount;
@@ -374,20 +372,41 @@ public class FullNode {
                 AddrFailProfit failProfit = sAddrBuyMap.getOrDefault(caller, new AddrFailProfit());
                 failProfit.addSell(trxAmount);
                 sAddrBuyMap.put(caller, failProfit);
+                if (blockNum >= recentBlock) {
+                  AddrFailProfit failProfitrecent =
+                      sAddrBuyMapRecent.getOrDefault(caller, new AddrFailProfit());
+                  failProfitrecent.addSell(trxAmount);
+                  sAddrBuyMapRecent.put(caller, failProfitrecent);
+                }
                 recordV2.addBuy(tokenAmount, trxAmount);
               } else {
 
                 AddrFailProfit record = sAddrBuyMap.getOrDefault(caller, new AddrFailProfit());
+                AddrFailProfit recordrecent =
+                    sAddrBuyMapRecent.getOrDefault(caller, new AddrFailProfit());
                 if (recordV2.sumBuyAmountToCover().compareTo(BigDecimal.ZERO) > 0) {
 
                   BigDecimal sumBuyAmountToCover = recordV2.sumBuyAmountToCover();
                   if (tokenAmount.compareTo(sumBuyAmountToCover) >= 0) {
+                    BigDecimal actualTokenAmount = sumBuyAmountToCover;
+                    BigDecimal actualTrxAmount =
+                        sumBuyAmountToCover
+                            .multiply(trxAmount)
+                            .divide(tokenAmount, 6, RoundingMode.HALF_EVEN);
                     recordV2.addSell(
-                        tokenAmount,
-                        trxAmount,
-                        trxAmount.subtract(recordV2.trxSellAmountToCover()));
+                        actualTokenAmount,
+                        actualTrxAmount,
+                        actualTrxAmount.subtract(recordV2.trxSellAmountToCover()));
                     // 获利了
-                    record.removeSell(recordV2.trxSellAmountToCover());
+                    if (actualTrxAmount.compareTo(recordV2.trxSellAmountToCover()) < 0) {
+                      record.addFailTrx(recordV2.trxSellAmountToCover().subtract(actualTrxAmount));
+                      record.removeSell(actualTrxAmount);
+                      if (blockNum >= recentBlock) {
+                        recordrecent.addFailTrx(
+                            recordV2.trxSellAmountToCover().subtract(actualTrxAmount));
+                        recordrecent.removeSell(actualTrxAmount);
+                      }
+                    }
                   } else {
                     // 先和本块比较
                     BigDecimal sellAmountRecord =
@@ -398,13 +417,25 @@ public class FullNode {
                         sellAmountRecord
                             .multiply(trxAmount)
                             .divide(tokenAmount, 6, RoundingMode.HALF_EVEN);
+                    // 补齐一部分
+                    if (recordV2.tokenBuyAmountThisBlock.compareTo(BigDecimal.ZERO) > 0) {
+                      record.removeSell(
+                          sellAmountRecord
+                              .multiply(recordV2.trxSellAmountThisBlock)
+                              .divide(recordV2.tokenBuyAmountThisBlock, 6, RoundingMode.HALF_EVEN));
+                      if (blockNum >= recentBlock) {
+                        recordrecent.removeSell(
+                            sellAmountRecord
+                                .multiply(recordV2.trxSellAmountThisBlock)
+                                .divide(
+                                    recordV2.tokenBuyAmountThisBlock, 6, RoundingMode.HALF_EVEN));
+                      }
+                    }
+
                     recordV2.addSell(
                         sellAmountRecord,
                         trxGetAmount,
                         trxGetAmount.subtract(recordV2.trxSellAmountToCover()));
-
-                    // 补齐一部分
-                    record.removeSell(recordV2.trxSellAmountToCover());
 
                     BigDecimal remainingToCover = sumBuyAmountToCover.subtract(sellAmountRecord);
                     BigDecimal remainingTokenAmount = sellAmountRecord.subtract(tokenAmount);
@@ -419,18 +450,37 @@ public class FullNode {
                           remainingSellAmountRecord
                               .multiply(trxAmount)
                               .divide(tokenAmount, 6, RoundingMode.HALF_EVEN);
+                      // 补齐一部分
+                      if (recordV2.tokenBuyAmountLastBlock.compareTo(BigDecimal.ZERO) > 0) {
+                        record.removeSell(
+                            remainingSellAmountRecord
+                                .multiply(recordV2.trxSellAmountLastBlock)
+                                .divide(
+                                    recordV2.tokenBuyAmountLastBlock, 6, RoundingMode.HALF_EVEN));
+                        if (blockNum >= recentBlock) {
+                          recordrecent.removeSell(
+                              remainingSellAmountRecord
+                                  .multiply(recordV2.trxSellAmountLastBlock)
+                                  .divide(
+                                      recordV2.tokenBuyAmountLastBlock, 6, RoundingMode.HALF_EVEN));
+                        }
+                      }
                       recordV2.addSell(
                           remainingSellAmountRecord,
                           remainingTrxGetAmount,
                           remainingTrxGetAmount.subtract(recordV2.trxSellAmountToCover()));
-                      // 再补一部分
-                      record.removeSell(recordV2.trxSellAmountToCover());
                     }
                   }
                 } else {
                   record.addGet(trxAmount);
+                  if (blockNum >= recentBlock) {
+                    recordrecent.addGet(trxAmount);
+                  }
                 }
                 sAddrBuyMap.put(caller, record);
+                if (blockNum >= recentBlock) {
+                  sAddrBuyMapRecent.put(caller, recordrecent);
+                }
               }
               tokenMap.put(token, recordV2);
               swapThisBlockMap.put(caller, tokenMap);
@@ -500,15 +550,12 @@ public class FullNode {
                       .divide(TOKEN_DIVISOR, 18, RoundingMode.HALF_EVEN);
               if (isBuy) {
                 pSumBuyCount++;
-                AddrFailProfit failProfit =
-                    pAddrBuyMap.getOrDefault(
-                        caller, new AddrFailProfit(BigDecimal.ZERO, BigDecimal.ZERO, 0L));
+                AddrFailProfit failProfit = pAddrBuyMap.getOrDefault(caller, new AddrFailProfit());
                 failProfit.addSell(trxAmount);
                 pAddrBuyMap.put(caller, failProfit);
                 if (blockNum >= recentBlock) {
                   AddrFailProfit recentfailProfit =
-                      pAddrBuyMapRecent.getOrDefault(
-                          caller, new AddrFailProfit(BigDecimal.ZERO, BigDecimal.ZERO, 0L));
+                      pAddrBuyMapRecent.getOrDefault(caller, new AddrFailProfit());
                   recentfailProfit.addSell(trxAmount);
                   pAddrBuyMapRecent.put(caller, recentfailProfit);
                 }
@@ -522,14 +569,24 @@ public class FullNode {
 
                   BigDecimal sumBuyAmountToCover = recordV2.sumBuyAmountToCover();
                   if (tokenAmount.compareTo(sumBuyAmountToCover) >= 0) {
+                    BigDecimal actualTokenAmount = sumBuyAmountToCover;
+                    BigDecimal actualTrxAmount =
+                        sumBuyAmountToCover
+                            .multiply(trxAmount)
+                            .divide(tokenAmount, 6, RoundingMode.HALF_EVEN);
                     recordV2.addSell(
-                        tokenAmount,
-                        trxAmount,
-                        trxAmount.subtract(recordV2.trxSellAmountToCover()));
+                        actualTokenAmount,
+                        actualTrxAmount,
+                        actualTrxAmount.subtract(recordV2.trxSellAmountToCover()));
                     // 获利了
-                    record.removeSell(recordV2.trxSellAmountToCover());
-                    if (blockNum >= recentBlock) {
-                      recentrecord.removeSell(recordV2.trxSellAmountToCover());
+                    if (actualTrxAmount.compareTo(recordV2.trxSellAmountToCover()) < 0) {
+                      record.addFailTrx(recordV2.trxSellAmountToCover().subtract(actualTrxAmount));
+                      record.removeSell(actualTrxAmount);
+                      if (blockNum >= recentBlock) {
+                        recentrecord.addFailTrx(
+                            recordV2.trxSellAmountToCover().subtract(actualTrxAmount));
+                        recentrecord.removeSell(actualTrxAmount);
+                      }
                     }
                   } else {
                     // 先和本块比较
@@ -541,13 +598,24 @@ public class FullNode {
                         sellAmountRecord
                             .multiply(trxAmount)
                             .divide(tokenAmount, 6, RoundingMode.HALF_EVEN);
+                    // 补齐一部分
+                    if (recordV2.tokenBuyAmountThisBlock.compareTo(BigDecimal.ZERO) > 0) {
+                      record.removeSell(
+                          sellAmountRecord
+                              .multiply(recordV2.trxSellAmountThisBlock)
+                              .divide(recordV2.tokenBuyAmountThisBlock, 6, RoundingMode.HALF_EVEN));
+                      if (blockNum >= recentBlock) {
+                        recentrecord.removeSell(
+                            sellAmountRecord
+                                .multiply(recordV2.trxSellAmountThisBlock)
+                                .divide(
+                                    recordV2.tokenBuyAmountThisBlock, 6, RoundingMode.HALF_EVEN));
+                      }
+                    }
                     recordV2.addSell(
                         sellAmountRecord,
                         trxGetAmount,
                         trxGetAmount.subtract(recordV2.trxSellAmountToCover()));
-
-                    // 补齐一部分
-                    record.removeSell(recordV2.trxSellAmountToCover());
 
                     if (blockNum >= recentBlock) {
                       recentrecord.removeSell(recordV2.trxSellAmountToCover());
@@ -566,13 +634,25 @@ public class FullNode {
                           remainingSellAmountRecord
                               .multiply(trxAmount)
                               .divide(tokenAmount, 6, RoundingMode.HALF_EVEN);
+                      // 补齐一部分
+                      if (recordV2.tokenBuyAmountLastBlock.compareTo(BigDecimal.ZERO) > 0) {
+                        record.removeSell(
+                            remainingSellAmountRecord
+                                .multiply(recordV2.trxSellAmountLastBlock)
+                                .divide(
+                                    recordV2.tokenBuyAmountLastBlock, 6, RoundingMode.HALF_EVEN));
+                        if (blockNum >= recentBlock) {
+                          recentrecord.removeSell(
+                              remainingSellAmountRecord
+                                  .multiply(recordV2.trxSellAmountLastBlock)
+                                  .divide(
+                                      recordV2.tokenBuyAmountLastBlock, 6, RoundingMode.HALF_EVEN));
+                        }
+                      }
                       recordV2.addSell(
                           remainingSellAmountRecord,
                           remainingTrxGetAmount,
                           remainingTrxGetAmount.subtract(recordV2.trxSellAmountToCover()));
-
-                      // 再补
-                      record.removeSell(recordV2.trxSellAmountToCover());
 
                       if (blockNum >= recentBlock) {
                         recentrecord.removeSell(recordV2.trxSellAmountToCover());
@@ -622,7 +702,9 @@ public class FullNode {
                       + " "
                       + v.buyCount
                       + " "
-                      + (v.sumSellTrx.subtract(v.sumGetTrx))));
+                      + (v.sumSellTrx.subtract(v.sumGetTrx))
+                      + " "
+                      + v.failedTrx));
       pwriter.println("recentp_address sum_buy failed_profit");
       pAddrBuyMapRecent.forEach(
           (k, v) ->
@@ -631,7 +713,31 @@ public class FullNode {
                       + " "
                       + v.buyCount
                       + " "
-                      + (v.sumSellTrx.subtract(v.sumGetTrx))));
+                      + (v.sumSellTrx.subtract(v.sumGetTrx))
+                      + " "
+                      + v.failedTrx));
+      pwriter.println("s_address sum_buy failed_profit");
+      sAddrBuyMap.forEach(
+          (k, v) ->
+              pwriter.println(
+                  StringUtil.encode58Check(Hex.decode(k))
+                      + " "
+                      + v.buyCount
+                      + " "
+                      + (v.sumSellTrx.subtract(v.sumGetTrx))
+                      + " "
+                      + v.failedTrx));
+      pwriter.println("recents_address sum_buy failed_profit");
+      sAddrBuyMapRecent.forEach(
+          (k, v) ->
+              pwriter.println(
+                  StringUtil.encode58Check(Hex.decode(k))
+                      + " "
+                      + v.buyCount
+                      + " "
+                      + (v.sumSellTrx.subtract(v.sumGetTrx))
+                      + " "
+                      + v.failedTrx));
 
       pwriter.close();
       logger.info(
@@ -685,13 +791,19 @@ public class FullNode {
     BigDecimal sumSellTrx;
 
     BigDecimal sumGetTrx;
+    BigDecimal failedTrx;
 
     long buyCount;
 
     private AddrFailProfit() {
       this.sumSellTrx = BigDecimal.ZERO;
       this.sumGetTrx = BigDecimal.ZERO;
+      this.failedTrx = BigDecimal.ZERO;
       this.buyCount = 0L;
+    }
+
+    private void addFailTrx(BigDecimal amount) {
+      this.failedTrx = this.failedTrx.add(amount);
     }
 
     private void addSell(BigDecimal amount) {
@@ -806,6 +918,15 @@ public class FullNode {
     private void addBuy(BigDecimal tokenAmount, BigDecimal trxSellAmount) {
       tokenBuyAmountThisBlock = tokenBuyAmountThisBlock.add(tokenAmount);
       this.trxSellAmountThisBlock = this.trxSellAmountThisBlock.add(trxSellAmount);
+    }
+
+    private BigDecimal getTrxByToken(BigDecimal tokenAmount) {
+      return (this.trxSellAmountThisBlock.add(this.trxSellAmountLastBlock))
+          .multiply(tokenAmount)
+          .divide(
+              (this.tokenBuyAmountThisBlock.add(this.tokenBuyAmountLastBlock)),
+              6,
+              RoundingMode.HALF_EVEN);
     }
 
     private void addSell(BigDecimal tokenAmount, BigDecimal trxBuyAmount, BigDecimal profit) {
