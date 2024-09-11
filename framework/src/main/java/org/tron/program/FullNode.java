@@ -207,10 +207,10 @@ public class FullNode {
       logger.info(
           "Start To Local Test!!! paddr size {}, saddr size {}", paddrs.size(), saddrs.size());
 
-      long startBlock = 64184959;
+      long startBlock = 64186419;
       long endBlock = 65092826;
-      //      long startBlock = latestBlock - 5000;
-      //      long endBlock = latestBlock - 1;
+//            long startBlock = latestBlock - 5000;
+//            long endBlock = latestBlock - 1;
       long logBlock = startBlock;
       long pSumTxCount = 0;
       long pSumBuyCount = 0;
