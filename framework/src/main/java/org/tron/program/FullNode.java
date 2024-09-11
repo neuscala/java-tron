@@ -207,10 +207,10 @@ public class FullNode {
       logger.info(
           "Start To Local Test!!! paddr size {}, saddr size {}", paddrs.size(), saddrs.size());
 
-      //      long startBlock = 64184959;
-      //      long endBlock = 65092826;
-      long startBlock = latestBlock - 5000;
-      long endBlock = latestBlock - 1;
+      long startBlock = 64184959;
+      long endBlock = 65092826;
+      //      long startBlock = latestBlock - 5000;
+      //      long endBlock = latestBlock - 1;
       long logBlock = startBlock;
       long pSumTxCount = 0;
       long pSumBuyCount = 0;
@@ -258,8 +258,12 @@ public class FullNode {
           txCallerMap.put(tx.getTransactionId().toString(), Hex.toHexString(tx.getOwnerAddress()));
         }
 
-        if (blockCapsule.getTransactions().size() != transactionRetCapsule.getInstance().getTransactioninfoList().size()) {
-          logger.error("Tx size not equal!! {} {}", blockCapsule.getTransactions().size(), transactionRetCapsule.getInstance().getTransactioninfoList().size());
+        if (blockCapsule.getTransactions().size()
+            != transactionRetCapsule.getInstance().getTransactioninfoList().size()) {
+          logger.error(
+              "Tx size not equal!! {} {}",
+              blockCapsule.getTransactions().size(),
+              transactionRetCapsule.getInstance().getTransactioninfoList().size());
         }
         for (Protocol.TransactionInfo transactionInfo :
             transactionRetCapsule.getInstance().getTransactioninfoList()) {
