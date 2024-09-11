@@ -205,7 +205,7 @@ public class FullNode {
       while ((line = reader.readLine()) != null) {
         saddrs.add(Hex.toHexString(Commons.decodeFromBase58Check(line)));
       }
-      long startBlock = 64493430;
+      long startBlock = 64493430 - 28800 * 5;
       long endBlock = 65092826;
       //      long startBlock = latestBlock - 5000;
       //      long endBlock = latestBlock - 1;
@@ -260,9 +260,9 @@ public class FullNode {
           if (Arrays.equals(contractAddress, SWAP_ROUTER)) {
             sSumTxCount++;
 
-            //            if (!saddrs.contains(caller)) {
-            //              continue;
-            //            }
+            if (!saddrs.contains(caller)) {
+              continue;
+            }
             for (Protocol.TransactionInfo.Log log : transactionInfo.getLogList()) {
               if (!Arrays.equals(log.getTopics(0).toByteArray(), SWAP_TOPIC)) {
                 continue;
