@@ -248,7 +248,7 @@ public class FullNode {
         BlockCapsule blockCapsule;
         if (blockNum != blockStoreNum) {
           logger.error("BlockNum not equal!! {} {}", blockNum, blockStoreNum);
-          blockIterator.seek(key);
+          blockIterator.seek(ByteArray.fromLong(blockNum - 1));
           blockCapsule = ChainBaseManager.getChainBaseManager().getBlockByNum(blockNum);
         } else {
           blockCapsule = new BlockCapsule(blockEntry.getValue());
