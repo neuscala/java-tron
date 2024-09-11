@@ -205,10 +205,10 @@ public class FullNode {
       while ((line = reader.readLine()) != null) {
         saddrs.add(Hex.toHexString(Commons.decodeFromBase58Check(line)));
       }
-      //      long startBlock = 64493430;
-      //      long endBlock = 65092826;
-      long startBlock = latestBlock - 2000;
-      long endBlock = latestBlock - 1;
+      long startBlock = 64493430;
+      long endBlock = 65092826;
+      //      long startBlock = latestBlock - 2000;
+      //      long endBlock = latestBlock - 1;
       long logBlock = startBlock;
       long pSumTxCount = 0;
       long pSumBuyCount = 0;
