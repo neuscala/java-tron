@@ -417,19 +417,19 @@ public class FullNode {
                             .multiply(trxAmount)
                             .divide(tokenAmount, 6, RoundingMode.HALF_EVEN);
                     // 补齐一部分
-                    if (recordV2.tokenBuyAmountThisBlock.compareTo(BigDecimal.ZERO) > 0) {
-                      record.removeSell(
-                          sellAmountRecord
-                              .multiply(recordV2.trxSellAmountThisBlock)
-                              .divide(recordV2.tokenBuyAmountThisBlock, 6, RoundingMode.HALF_EVEN));
-                      if (blockNum >= recentBlock) {
-                        recordrecent.removeSell(
-                            sellAmountRecord
-                                .multiply(recordV2.trxSellAmountThisBlock)
-                                .divide(
-                                    recordV2.tokenBuyAmountThisBlock, 6, RoundingMode.HALF_EVEN));
-                      }
-                    }
+//                    if (recordV2.tokenBuyAmountThisBlock.compareTo(BigDecimal.ZERO) > 0) {
+//                      record.removeSell(
+//                          sellAmountRecord
+//                              .multiply(recordV2.trxSellAmountThisBlock)
+//                              .divide(recordV2.tokenBuyAmountThisBlock, 6, RoundingMode.HALF_EVEN));
+//                      if (blockNum >= recentBlock) {
+//                        recordrecent.removeSell(
+//                            sellAmountRecord
+//                                .multiply(recordV2.trxSellAmountThisBlock)
+//                                .divide(
+//                                    recordV2.tokenBuyAmountThisBlock, 6, RoundingMode.HALF_EVEN));
+//                      }
+//                    }
 
                     recordV2.addSell(
                         sellAmountRecord,
@@ -450,20 +450,20 @@ public class FullNode {
                               .multiply(trxAmount)
                               .divide(tokenAmount, 6, RoundingMode.HALF_EVEN);
                       // 补齐一部分
-                      if (recordV2.tokenBuyAmountLastBlock.compareTo(BigDecimal.ZERO) > 0) {
-                        record.removeSell(
-                            remainingSellAmountRecord
-                                .multiply(recordV2.trxSellAmountLastBlock)
-                                .divide(
-                                    recordV2.tokenBuyAmountLastBlock, 6, RoundingMode.HALF_EVEN));
-                        if (blockNum >= recentBlock) {
-                          recordrecent.removeSell(
-                              remainingSellAmountRecord
-                                  .multiply(recordV2.trxSellAmountLastBlock)
-                                  .divide(
-                                      recordV2.tokenBuyAmountLastBlock, 6, RoundingMode.HALF_EVEN));
-                        }
-                      }
+//                      if (recordV2.tokenBuyAmountLastBlock.compareTo(BigDecimal.ZERO) > 0) {
+//                        record.removeSell(
+//                            remainingSellAmountRecord
+//                                .multiply(recordV2.trxSellAmountLastBlock)
+//                                .divide(
+//                                    recordV2.tokenBuyAmountLastBlock, 6, RoundingMode.HALF_EVEN));
+//                        if (blockNum >= recentBlock) {
+//                          recordrecent.removeSell(
+//                              remainingSellAmountRecord
+//                                  .multiply(recordV2.trxSellAmountLastBlock)
+//                                  .divide(
+//                                      recordV2.tokenBuyAmountLastBlock, 6, RoundingMode.HALF_EVEN));
+//                        }
+//                      }
                       recordV2.addSell(
                           remainingSellAmountRecord,
                           remainingTrxGetAmount,
@@ -526,18 +526,27 @@ public class FullNode {
               //              BigDecimal feeAmount =
               //                  new BigDecimal(new BigInteger(dataStr.substring(64, 128), 16))
               //                      .divide(TRX_DIVISOR, 6, RoundingMode.HALF_EVEN);
-              BigDecimal trxAmount = BigDecimal.ZERO;
-              if (!isBuy) {
+              BigDecimal trxAmount;
+              if (isBuy) {
+                BigDecimal trxAmount1 =
+                    new BigDecimal(new BigInteger(dataStr.substring(0, 64), 16))
+                        .divide(TRX_DIVISOR, 6, RoundingMode.HALF_EVEN);
+                BigDecimal feeAmount1 =
+                    new BigDecimal(new BigInteger(dataStr.substring(64, 128), 16))
+                        .divide(TRX_DIVISOR, 6, RoundingMode.HALF_EVEN);
+                BigDecimal trxAmount2 = BigDecimal.ZERO;
                 for (Protocol.TransactionInfo.Log log2 : transactionInfo.getLogList()) {
                   if (Arrays.equals(log2.getTopics(0).toByteArray(), TRX_RECEIVED)) {
-                    trxAmount =
-                        trxAmount.add(
+                    trxAmount2 =
+                        trxAmount2.add(
                             new BigDecimal(
                                     new BigInteger(
                                         Hex.toHexString(log2.getData().toByteArray()), 16))
                                 .divide(TRX_DIVISOR, 6, RoundingMode.HALF_EVEN));
                   }
                 }
+                trxAmount =
+                    trxAmount1.compareTo(trxAmount2) > 0 ? trxAmount1.add(feeAmount1) : trxAmount2;
               } else {
                 trxAmount =
                     new BigDecimal(new BigInteger(dataStr.substring(0, 64), 16))
@@ -598,19 +607,19 @@ public class FullNode {
                             .multiply(trxAmount)
                             .divide(tokenAmount, 6, RoundingMode.HALF_EVEN);
                     // 补齐一部分
-                    if (recordV2.tokenBuyAmountThisBlock.compareTo(BigDecimal.ZERO) > 0) {
-                      record.removeSell(
-                          sellAmountRecord
-                              .multiply(recordV2.trxSellAmountThisBlock)
-                              .divide(recordV2.tokenBuyAmountThisBlock, 6, RoundingMode.HALF_EVEN));
-                      if (blockNum >= recentBlock) {
-                        recentrecord.removeSell(
-                            sellAmountRecord
-                                .multiply(recordV2.trxSellAmountThisBlock)
-                                .divide(
-                                    recordV2.tokenBuyAmountThisBlock, 6, RoundingMode.HALF_EVEN));
-                      }
-                    }
+//                    if (recordV2.tokenBuyAmountThisBlock.compareTo(BigDecimal.ZERO) > 0) {
+//                      record.removeSell(
+//                          sellAmountRecord
+//                              .multiply(recordV2.trxSellAmountThisBlock)
+//                              .divide(recordV2.tokenBuyAmountThisBlock, 6, RoundingMode.HALF_EVEN));
+//                      if (blockNum >= recentBlock) {
+//                        recentrecord.removeSell(
+//                            sellAmountRecord
+//                                .multiply(recordV2.trxSellAmountThisBlock)
+//                                .divide(
+//                                    recordV2.tokenBuyAmountThisBlock, 6, RoundingMode.HALF_EVEN));
+//                      }
+//                    }
                     recordV2.addSell(
                         sellAmountRecord,
                         trxGetAmount,
@@ -634,20 +643,20 @@ public class FullNode {
                               .multiply(trxAmount)
                               .divide(tokenAmount, 6, RoundingMode.HALF_EVEN);
                       // 补齐一部分
-                      if (recordV2.tokenBuyAmountLastBlock.compareTo(BigDecimal.ZERO) > 0) {
-                        record.removeSell(
-                            remainingSellAmountRecord
-                                .multiply(recordV2.trxSellAmountLastBlock)
-                                .divide(
-                                    recordV2.tokenBuyAmountLastBlock, 6, RoundingMode.HALF_EVEN));
-                        if (blockNum >= recentBlock) {
-                          recentrecord.removeSell(
-                              remainingSellAmountRecord
-                                  .multiply(recordV2.trxSellAmountLastBlock)
-                                  .divide(
-                                      recordV2.tokenBuyAmountLastBlock, 6, RoundingMode.HALF_EVEN));
-                        }
-                      }
+//                      if (recordV2.tokenBuyAmountLastBlock.compareTo(BigDecimal.ZERO) > 0) {
+//                        record.removeSell(
+//                            remainingSellAmountRecord
+//                                .multiply(recordV2.trxSellAmountLastBlock)
+//                                .divide(
+//                                    recordV2.tokenBuyAmountLastBlock, 6, RoundingMode.HALF_EVEN));
+//                        if (blockNum >= recentBlock) {
+//                          recentrecord.removeSell(
+//                              remainingSellAmountRecord
+//                                  .multiply(recordV2.trxSellAmountLastBlock)
+//                                  .divide(
+//                                      recordV2.tokenBuyAmountLastBlock, 6, RoundingMode.HALF_EVEN));
+//                        }
+//                      }
                       recordV2.addSell(
                           remainingSellAmountRecord,
                           remainingTrxGetAmount,
