@@ -188,8 +188,11 @@ public class FullNode {
     String SWAP_SELL_METHOD_2 = "4a25d94a";
     String SWAP_SELL_METHOD_3 = "791ac947";
     byte[] SWAP_ROUTER = Hex.decode("41fF7155b5df8008fbF3834922B2D52430b27874f5");
+    byte[] TRANSFER_TOPIC =
+        Hex.decode("ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef");
     byte[] SWAP_TOPIC =
         Hex.decode("d78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822");
+    byte[] WTRX_HEX = Hex.decode("891cdb91d149f23B1a45D9c5Ca78a88d0cB44C18");
     String WTRX = "891cdb91d149f23B1a45D9c5Ca78a88d0cB44C18";
 
     try {
@@ -206,21 +209,26 @@ public class FullNode {
         saddrs.add(Hex.toHexString(Commons.decodeFromBase58Check(line)));
       }
 
-      //      long startBlock = latestBlock - 5000;
-      //      long endBlock = latestBlock - 1;
-      long startBlock = 64184959;
-      long recentBlock = 64689819;
+      long startBlock = latestBlock - 5000;
+      long endBlock = latestBlock - 1;
+      long recentBlock = latestBlock - 2000;
+      //      long startBlock = 64184959;
+      //      long recentBlock = 64689819;
       logger.info(
           "Start To Local Test at {}!!! paddr size {}, saddr size {}",
           startBlock,
           paddrs.size(),
           saddrs.size());
-      long endBlock = 65092826;
+      //      long endBlock = 65092826;
       long logBlock = startBlock;
       long pSumTxCount = 0;
       long pSumBuyCount = 0;
       long sSumTxCount = 0;
       long sSumBuyCount = 0;
+      long pSumTxCountrecent = 0;
+      long pSumBuyCountrecent = 0;
+      long sSumTxCountrecent = 0;
+      long sSumBuyCountrecent = 0;
       Map<String, AddrFailProfit> pAddrBuyMap = new HashMap<>();
       Map<String, AddrFailProfit> pAddrBuyMapRecent = new HashMap<>();
       Map<String, AddrFailProfit> sAddrBuyMap = new HashMap<>();
@@ -283,13 +291,13 @@ public class FullNode {
           byte[] contractAddress = transactionInfo.getContractAddress().toByteArray();
           if (Arrays.equals(contractAddress, SWAP_ROUTER)) {
             sSumTxCount++;
+            if (blockNum >= recentBlock) {
+              sSumTxCountrecent++;
+            }
 
             //            if (!saddrs.contains(caller)) {
             //              continue;
             //            }
-            if (true) {
-              continue;
-            }
             for (Protocol.TransactionInfo.Log log : transactionInfo.getLogList()) {
               if (!Arrays.equals(log.getTopics(0).toByteArray(), SWAP_TOPIC)) {
                 continue;
@@ -302,8 +310,15 @@ public class FullNode {
 
               String pair = Hex.toHexString(log.getAddress().toByteArray());
               String token = pairToTokenMap.get(pair);
-              if (token == null) {
-                continue;
+              boolean tokenNull = token == null;
+              if (tokenNull) {
+                for (Protocol.TransactionInfo.Log log2 : transactionInfo.getLogList()) {
+                  if (Arrays.equals(TRANSFER_TOPIC, log2.getTopics(0).toByteArray())
+                      && !Arrays.equals(log2.getAddress().toByteArray(), WTRX_HEX)) {
+                    token = Hex.toHexString(log2.getAddress().toByteArray());
+                    break;
+                  }
+                }
               }
               Map<String, BuyAndSellRecordV2> tokenMap =
                   swapThisBlockMap.getOrDefault(caller, new HashMap<>());
@@ -315,6 +330,16 @@ public class FullNode {
               boolean isBuy =
                   ((smaller && amount0Out.compareTo(BigInteger.ZERO) > 0)
                       || (!smaller && amount1Out.compareTo(BigInteger.ZERO) > 0));
+
+              if (isBuy) {
+                sSumBuyCount++;
+                if (blockNum >= recentBlock) {
+                  sSumBuyCountrecent++;
+                }
+              }
+              if (true) {
+                break;
+              }
 
               BigDecimal trxAmount;
               BigDecimal tokenAmount;
@@ -343,6 +368,7 @@ public class FullNode {
                       new BigDecimal(amount1In).divide(TOKEN_DIVISOR, 18, RoundingMode.HALF_EVEN);
                 }
               }
+
               if (isBuy) {
                 sSumBuyCount++;
                 AddrFailProfit failProfit = sAddrBuyMap.getOrDefault(caller, new AddrFailProfit());
@@ -412,9 +438,8 @@ public class FullNode {
             }
           } else if (Arrays.equals(contractAddress, SUNPUMP_LAUNCH)) {
             pSumTxCount++;
-            //
-            if (!paddrs.contains(caller)) {
-              continue;
+            if (blockNum >= recentBlock) {
+              pSumTxCountrecent++;
             }
             for (Protocol.TransactionInfo.Log log : transactionInfo.getLogList()) {
               String token = get41Addr(Hex.toHexString(log.getAddress().toByteArray()));
@@ -434,6 +459,16 @@ public class FullNode {
               if (!flag) {
                 continue;
               }
+              if (isBuy) {
+                pSumBuyCount++;
+                if (blockNum >= recentBlock) {
+                  pSumBuyCountrecent++;
+                }
+              }
+
+              if (!paddrs.contains(caller)) {
+                continue;
+              }
 
               String dataStr = Hex.toHexString(log.getData().toByteArray());
               //              BigDecimal trxAmount =
@@ -443,14 +478,21 @@ public class FullNode {
               //                  new BigDecimal(new BigInteger(dataStr.substring(64, 128), 16))
               //                      .divide(TRX_DIVISOR, 6, RoundingMode.HALF_EVEN);
               BigDecimal trxAmount = BigDecimal.ZERO;
-              for (Protocol.TransactionInfo.Log log2 : transactionInfo.getLogList()) {
-                if (Arrays.equals(log2.getTopics(0).toByteArray(), TRX_RECEIVED)) {
-                  trxAmount =
-                      trxAmount.add(
-                          new BigDecimal(
-                                  new BigInteger(Hex.toHexString(log2.getData().toByteArray()), 16))
-                              .divide(TRX_DIVISOR, 6, RoundingMode.HALF_EVEN));
+              if (isBuy) {
+                for (Protocol.TransactionInfo.Log log2 : transactionInfo.getLogList()) {
+                  if (Arrays.equals(log2.getTopics(0).toByteArray(), TRX_RECEIVED)) {
+                    trxAmount =
+                        trxAmount.add(
+                            new BigDecimal(
+                                    new BigInteger(
+                                        Hex.toHexString(log2.getData().toByteArray()), 16))
+                                .divide(TRX_DIVISOR, 6, RoundingMode.HALF_EVEN));
+                  }
                 }
+              } else {
+                trxAmount =
+                    new BigDecimal(new BigInteger(dataStr.substring(0, 64), 16))
+                        .divide(TRX_DIVISOR, 6, RoundingMode.HALF_EVEN);
               }
 
               BigDecimal tokenAmount =
@@ -593,13 +635,17 @@ public class FullNode {
 
       pwriter.close();
       logger.info(
-          "Final syncing sum p addr {}, s addr {}, p_sum_tx_count {}, p_buy {}, s_sum_tx_count {}, s_buy {}",
+          "Final syncing sum p addr {}, s addr {}, p_sum_tx_count {}, p_buy {}, s_sum_tx_count {}, s_buy {}, p_recent_tx_count {}, p_recent_buy {}, s_recent_tx_count {}, s_recent_buy {}",
           pAddrBuyMap.keySet().size(),
           sAddrBuyMap.keySet().size(),
           pSumTxCount,
           pSumBuyCount,
           sSumTxCount,
-          sSumBuyCount);
+          sSumBuyCount,
+          pSumTxCountrecent,
+          pSumBuyCountrecent,
+          sSumTxCountrecent,
+          sSumBuyCountrecent);
 
     } catch (Exception e) {
       logger.info("ERROR!!!", e);
