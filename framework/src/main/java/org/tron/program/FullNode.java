@@ -205,7 +205,7 @@ public class FullNode {
         saddrs.add(Hex.toHexString(Commons.decodeFromBase58Check(line)));
       }
 
-      long startBlock = Math.max(ChainBaseManager.getInstance().getLowestBlockNum(), 64186419);
+      long startBlock = Math.max(ChainBaseManager.getInstance().getLowestBlockNum(), 64189497);
       logger.info(
           "Start To Local Test at {}!!! paddr size {}, saddr size {}",
           startBlock,
