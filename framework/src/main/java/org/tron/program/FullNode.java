@@ -167,11 +167,12 @@ public class FullNode {
     long latestBlock = ChainBaseManager.getInstance().getHeadBlockNum();
 
     // 发射前
-    byte[] LaunchPadProxy = Hex.decode("41C22DD1b7Bc7574e94563C8282F64B065bC07b2fa");
     byte[] TOKEN_PURCHASE_TOPIC =
         Hex.decode("63abb62535c21a5d221cf9c15994097b8880cc986d82faf80f57382b998dbae5");
     byte[] TOKEN_SOLD_TOPIC =
         Hex.decode("9387a595ac4be9038bbb9751abad8baa3dcf219dd9e19abb81552bd521fe3546");
+    byte[] TRX_RECEIVED =
+        Hex.decode("1bab02886c659969cbb004cc17dc19be19f193323a306e26c669bedb29c651f7");
     String PUMP_BUY_METHOD_1 = "1cc2c911";
     String PUMP_BUY_METHOD_2 = "2f70d762";
     String PUMP_SELL_METHOD = "d19aa2b9";
@@ -205,21 +206,23 @@ public class FullNode {
         saddrs.add(Hex.toHexString(Commons.decodeFromBase58Check(line)));
       }
 
-      long startBlock = 64689819;
+      //      long startBlock = latestBlock - 5000;
+      //      long endBlock = latestBlock - 1;
+      long startBlock = 64184959;
+      long recentBlock = 64689819;
       logger.info(
           "Start To Local Test at {}!!! paddr size {}, saddr size {}",
           startBlock,
           paddrs.size(),
           saddrs.size());
       long endBlock = 65092826;
-      //      long startBlock = latestBlock - 5000;
-      //      long endBlock = latestBlock - 1;
       long logBlock = startBlock;
       long pSumTxCount = 0;
       long pSumBuyCount = 0;
       long sSumTxCount = 0;
       long sSumBuyCount = 0;
       Map<String, AddrFailProfit> pAddrBuyMap = new HashMap<>();
+      Map<String, AddrFailProfit> pAddrBuyMapRecent = new HashMap<>();
       Map<String, AddrFailProfit> sAddrBuyMap = new HashMap<>();
 
       Map<String, Map<String, BuyAndSellRecordV2>> pumpLastBlockBuyAndSellMap = new HashMap<>();
@@ -281,7 +284,10 @@ public class FullNode {
           if (Arrays.equals(contractAddress, SWAP_ROUTER)) {
             sSumTxCount++;
 
-            if (!saddrs.contains(caller)) {
+            //            if (!saddrs.contains(caller)) {
+            //              continue;
+            //            }
+            if (true) {
               continue;
             }
             for (Protocol.TransactionInfo.Log log : transactionInfo.getLogList()) {
@@ -430,12 +436,23 @@ public class FullNode {
               }
 
               String dataStr = Hex.toHexString(log.getData().toByteArray());
-              BigDecimal trxAmount =
-                  new BigDecimal(new BigInteger(dataStr.substring(0, 64), 16))
-                      .divide(TRX_DIVISOR, 6, RoundingMode.HALF_EVEN);
-              BigDecimal feeAmount =
-                  new BigDecimal(new BigInteger(dataStr.substring(64, 128), 16))
-                      .divide(TRX_DIVISOR, 6, RoundingMode.HALF_EVEN);
+              //              BigDecimal trxAmount =
+              //                  new BigDecimal(new BigInteger(dataStr.substring(0, 64), 16))
+              //                      .divide(TRX_DIVISOR, 6, RoundingMode.HALF_EVEN);
+              //              BigDecimal feeAmount =
+              //                  new BigDecimal(new BigInteger(dataStr.substring(64, 128), 16))
+              //                      .divide(TRX_DIVISOR, 6, RoundingMode.HALF_EVEN);
+              BigDecimal trxAmount = BigDecimal.ZERO;
+              for (Protocol.TransactionInfo.Log log2 : transactionInfo.getLogList()) {
+                if (Arrays.equals(log2.getTopics(0).toByteArray(), TRX_RECEIVED)) {
+                  trxAmount =
+                      trxAmount.add(
+                          new BigDecimal(
+                                  new BigInteger(Hex.toHexString(log2.getData().toByteArray()), 16))
+                              .divide(TRX_DIVISOR, 6, RoundingMode.HALF_EVEN));
+                }
+              }
+
               BigDecimal tokenAmount =
                   new BigDecimal(new BigInteger(dataStr.substring(128, 192), 16))
                       .divide(TOKEN_DIVISOR, 18, RoundingMode.HALF_EVEN);
@@ -444,12 +461,21 @@ public class FullNode {
                 AddrFailProfit failProfit =
                     pAddrBuyMap.getOrDefault(
                         caller, new AddrFailProfit(BigDecimal.ZERO, BigDecimal.ZERO, 0L));
-                failProfit.addSell(feeAmount.add(trxAmount));
+                failProfit.addSell(trxAmount);
                 pAddrBuyMap.put(caller, failProfit);
-                recordV2.addBuy(tokenAmount, feeAmount.add(trxAmount));
+                if (blockNum >= recentBlock) {
+                  AddrFailProfit recentfailProfit =
+                      pAddrBuyMapRecent.getOrDefault(
+                          caller, new AddrFailProfit(BigDecimal.ZERO, BigDecimal.ZERO, 0L));
+                  recentfailProfit.addSell(trxAmount);
+                  pAddrBuyMapRecent.put(caller, recentfailProfit);
+                }
+                recordV2.addBuy(tokenAmount, trxAmount);
               } else {
 
                 AddrFailProfit record = pAddrBuyMap.getOrDefault(caller, new AddrFailProfit());
+                AddrFailProfit recentrecord =
+                    pAddrBuyMapRecent.getOrDefault(caller, new AddrFailProfit());
                 if (recordV2.sumBuyAmountToCover().compareTo(BigDecimal.ZERO) > 0) {
 
                   BigDecimal sumBuyAmountToCover = recordV2.sumBuyAmountToCover();
@@ -460,6 +486,9 @@ public class FullNode {
                         trxAmount.subtract(recordV2.trxSellAmountToCover()));
                     // 获利了
                     record.removeSell(recordV2.trxSellAmountToCover());
+                    if (blockNum >= recentBlock) {
+                      recentrecord.removeSell(recordV2.trxSellAmountToCover());
+                    }
                   } else {
                     // 先和本块比较
                     BigDecimal sellAmountRecord =
@@ -477,6 +506,10 @@ public class FullNode {
 
                     // 补齐一部分
                     record.removeSell(recordV2.trxSellAmountToCover());
+
+                    if (blockNum >= recentBlock) {
+                      recentrecord.removeSell(recordV2.trxSellAmountToCover());
+                    }
 
                     BigDecimal remainingToCover = sumBuyAmountToCover.subtract(sellAmountRecord);
                     BigDecimal remainingTokenAmount = sellAmountRecord.subtract(tokenAmount);
@@ -498,13 +531,23 @@ public class FullNode {
 
                       // 再补
                       record.removeSell(recordV2.trxSellAmountToCover());
+
+                      if (blockNum >= recentBlock) {
+                        recentrecord.removeSell(recordV2.trxSellAmountToCover());
+                      }
                     }
                   }
                 } else {
                   record.addGet(trxAmount);
+                  if (blockNum >= recentBlock) {
+                    recentrecord.addGet(trxAmount);
+                  }
                 }
 
                 pAddrBuyMap.put(caller, record);
+                if (blockNum >= recentBlock) {
+                  pAddrBuyMapRecent.put(caller, recentrecord);
+                }
               }
               tokenMap.put(token, recordV2);
               pumpThisBlockMap.put(caller, tokenMap);
@@ -538,8 +581,8 @@ public class FullNode {
                       + v.buyCount
                       + " "
                       + (v.sumSellTrx.subtract(v.sumGetTrx))));
-      pwriter.println("s_address sum_buy failed_profit");
-      sAddrBuyMap.forEach(
+      pwriter.println("recentp_address sum_buy failed_profit");
+      pAddrBuyMapRecent.forEach(
           (k, v) ->
               pwriter.println(
                   StringUtil.encode58Check(Hex.decode(k))
