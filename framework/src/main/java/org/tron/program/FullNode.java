@@ -192,7 +192,6 @@ public class FullNode {
     String WTRX = "891cdb91d149f23B1a45D9c5Ca78a88d0cB44C18";
 
     try {
-      logger.info("Start To Local Test!!!");
 
       BufferedReader reader = new BufferedReader(new FileReader("paddrs.txt"));
       Set<String> paddrs = new HashSet<>();
@@ -205,6 +204,9 @@ public class FullNode {
       while ((line = sreader.readLine()) != null) {
         saddrs.add(Hex.toHexString(Commons.decodeFromBase58Check(line)));
       }
+      logger.info(
+          "Start To Local Test!!! paddr size {}, saddr size [}", paddrs.size(), saddrs.size());
+
       long startBlock = 64184959;
       long endBlock = 65092826;
       //      long startBlock = latestBlock - 5000;
@@ -254,7 +256,7 @@ public class FullNode {
         for (Protocol.TransactionInfo transactionInfo :
             transactionRetCapsule.getInstance().getTransactioninfoList()) {
           byte[] txId = transactionInfo.getId().toByteArray();
-          String caller = txCallerMap.get(Hex.toHexString(txId));
+          String caller = get41Addr(txCallerMap.get(Hex.toHexString(txId)));
 
           byte[] contractAddress = transactionInfo.getContractAddress().toByteArray();
           if (Arrays.equals(contractAddress, SWAP_ROUTER)) {
@@ -283,6 +285,7 @@ public class FullNode {
               BuyAndSellRecordV2 recordV2 =
                   tokenMap.getOrDefault(token, new BuyAndSellRecordV2(blockNum));
               boolean smaller = smallerToWtrx(token, WTRX);
+              token = get41Addr(token);
 
               boolean isBuy =
                   ((smaller && amount0Out.compareTo(BigInteger.ZERO) > 0)
@@ -389,7 +392,7 @@ public class FullNode {
               continue;
             }
             for (Protocol.TransactionInfo.Log log : transactionInfo.getLogList()) {
-              String token = Hex.toHexString(log.getAddress().toByteArray());
+              String token = get41Addr(Hex.toHexString(log.getAddress().toByteArray()));
               Map<String, BuyAndSellRecordV2> tokenMap =
                   pumpThisBlockMap.getOrDefault(caller, new HashMap<>());
               BuyAndSellRecordV2 recordV2 =
@@ -541,6 +544,13 @@ public class FullNode {
     }
 
     logger.info("END");
+  }
+
+  private static String get41Addr(String hexAddr) {
+    if (!hexAddr.startsWith("41")) {
+      return "41" + hexAddr;
+    }
+    return hexAddr;
   }
 
   private static Map<String, String> populateMap() throws IOException {
