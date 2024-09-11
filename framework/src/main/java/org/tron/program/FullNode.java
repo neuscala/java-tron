@@ -205,7 +205,7 @@ public class FullNode {
         saddrs.add(Hex.toHexString(Commons.decodeFromBase58Check(line)));
       }
 
-      long startBlock = Math.max(ChainBaseManager.getInstance().getLowestBlockNum(), 64189497);
+      long startBlock = 64184959;
       logger.info(
           "Start To Local Test at {}!!! paddr size {}, saddr size {}",
           startBlock,
@@ -239,16 +239,20 @@ public class FullNode {
         byte[] key = retEntry.getKey();
         long blockNum = Longs.fromByteArray(key);
         long blockStoreNum = Longs.fromByteArray(blockEntry.getKey());
-        if (blockNum != blockStoreNum) {
-          logger.error("BlockNum not equal!! {} {}", blockNum, blockStoreNum);
-        }
         if (blockNum > endBlock) {
           break;
         }
 
         byte[] value = retEntry.getValue();
         TransactionRetCapsule transactionRetCapsule = new TransactionRetCapsule(value);
-        BlockCapsule blockCapsule = new BlockCapsule(blockEntry.getValue());
+        BlockCapsule blockCapsule;
+        if (blockNum != blockStoreNum) {
+          logger.error("BlockNum not equal!! {} {}", blockNum, blockStoreNum);
+          blockIterator.seek(key);
+          blockCapsule = ChainBaseManager.getChainBaseManager().getBlockByNum(blockNum);
+        } else {
+          blockCapsule = new BlockCapsule(blockEntry.getValue());
+        }
 
         long timestamp = transactionRetCapsule.getInstance().getBlockTimeStamp();
         Map<String, Map<String, BuyAndSellRecordV2>> swapThisBlockMap =
