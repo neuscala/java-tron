@@ -207,7 +207,7 @@ public class FullNode {
       }
       long startBlock = 64493430;
       long endBlock = 65092826;
-      //      long startBlock = latestBlock - 2000;
+      //      long startBlock = latestBlock - 5000;
       //      long endBlock = latestBlock - 1;
       long logBlock = startBlock;
       long pSumTxCount = 0;
@@ -233,7 +233,6 @@ public class FullNode {
 
         byte[] key = retEntry.getKey();
         long blockNum = Longs.fromByteArray(key);
-        System.out.println(blockNum + " " + Longs.fromByteArray(blockEntry.getKey()));
         if (blockNum > endBlock) {
           break;
         }
@@ -244,9 +243,9 @@ public class FullNode {
 
         long timestamp = transactionRetCapsule.getInstance().getBlockTimeStamp();
         Map<String, Map<String, BuyAndSellRecordV2>> swapThisBlockMap =
-            getThisBlockMap(swapLastBlockBuyAndSellMap);
+            getThisBlockMap(blockNum, swapLastBlockBuyAndSellMap);
         Map<String, Map<String, BuyAndSellRecordV2>> pumpThisBlockMap =
-            getThisBlockMap(pumpLastBlockBuyAndSellMap);
+            getThisBlockMap(blockNum, pumpLastBlockBuyAndSellMap);
 
         Map<String, String> txCallerMap = new HashMap<>();
         for (TransactionCapsule tx : blockCapsule.getTransactions()) {
@@ -261,27 +260,28 @@ public class FullNode {
           if (Arrays.equals(contractAddress, SWAP_ROUTER)) {
             sSumTxCount++;
 
-            if (!saddrs.contains(caller)) {
-              continue;
-            }
+            //            if (!saddrs.contains(caller)) {
+            //              continue;
+            //            }
             for (Protocol.TransactionInfo.Log log : transactionInfo.getLogList()) {
               if (!Arrays.equals(log.getTopics(0).toByteArray(), SWAP_TOPIC)) {
                 continue;
               }
-              String pair = Hex.toHexString(log.getAddress().toByteArray());
-              Map<String, BuyAndSellRecordV2> tokenMap =
-                  swapThisBlockMap.getOrDefault(caller, new HashMap<>());
-              BuyAndSellRecordV2 recordV2 = tokenMap.getOrDefault(pair, new BuyAndSellRecordV2());
               String logData = Hex.toHexString(log.getData().toByteArray());
               BigInteger amount0In = new BigInteger(logData.substring(0, 64), 16);
               BigInteger amount1In = new BigInteger(logData.substring(64, 128), 16);
               BigInteger amount0Out = new BigInteger(logData.substring(128, 192), 16);
               BigInteger amount1Out = new BigInteger(logData.substring(192, 256), 16);
 
+              String pair = Hex.toHexString(log.getAddress().toByteArray());
               String token = pairToTokenMap.get(pair);
               if (token == null) {
                 continue;
               }
+              Map<String, BuyAndSellRecordV2> tokenMap =
+                  swapThisBlockMap.getOrDefault(caller, new HashMap<>());
+              BuyAndSellRecordV2 recordV2 =
+                  tokenMap.getOrDefault(token, new BuyAndSellRecordV2(blockNum));
               boolean smaller = smallerToWtrx(token, WTRX);
 
               boolean isBuy =
@@ -392,7 +392,8 @@ public class FullNode {
               String token = Hex.toHexString(log.getAddress().toByteArray());
               Map<String, BuyAndSellRecordV2> tokenMap =
                   pumpThisBlockMap.getOrDefault(caller, new HashMap<>());
-              BuyAndSellRecordV2 recordV2 = tokenMap.getOrDefault(token, new BuyAndSellRecordV2());
+              BuyAndSellRecordV2 recordV2 =
+                  tokenMap.getOrDefault(token, new BuyAndSellRecordV2(blockNum));
 
               boolean isBuy = false;
               boolean flag = false;
@@ -594,15 +595,19 @@ public class FullNode {
   }
 
   private static Map<String, Map<String, BuyAndSellRecordV2>> getThisBlockMap(
-      Map<String, Map<String, BuyAndSellRecordV2>> lastBlockBuyAndSellMap) {
+      long curBlockNum, Map<String, Map<String, BuyAndSellRecordV2>> lastBlockBuyAndSellMap) {
     Map<String, Map<String, BuyAndSellRecordV2>> map = new HashMap<>();
 
     lastBlockBuyAndSellMap.forEach(
         (caller, tokenMap) ->
             tokenMap.forEach(
                 (token, record) -> {
+                  if (curBlockNum - record.blockNum != 1) {
+                    return;
+                  }
                   BuyAndSellRecordV2 recordV2 =
                       new BuyAndSellRecordV2(
+                          curBlockNum,
                           record.tokenBuyAmountThisBlock,
                           record.trxSellAmountThisBlock,
                           record.tokenSellAmountThisBlock,
@@ -630,7 +635,9 @@ public class FullNode {
     long successCount;
     BigDecimal recordProfit;
 
-    private BuyAndSellRecordV2() {
+    long blockNum;
+
+    private BuyAndSellRecordV2(long blockNum) {
       tokenBuyAmountThisBlock = BigDecimal.ZERO;
       trxSellAmountThisBlock = BigDecimal.ZERO;
       tokenSellAmountThisBlock = BigDecimal.ZERO;
@@ -641,9 +648,11 @@ public class FullNode {
       trxBuyAmountLastBlock = BigDecimal.ZERO;
       successCount = 0;
       recordProfit = BigDecimal.ZERO;
+      this.blockNum = blockNum;
     }
 
     private BuyAndSellRecordV2(
+        long blockNum,
         BigDecimal tokenBuyAmountLastBlock,
         BigDecimal trxSellAmountLastBlock,
         BigDecimal tokenSellAmountLastBlock,
@@ -658,6 +667,7 @@ public class FullNode {
       this.trxBuyAmountLastBlock = trxBuyAmountLastBlock;
       successCount = 0;
       recordProfit = BigDecimal.ZERO;
+      this.blockNum = blockNum;
     }
 
     private void addBuy(BigDecimal tokenAmount, BigDecimal trxSellAmount) {
