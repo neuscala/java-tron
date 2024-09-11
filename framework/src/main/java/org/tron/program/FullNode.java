@@ -612,7 +612,12 @@ public class FullNode {
         (caller, tokenMap) ->
             tokenMap.forEach(
                 (token, record) -> {
-                  if (curBlockNum - record.blockNum != 1) {
+                  if (curBlockNum - record.blockNum != 1
+                      || record
+                              .getTokenBuyAmountThisBlock()
+                              .subtract(record.getTokenSellAmountThisBlock())
+                              .compareTo(BigDecimal.ZERO)
+                          <= 0) {
                     return;
                   }
                   BuyAndSellRecordV2 recordV2 =
