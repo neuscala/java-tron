@@ -561,11 +561,11 @@ public class FullNode {
         if (blockNum - logBlock >= 10000) {
           logBlock = blockNum;
           logger.info(
-              "Sync to block {} timestamp {}, sum p addr {}, s addr {}, p_sum_tx_count {}, s_sum_tx_count {}",
+              "Sync to block {} timestamp {}, sum p addr {}, recent p addr {}, p_sum_tx_count {}, s_sum_tx_count {}",
               blockNum,
               timestamp,
               pAddrBuyMap.keySet().size(),
-              sAddrBuyMap.keySet().size(),
+              pAddrBuyMapRecent.keySet().size(),
               pSumTxCount,
               sSumTxCount);
         }
