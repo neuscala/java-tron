@@ -296,9 +296,9 @@ public class FullNode {
               sSumTxCountrecent++;
             }
 
-            //            if (!saddrs.contains(caller)) {
-            //              continue;
-            //            }
+            if (!saddrs.contains(caller)) {
+              continue;
+            }
             for (Protocol.TransactionInfo.Log log : transactionInfo.getLogList()) {
               if (!Arrays.equals(log.getTopics(0).toByteArray(), SWAP_TOPIC)) {
                 continue;
@@ -368,7 +368,6 @@ public class FullNode {
               }
 
               if (isBuy) {
-                sSumBuyCount++;
                 AddrFailProfit failProfit = sAddrBuyMap.getOrDefault(caller, new AddrFailProfit());
                 failProfit.addSell(trxAmount);
                 sAddrBuyMap.put(caller, failProfit);
@@ -974,30 +973,6 @@ public class FullNode {
           .add(trxSellAmountLastBlock)
           .subtract(trxBuyAmountThisBlock)
           .subtract(trxBuyAmountLastBlock);
-    }
-  }
-
-  @AllArgsConstructor
-  @Getter
-  private static class AddrAllInfoRecord {
-
-    private BigDecimal trxAmount;
-    private Set<Long> blocks;
-    private Set<String> tokens;
-    private long successCount;
-
-    private AddrAllInfoRecord() {
-      trxAmount = new BigDecimal(0);
-      blocks = new HashSet<>();
-      tokens = new HashSet<>();
-      successCount = 0;
-    }
-
-    private void addRecord(long blockNum, String token, BigDecimal trxAmount, long success) {
-      this.trxAmount = this.trxAmount.add(trxAmount);
-      blocks.add(blockNum);
-      tokens.add(token);
-      successCount += success;
     }
   }
 }
