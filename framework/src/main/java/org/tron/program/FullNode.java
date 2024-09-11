@@ -209,17 +209,17 @@ public class FullNode {
         saddrs.add(Hex.toHexString(Commons.decodeFromBase58Check(line)));
       }
 
-      long startBlock = latestBlock - 5000;
-      long endBlock = latestBlock - 1;
-      long recentBlock = latestBlock - 2000;
-      //      long startBlock = 64184959;
-      //      long recentBlock = 64689819;
+      //      long startBlock = latestBlock - 5000;
+      //      long endBlock = latestBlock - 1;
+      //      long recentBlock = latestBlock - 2000;
+      long startBlock = 64184959;
+      long recentBlock = 64689819;
       logger.info(
           "Start To Local Test at {}!!! paddr size {}, saddr size {}",
           startBlock,
           paddrs.size(),
           saddrs.size());
-      //      long endBlock = 65092826;
+      long endBlock = 65092826;
       long logBlock = startBlock;
       long pSumTxCount = 0;
       long pSumBuyCount = 0;
