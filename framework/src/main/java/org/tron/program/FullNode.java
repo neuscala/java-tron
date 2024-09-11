@@ -261,9 +261,9 @@ public class FullNode {
           if (Arrays.equals(contractAddress, SWAP_ROUTER)) {
             sSumTxCount++;
 
-            //            if (!saddrs.contains(caller)) {
-            //              continue;
-            //            }
+            if (!saddrs.contains(caller)) {
+              continue;
+            }
             for (Protocol.TransactionInfo.Log log : transactionInfo.getLogList()) {
               if (!Arrays.equals(log.getTopics(0).toByteArray(), SWAP_TOPIC)) {
                 continue;
@@ -385,9 +385,9 @@ public class FullNode {
           } else if (Arrays.equals(contractAddress, SUNPUMP_LAUNCH)) {
             pSumTxCount++;
             //
-            //            if (!paddrs.contains(caller)) {
-            //              continue;
-            //            }
+            if (!paddrs.contains(caller)) {
+              continue;
+            }
             for (Protocol.TransactionInfo.Log log : transactionInfo.getLogList()) {
               String token = Hex.toHexString(log.getAddress().toByteArray());
               Map<String, BuyAndSellRecordV2> tokenMap =
