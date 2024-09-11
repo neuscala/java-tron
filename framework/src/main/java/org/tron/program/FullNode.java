@@ -200,12 +200,12 @@ public class FullNode {
       while ((line = reader.readLine()) != null) {
         paddrs.add(Hex.toHexString(Commons.decodeFromBase58Check(line)));
       }
-      new BufferedReader(new FileReader("saddrs.txt"));
+      reader = new BufferedReader(new FileReader("saddrs.txt"));
       Set<String> saddrs = new HashSet<>();
       while ((line = reader.readLine()) != null) {
         saddrs.add(Hex.toHexString(Commons.decodeFromBase58Check(line)));
       }
-      long startBlock = 64493430 - 28800 * 5;
+      long startBlock = 64268679;
       long endBlock = 65092826;
       //      long startBlock = latestBlock - 5000;
       //      long endBlock = latestBlock - 1;
