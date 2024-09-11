@@ -527,7 +527,7 @@ public class FullNode {
               //                  new BigDecimal(new BigInteger(dataStr.substring(64, 128), 16))
               //                      .divide(TRX_DIVISOR, 6, RoundingMode.HALF_EVEN);
               BigDecimal trxAmount = BigDecimal.ZERO;
-              if (isBuy) {
+              if (!isBuy) {
                 for (Protocol.TransactionInfo.Log log2 : transactionInfo.getLogList()) {
                   if (Arrays.equals(log2.getTopics(0).toByteArray(), TRX_RECEIVED)) {
                     trxAmount =
