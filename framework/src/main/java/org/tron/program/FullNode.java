@@ -198,16 +198,16 @@ public class FullNode {
       Set<String> paddrs = new HashSet<>();
       String line;
       while ((line = reader.readLine()) != null) {
-        paddrs.add(Hex.toHexString(Commons.decodeFromBase58Check(line)).substring(2));
+        paddrs.add(Hex.toHexString(Commons.decodeFromBase58Check(line)));
       }
       new BufferedReader(new FileReader("saddrs.txt"));
       Set<String> saddrs = new HashSet<>();
       while ((line = reader.readLine()) != null) {
-        saddrs.add(Hex.toHexString(Commons.decodeFromBase58Check(line)).substring(2));
+        saddrs.add(Hex.toHexString(Commons.decodeFromBase58Check(line)));
       }
       //      long startBlock = 64493430;
       //      long endBlock = 65092826;
-      long startBlock = latestBlock - 200;
+      long startBlock = latestBlock - 2000;
       long endBlock = latestBlock - 1;
       long logBlock = startBlock;
       long pSumTxCount = 0;
@@ -233,6 +233,7 @@ public class FullNode {
 
         byte[] key = retEntry.getKey();
         long blockNum = Longs.fromByteArray(key);
+        System.out.println(blockNum + " " + Longs.fromByteArray(blockEntry.getKey()));
         if (blockNum > endBlock) {
           break;
         }
@@ -257,9 +258,12 @@ public class FullNode {
           String caller = txCallerMap.get(Hex.toHexString(txId));
 
           byte[] contractAddress = transactionInfo.getContractAddress().toByteArray();
-          if (Arrays.equals(contractAddress, SWAP_ROUTER) && saddrs.contains(caller)) {
+          if (Arrays.equals(contractAddress, SWAP_ROUTER)) {
             sSumTxCount++;
 
+            //            if (!saddrs.contains(caller)) {
+            //              continue;
+            //            }
             for (Protocol.TransactionInfo.Log log : transactionInfo.getLogList()) {
               if (!Arrays.equals(log.getTopics(0).toByteArray(), SWAP_TOPIC)) {
                 continue;
@@ -312,14 +316,15 @@ public class FullNode {
                 }
               }
               if (isBuy) {
+                sSumBuyCount++;
                 AddrFailProfit failProfit = sAddrBuyMap.getOrDefault(caller, new AddrFailProfit());
                 failProfit.addSell(trxAmount);
                 sAddrBuyMap.put(caller, failProfit);
                 recordV2.addBuy(tokenAmount, trxAmount);
               } else {
-                if (recordV2.sumBuyAmountToCover().compareTo(BigDecimal.ZERO) > 0) {
 
-                  AddrFailProfit record = sAddrBuyMap.getOrDefault(caller, new AddrFailProfit());
+                AddrFailProfit record = sAddrBuyMap.getOrDefault(caller, new AddrFailProfit());
+                if (recordV2.sumBuyAmountToCover().compareTo(BigDecimal.ZERO) > 0) {
 
                   BigDecimal sumBuyAmountToCover = recordV2.sumBuyAmountToCover();
                   if (tokenAmount.compareTo(sumBuyAmountToCover) >= 0) {
@@ -328,7 +333,7 @@ public class FullNode {
                         trxAmount,
                         trxAmount.subtract(recordV2.trxSellAmountToCover()));
                     // 获利了
-                    record.addGet(recordV2.trxSellAmountToCover());
+                    record.removeSell(recordV2.trxSellAmountToCover());
                   } else {
                     // 先和本块比较
                     BigDecimal sellAmountRecord =
@@ -345,7 +350,7 @@ public class FullNode {
                         trxGetAmount.subtract(recordV2.trxSellAmountToCover()));
 
                     // 补齐一部分
-                    record.addGet(recordV2.trxSellAmountToCover());
+                    record.removeSell(recordV2.trxSellAmountToCover());
 
                     BigDecimal remainingToCover = sumBuyAmountToCover.subtract(sellAmountRecord);
                     BigDecimal remainingTokenAmount = sellAmountRecord.subtract(tokenAmount);
@@ -365,18 +370,24 @@ public class FullNode {
                           remainingTrxGetAmount,
                           remainingTrxGetAmount.subtract(recordV2.trxSellAmountToCover()));
                       // 再补一部分
-                      record.addGet(recordV2.trxSellAmountToCover());
+                      record.removeSell(recordV2.trxSellAmountToCover());
                     }
                   }
-                  sAddrBuyMap.put(caller, record);
+                } else {
+                  record.addGet(trxAmount);
                 }
+                sAddrBuyMap.put(caller, record);
               }
               tokenMap.put(token, recordV2);
               swapThisBlockMap.put(caller, tokenMap);
+              break;
             }
-          } else if (Arrays.equals(contractAddress, SUNPUMP_LAUNCH) && paddrs.contains(caller)) {
+          } else if (Arrays.equals(contractAddress, SUNPUMP_LAUNCH)) {
             pSumTxCount++;
-
+            //
+            //            if (!paddrs.contains(caller)) {
+            //              continue;
+            //            }
             for (Protocol.TransactionInfo.Log log : transactionInfo.getLogList()) {
               String token = Hex.toHexString(log.getAddress().toByteArray());
               Map<String, BuyAndSellRecordV2> tokenMap =
@@ -406,6 +417,7 @@ public class FullNode {
                   new BigDecimal(new BigInteger(dataStr.substring(128, 192), 16))
                       .divide(TOKEN_DIVISOR, 18, RoundingMode.HALF_EVEN);
               if (isBuy) {
+                pSumBuyCount++;
                 AddrFailProfit failProfit =
                     pAddrBuyMap.getOrDefault(
                         caller, new AddrFailProfit(BigDecimal.ZERO, BigDecimal.ZERO, 0L));
@@ -413,9 +425,9 @@ public class FullNode {
                 pAddrBuyMap.put(caller, failProfit);
                 recordV2.addBuy(tokenAmount, feeAmount.add(trxAmount));
               } else {
-                if (recordV2.sumBuyAmountToCover().compareTo(BigDecimal.ZERO) > 0) {
 
-                  AddrFailProfit record = pAddrBuyMap.getOrDefault(caller, new AddrFailProfit());
+                AddrFailProfit record = pAddrBuyMap.getOrDefault(caller, new AddrFailProfit());
+                if (recordV2.sumBuyAmountToCover().compareTo(BigDecimal.ZERO) > 0) {
 
                   BigDecimal sumBuyAmountToCover = recordV2.sumBuyAmountToCover();
                   if (tokenAmount.compareTo(sumBuyAmountToCover) >= 0) {
@@ -424,7 +436,7 @@ public class FullNode {
                         trxAmount,
                         trxAmount.subtract(recordV2.trxSellAmountToCover()));
                     // 获利了
-                    record.addGet(recordV2.trxSellAmountToCover());
+                    record.removeSell(recordV2.trxSellAmountToCover());
                   } else {
                     // 先和本块比较
                     BigDecimal sellAmountRecord =
@@ -441,7 +453,7 @@ public class FullNode {
                         trxGetAmount.subtract(recordV2.trxSellAmountToCover()));
 
                     // 补齐一部分
-                    record.addGet(recordV2.trxSellAmountToCover());
+                    record.removeSell(recordV2.trxSellAmountToCover());
 
                     BigDecimal remainingToCover = sumBuyAmountToCover.subtract(sellAmountRecord);
                     BigDecimal remainingTokenAmount = sellAmountRecord.subtract(tokenAmount);
@@ -462,15 +474,18 @@ public class FullNode {
                           remainingTrxGetAmount.subtract(recordV2.trxSellAmountToCover()));
 
                       // 再补
-                      record.addGet(recordV2.trxSellAmountToCover());
+                      record.removeSell(recordV2.trxSellAmountToCover());
                     }
                   }
-
-                  pAddrBuyMap.put(caller, record);
+                } else {
+                  record.addGet(trxAmount);
                 }
+
+                pAddrBuyMap.put(caller, record);
               }
               tokenMap.put(token, recordV2);
               pumpThisBlockMap.put(caller, tokenMap);
+              break;
             }
           }
         }
@@ -502,11 +517,13 @@ public class FullNode {
 
       pwriter.close();
       logger.info(
-          "Final syncing sum p addr {}, s addr {}, p_sum_tx_count {}, s_sum_tx_count {}",
+          "Final syncing sum p addr {}, s addr {}, p_sum_tx_count {}, p_buy {}, s_sum_tx_count {}, s_buy {}",
           pAddrBuyMap.keySet().size(),
           sAddrBuyMap.keySet().size(),
           pSumTxCount,
-          sSumTxCount);
+          pSumBuyCount,
+          sSumTxCount,
+          sSumBuyCount);
 
     } catch (Exception e) {
       logger.info("ERROR!!!", e);
@@ -554,8 +571,15 @@ public class FullNode {
     }
 
     private void addGet(BigDecimal amount) {
-      this.sumSellTrx = this.sumSellTrx.add(amount);
-      if (sumSellTrx.compareTo(sumGetTrx) > 0) {
+      this.sumGetTrx = this.sumGetTrx.add(amount);
+      if (sumGetTrx.compareTo(sumSellTrx) > 0) {
+        sumGetTrx = sumSellTrx.add(BigDecimal.ZERO);
+      }
+    }
+
+    private void removeSell(BigDecimal amount) {
+      this.sumSellTrx = this.sumSellTrx.subtract(amount);
+      if (sumSellTrx.compareTo(sumGetTrx) < 0) {
         sumSellTrx = sumGetTrx.add(BigDecimal.ZERO);
       }
     }
