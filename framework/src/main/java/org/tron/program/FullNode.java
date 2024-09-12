@@ -201,14 +201,13 @@ public class FullNode {
         saddrs.add(Hex.toHexString(Commons.decodeFromBase58Check(line)));
       }
 
-      //      long startBlock =
-      //          Math.max(ChainBaseManager.getChainBaseManager().getLowestBlockNum(), latestBlock -
-      // 5000);
-      //      long endBlock = latestBlock - 1;
-      //      long recentBlock = latestBlock - 2000;
-      long startBlock = 64184959;
-      long recentBlock = 64689819;
-      long endBlock = 65092826;
+      long startBlock =
+          Math.max(ChainBaseManager.getChainBaseManager().getLowestBlockNum(), latestBlock - 5000);
+      long endBlock = latestBlock - 1;
+      long recentBlock = latestBlock - 2000;
+      //      long startBlock = 64184959;
+      //      long recentBlock = 64689819;
+      //      long endBlock = 65092826;
       logger.info(
           "Start To Local Test at {}!!! paddr size {}, saddr size {}",
           startBlock,
@@ -598,7 +597,7 @@ public class FullNode {
         if (blockNum - logBlock >= 10000) {
           logBlock = blockNum;
           logger.info(
-              "Sync to block {} timestamp {}, sum p addr {}, recent p addr {}, p_sum_tx_count {}, s_sum_tx_count {}",
+              "Sync to block {} timestamp {}, sum p addr {}, s addr {}, p_sum_tx_count {}, s_sum_tx_count {}",
               blockNum,
               timestamp,
               pumpAddressAllInfoMap.keySet().size(),
@@ -632,10 +631,52 @@ public class FullNode {
                       + v.profit
                       + " "
                       + v.lack));
+      pwriter.println("SWAPRECENT");
+      swapRecentAddressAllInfoMap.forEach(
+          (k, v) ->
+              pwriter.println(
+                  StringUtil.encode58Check(Hex.decode(k))
+                      + " "
+                      + v.buyTokenCount
+                      + " "
+                      + v.sellTokenCount
+                      + " "
+                      + v.successSellCount
+                      + " "
+                      + v.trxOut
+                      + " "
+                      + v.trxIn
+                      + " "
+                      + v.originTrxIn
+                      + " "
+                      + v.profit
+                      + " "
+                      + v.lack));
       pwriter.println("PUMP");
       pwriter.println(
           "addr buy_count sell_count sccess_sell_count trx_out trx_in origin_trx_in profit lack");
       pumpAddressAllInfoMap.forEach(
+          (k, v) ->
+              pwriter.println(
+                  StringUtil.encode58Check(Hex.decode(k))
+                      + " "
+                      + v.buyTokenCount
+                      + " "
+                      + v.sellTokenCount
+                      + " "
+                      + v.successSellCount
+                      + " "
+                      + v.trxOut
+                      + " "
+                      + v.trxIn
+                      + " "
+                      + v.originTrxIn
+                      + " "
+                      + v.profit
+                      + " "
+                      + v.lack));
+      pwriter.println("PUMPRECENT");
+      pumpRecentAddressAllInfoMap.forEach(
           (k, v) ->
               pwriter.println(
                   StringUtil.encode58Check(Hex.decode(k))
