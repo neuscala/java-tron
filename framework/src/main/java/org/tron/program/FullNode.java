@@ -153,8 +153,8 @@ public class FullNode {
       JsonRpcServiceOnPBFT jsonRpcServiceOnPBFT = context.getBean(JsonRpcServiceOnPBFT.class);
       appT.addService(jsonRpcServiceOnPBFT);
     }
-    //    appT.startup();
-    //    appT.blockUntilShutdown();
+    //        appT.startup();
+    //        appT.blockUntilShutdown();
 
     long latestBlock = ChainBaseManager.getInstance().getHeadBlockNum();
 
@@ -201,13 +201,15 @@ public class FullNode {
         saddrs.add(Hex.toHexString(Commons.decodeFromBase58Check(line)));
       }
 
-//      long startBlock =
-//          Math.max(ChainBaseManager.getChainBaseManager().getLowestBlockNum(), latestBlock - 5000);
-//      long endBlock = latestBlock - 1;
-//      long recentBlock = latestBlock - 2000;
-            long startBlock = 64184959;
-            long recentBlock = 64689819;
-            long endBlock = 65092826;
+      //      long startBlock =
+      //          Math.max(ChainBaseManager.getChainBaseManager().getLowestBlockNum(), latestBlock -
+      // 5000);
+      //      long endBlock = latestBlock - 1;
+      //      long recentBlock = latestBlock - 2000;
+      // todo
+      long startBlock = 64184959;
+      long recentBlock = 64689819;
+      long endBlock = 65092826;
       logger.info(
           "Start To Local Test at {}!!! paddr size {}, saddr size {}",
           startBlock,
@@ -222,6 +224,11 @@ public class FullNode {
       long pSumBuyCountrecent = 0;
       long sSumTxCountrecent = 0;
       long sSumBuyCountrecent = 0;
+
+      Map<String, BigDecimal> swapFeeMap = new HashMap<>();
+      Map<String, BigDecimal> pumpFeeMap = new HashMap<>();
+      Map<String, BigDecimal> swapRecentFeeMap = new HashMap<>();
+      Map<String, BigDecimal> pumpRecentFeeMap = new HashMap<>();
 
       Map<String, Map<String, BuyAndSellRecordV2>> pumpLastBlockBuyAndSellMap = new HashMap<>();
       Map<String, Map<String, BuyAndSellRecordV2>> swapLastBlockBuyAndSellMap = new HashMap<>();
@@ -244,20 +251,24 @@ public class FullNode {
         byte[] key = retEntry.getKey();
         long blockNum = Longs.fromByteArray(key);
         long blockStoreNum = Longs.fromByteArray(blockEntry.getKey());
+        while (blockNum != blockStoreNum) {
+          blockEntry = blockIterator.next();
+          blockStoreNum = Longs.fromByteArray(blockEntry.getKey());
+        }
         if (blockNum > endBlock) {
           break;
         }
 
         byte[] value = retEntry.getValue();
         TransactionRetCapsule transactionRetCapsule = new TransactionRetCapsule(value);
-        BlockCapsule blockCapsule;
-        if (blockNum != blockStoreNum) {
-          logger.error("BlockNum not equal!! {} {}", blockNum, blockStoreNum);
-          blockIterator.seek(ByteArray.fromLong(blockNum + 1));
-          blockCapsule = ChainBaseManager.getChainBaseManager().getBlockByNum(blockNum);
-        } else {
-          blockCapsule = new BlockCapsule(blockEntry.getValue());
-        }
+        BlockCapsule blockCapsule = new BlockCapsule(blockEntry.getValue());
+        //        if (blockNum != blockStoreNum) {
+        //          logger.error("BlockNum not equal!! {} {}", blockNum, blockStoreNum);
+        //          blockIterator.seek(ByteArray.fromLong(blockNum + 1));
+        //          blockCapsule = ChainBaseManager.getChainBaseManager().getBlockByNum(blockNum);
+        //        } else {
+        //          blockCapsule = new BlockCapsule(blockEntry.getValue());
+        //        }
 
         long timestamp = transactionRetCapsule.getInstance().getBlockTimeStamp();
         Map<String, Map<String, BuyAndSellRecordV2>> swapThisBlockMap =
@@ -279,13 +290,48 @@ public class FullNode {
         }
         for (Protocol.TransactionInfo transactionInfo :
             transactionRetCapsule.getInstance().getTransactioninfoList()) {
-          if (!transactionInfo.getResult().equals(SUCESS)) {
-            continue;
-          }
+          //          if (!transactionInfo.getResult().equals(SUCESS)) {
+          //            continue;
+          //          }
           byte[] txId = transactionInfo.getId().toByteArray();
           String caller = get41Addr(txCallerMap.get(Hex.toHexString(txId)));
-
           byte[] contractAddress = transactionInfo.getContractAddress().toByteArray();
+
+          if (Arrays.equals(contractAddress, SWAP_ROUTER)
+              || Arrays.equals(contractAddress, SUNPUMP_LAUNCH)) {
+            long fee = transactionInfo.getFee();
+            if (saddrs.contains(caller)) {
+              swapFeeMap.put(
+                  caller,
+                  swapFeeMap
+                      .getOrDefault(caller, BigDecimal.ZERO)
+                      .add(BigDecimal.valueOf((double) fee / 1000000)));
+              if (blockNum >= recentBlock) {
+                swapRecentFeeMap.put(
+                    caller,
+                    swapRecentFeeMap
+                        .getOrDefault(caller, BigDecimal.ZERO)
+                        .add(BigDecimal.valueOf((double) fee / 1000000)));
+              }
+            } else if (paddrs.contains(caller)) {
+              pumpFeeMap.put(
+                  caller,
+                  pumpFeeMap
+                      .getOrDefault(caller, BigDecimal.ZERO)
+                      .add(BigDecimal.valueOf((double) fee / 1000000)));
+              if (blockNum >= recentBlock) {
+                pumpRecentFeeMap.put(
+                    caller,
+                    pumpRecentFeeMap
+                        .getOrDefault(caller, BigDecimal.ZERO)
+                        .add(BigDecimal.valueOf((double) fee / 1000000)));
+              }
+            }
+          }
+          if (true) {
+            continue;
+          }
+
           if (Arrays.equals(contractAddress, SWAP_ROUTER)) {
 
             // Swap tx
@@ -320,12 +366,12 @@ public class FullNode {
                   }
                 }
               }
+              boolean smaller = smallerToWtrx(token, WTRX);
+              token = get41Addr(token);
               Map<String, BuyAndSellRecordV2> tokenMap =
                   swapThisBlockMap.getOrDefault(caller, new HashMap<>());
               BuyAndSellRecordV2 recordV2 =
                   tokenMap.getOrDefault(token, new BuyAndSellRecordV2(blockNum));
-              boolean smaller = smallerToWtrx(token, WTRX);
-              token = get41Addr(token);
 
               boolean isBuy =
                   ((smaller && amount0Out.compareTo(BigInteger.ZERO) > 0)
@@ -365,6 +411,7 @@ public class FullNode {
                       new BigDecimal(amount1In).divide(TOKEN_DIVISOR, 18, RoundingMode.HALF_EVEN);
                 }
               }
+              //              String txHash = Hex.toHexString(txId);
 
               AddressAllInfo addressAllInfo =
                   swapAddressAllInfoMap.getOrDefault(caller, new AddressAllInfo());
@@ -483,7 +530,6 @@ public class FullNode {
               //                  new BigDecimal(new BigInteger(dataStr.substring(64, 128), 16))
               //                      .divide(TRX_DIVISOR, 6, RoundingMode.HALF_EVEN);
               BigDecimal trxAmount;
-              String txHash = Hex.toHexString(txId);
               // todo amount
               if (isBuy) {
                 BigDecimal trxAmount1 =
@@ -605,6 +651,26 @@ public class FullNode {
               pSumTxCount,
               sSumTxCount);
         }
+      }
+
+      if (true) {
+        PrintWriter pwriter = new PrintWriter("finalresult.txt");
+        pwriter.println("SWAP");
+        swapFeeMap.forEach(
+            (k, v) -> pwriter.println(StringUtil.encode58Check(Hex.decode(k)) + " " + v));
+        pwriter.println("RECENTSWAP");
+        swapRecentFeeMap.forEach(
+            (k, v) -> pwriter.println(StringUtil.encode58Check(Hex.decode(k)) + " " + v));
+        pwriter.println("PUMP");
+        pumpFeeMap.forEach(
+            (k, v) -> pwriter.println(StringUtil.encode58Check(Hex.decode(k)) + " " + v));
+        pwriter.println("RECENTPUMP");
+        pumpRecentFeeMap.forEach(
+            (k, v) -> pwriter.println(StringUtil.encode58Check(Hex.decode(k)) + " " + v));
+        pwriter.close();
+
+        logger.info("FFFF Task END!");
+        return;
       }
 
       PrintWriter pwriter = new PrintWriter("finalresult.txt");
