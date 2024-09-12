@@ -207,7 +207,7 @@ public class FullNode {
       //      long endBlock = latestBlock - 1;
       //      long recentBlock = latestBlock - 2000;
       // todo
-      long startBlock = 64184959;
+      long startBlock = 64689819;
       long recentBlock = 64689819;
       long endBlock = 65092826;
       logger.info(
@@ -288,6 +288,9 @@ public class FullNode {
               blockCapsule.getTransactions().size(),
               transactionRetCapsule.getInstance().getTransactioninfoList().size());
         }
+
+        Map<String, Set<String>> buyMap = new HashMap<>();
+        Map<String, Set<String>> addrTxes = new HashMap<>();
         for (Protocol.TransactionInfo transactionInfo :
             transactionRetCapsule.getInstance().getTransactioninfoList()) {
           //          if (!transactionInfo.getResult().equals(SUCESS)) {
@@ -297,34 +300,73 @@ public class FullNode {
           String caller = get41Addr(txCallerMap.get(Hex.toHexString(txId)));
           byte[] contractAddress = transactionInfo.getContractAddress().toByteArray();
 
-          if (Arrays.equals(contractAddress, SWAP_ROUTER)
-              || Arrays.equals(contractAddress, SUNPUMP_LAUNCH)) {
-            long fee = transactionInfo.getFee();
-            if (saddrs.contains(caller)) {
-              swapFeeMap.put(
-                  caller,
-                  swapFeeMap
-                      .getOrDefault(caller, BigDecimal.ZERO)
-                      .add(BigDecimal.valueOf((double) fee / 1000000)));
-              if (blockNum >= recentBlock) {
-                swapRecentFeeMap.put(
-                    caller,
-                    swapRecentFeeMap
-                        .getOrDefault(caller, BigDecimal.ZERO)
-                        .add(BigDecimal.valueOf((double) fee / 1000000)));
+          if (Arrays.equals(contractAddress, SWAP_ROUTER)) {
+
+            // Swap tx
+            sSumTxCount++;
+            if (blockNum >= recentBlock) {
+              sSumTxCountrecent++;
+            }
+
+            if (!saddrs.contains(caller)) {
+              continue;
+            }
+            for (Protocol.TransactionInfo.Log log : transactionInfo.getLogList()) {
+              if (!Arrays.equals(log.getTopics(0).toByteArray(), SWAP_TOPIC)) {
+                continue;
               }
-            } else if (paddrs.contains(caller)) {
-              pumpFeeMap.put(
-                  caller,
-                  pumpFeeMap
-                      .getOrDefault(caller, BigDecimal.ZERO)
-                      .add(BigDecimal.valueOf((double) fee / 1000000)));
-              if (blockNum >= recentBlock) {
-                pumpRecentFeeMap.put(
-                    caller,
-                    pumpRecentFeeMap
-                        .getOrDefault(caller, BigDecimal.ZERO)
-                        .add(BigDecimal.valueOf((double) fee / 1000000)));
+              // Swap topic
+              String logData = Hex.toHexString(log.getData().toByteArray());
+              BigInteger amount0In = new BigInteger(logData.substring(0, 64), 16);
+              BigInteger amount1In = new BigInteger(logData.substring(64, 128), 16);
+              BigInteger amount0Out = new BigInteger(logData.substring(128, 192), 16);
+              BigInteger amount1Out = new BigInteger(logData.substring(192, 256), 16);
+
+              String pair = Hex.toHexString(log.getAddress().toByteArray());
+              String token = pairToTokenMap.get(pair);
+              boolean tokenNull = token == null;
+              if (tokenNull) {
+                for (Protocol.TransactionInfo.Log log2 : transactionInfo.getLogList()) {
+                  if (Arrays.equals(TRANSFER_TOPIC, log2.getTopics(0).toByteArray())
+                      && !Arrays.equals(log2.getAddress().toByteArray(), WTRX_HEX)) {
+                    token = Hex.toHexString(log2.getAddress().toByteArray());
+                    break;
+                  }
+                }
+              }
+              boolean smaller = smallerToWtrx(token, WTRX);
+              token = get41Addr(token);
+              Map<String, BuyAndSellRecordV2> tokenMap =
+                  swapThisBlockMap.getOrDefault(caller, new HashMap<>());
+              BuyAndSellRecordV2 recordV2 =
+                  tokenMap.getOrDefault(token, new BuyAndSellRecordV2(blockNum));
+
+              boolean isBuy =
+                  ((smaller && amount0Out.compareTo(BigInteger.ZERO) > 0)
+                      || (!smaller && amount1Out.compareTo(BigInteger.ZERO) > 0));
+              if (isBuy) {
+                Set<String> curTokenAddr = buyMap.getOrDefault(token, new HashSet<>());
+                if (curTokenAddr.contains(caller)) {
+                  logger.info("Same block token buy");
+                  curTokenAddr.forEach(
+                      ad -> {
+                        logger.info(ad);
+                        Set<String> txes = addrTxes.getOrDefault(ad, new HashSet<>());
+                        txes.forEach(logger::info);
+                      });
+
+                  logger.info(caller);
+                  logger.info(Hex.toHexString(txId));
+                }
+                curTokenAddr.add(caller);
+                buyMap.put(token, curTokenAddr);
+                Set<String> addrCurTxes = addrTxes.getOrDefault(caller, new HashSet<>());
+                addrCurTxes.add(Hex.toHexString(txId));
+                addrTxes.put(caller, addrCurTxes);
+              }
+
+              if (true) {
+                break;
               }
             }
           }
