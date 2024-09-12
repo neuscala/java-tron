@@ -538,6 +538,16 @@ public class FullNode {
                 continue;
               }
 
+              // equals to router
+              if (token.equalsIgnoreCase("41c22dd1b7bc7574e94563c8282f64b065bc07b2fa")) {
+                for (Protocol.TransactionInfo.Log log2 : transactionInfo.getLogList()) {
+                  if (Arrays.equals(log2.getTopics(0).toByteArray(), TRANSFER_TOPIC)) {
+                    token = get41Addr(Hex.toHexString(log2.getAddress().toByteArray()));
+                    break;
+                  }
+                }
+              }
+
               String dataStr = Hex.toHexString(log.getData().toByteArray());
               //              BigDecimal trxAmount =
               //                  new BigDecimal(new BigInteger(dataStr.substring(0, 64), 16))
