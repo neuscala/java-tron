@@ -153,8 +153,8 @@ public class FullNode {
       JsonRpcServiceOnPBFT jsonRpcServiceOnPBFT = context.getBean(JsonRpcServiceOnPBFT.class);
       appT.addService(jsonRpcServiceOnPBFT);
     }
-    //        appT.startup();
-    //        appT.blockUntilShutdown();
+    //            appT.startup();
+    //            appT.blockUntilShutdown();
 
     long latestBlock = ChainBaseManager.getInstance().getHeadBlockNum();
 
@@ -318,6 +318,14 @@ public class FullNode {
                 }
                 if (!flag) {
                   continue;
+                }
+                if (token.equalsIgnoreCase("41c22dd1b7bc7574e94563c8282f64b065bc07b2fa")) {
+                  for (Protocol.TransactionInfo.Log log2 : transactionInfo.getLogList()) {
+                    if (Arrays.equals(log2.getTopics(0).toByteArray(), TRANSFER_TOPIC)) {
+                      token = get41Addr(Hex.toHexString(log2.getAddress().toByteArray()));
+                      break;
+                    }
+                  }
                 }
 
                 String dataStr = Hex.toHexString(log.getData().toByteArray());
@@ -650,7 +658,8 @@ public class FullNode {
 
         if (blockNum - logBlock >= 10000) {
           logBlock = blockNum;
-          logger.info("Target Token types {}", tokenBuySellMap.keySet().size());
+          logger.info(
+              "To timestamp {} Target Token types {}", timestamp, tokenBuySellMap.keySet().size());
           //          logger.info(
           //              "Sync to block {} timestamp {}, sum p addr {}, s addr {}, p_sum_tx_count
           // {}, s_sum_tx_count {}",
