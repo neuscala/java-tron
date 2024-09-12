@@ -52,6 +52,8 @@ import org.tron.core.services.interfaceOnSolidity.http.solidity.HttpApiOnSolidit
 import org.tron.core.services.jsonrpc.FullNodeJsonRpcHttpService;
 import org.tron.protos.Protocol;
 
+import static org.tron.protos.Protocol.TransactionInfo.code.SUCESS;
+
 @Slf4j(topic = "app")
 public class FullNode {
 
@@ -199,17 +201,19 @@ public class FullNode {
         saddrs.add(Hex.toHexString(Commons.decodeFromBase58Check(line)));
       }
 
-      //      long startBlock = latestBlock - 5000;
+      //      long startBlock =
+      //          Math.max(ChainBaseManager.getChainBaseManager().getLowestBlockNum(), latestBlock -
+      // 5000);
       //      long endBlock = latestBlock - 1;
       //      long recentBlock = latestBlock - 2000;
       long startBlock = 64184959;
       long recentBlock = 64689819;
+      long endBlock = 65092826;
       logger.info(
           "Start To Local Test at {}!!! paddr size {}, saddr size {}",
           startBlock,
           paddrs.size(),
           saddrs.size());
-      long endBlock = 65092826;
       long logBlock = startBlock;
       long pSumTxCount = 0;
       long pSumBuyCount = 0;
@@ -276,6 +280,9 @@ public class FullNode {
         }
         for (Protocol.TransactionInfo transactionInfo :
             transactionRetCapsule.getInstance().getTransactioninfoList()) {
+          if (!transactionInfo.getResult().equals(SUCESS)) {
+            continue;
+          }
           byte[] txId = transactionInfo.getId().toByteArray();
           String caller = get41Addr(txCallerMap.get(Hex.toHexString(txId)));
 
@@ -377,8 +384,10 @@ public class FullNode {
               } else {
                 // 卖
                 addressAllInfo.trxIn = addressAllInfo.trxIn.add(trxAmount);
+                addressAllInfo.sellTokenCount++;
                 if (blockNum >= recentBlock) {
                   recentaddressAllInfo.trxIn = recentaddressAllInfo.trxIn.add(trxAmount);
+                  recentaddressAllInfo.sellTokenCount++;
                 }
                 if (recordV2.remainingInTokenAmount().compareTo(BigDecimal.ZERO) > 0) {
                   // 有买有卖，或还剩下可以卖的
@@ -401,7 +410,6 @@ public class FullNode {
                   BigDecimal trxProfit = actualTrxInAmount.subtract(recordV2.trxOutAmountToCover());
                   recordV2.addSell(actualTokenOutAmount, actualTrxInAmount, trxProfit);
 
-                  addressAllInfo.sellTokenCount++;
                   addressAllInfo.originTrxIn = addressAllInfo.originTrxIn.add(actualTrxInAmount);
                   if (trxProfit.compareTo(BigDecimal.ZERO) > 0) {
                     addressAllInfo.profit = addressAllInfo.profit.add(trxProfit);
@@ -411,7 +419,6 @@ public class FullNode {
                   }
 
                   if (blockNum >= recentBlock) {
-                    recentaddressAllInfo.sellTokenCount++;
                     recentaddressAllInfo.originTrxIn =
                         recentaddressAllInfo.originTrxIn.add(actualTrxInAmount);
                     if (trxProfit.compareTo(BigDecimal.ZERO) > 0) {
@@ -477,6 +484,7 @@ public class FullNode {
               //                  new BigDecimal(new BigInteger(dataStr.substring(64, 128), 16))
               //                      .divide(TRX_DIVISOR, 6, RoundingMode.HALF_EVEN);
               BigDecimal trxAmount;
+              String txHash = Hex.toHexString(txId);
               // todo amount
               if (isBuy) {
                 BigDecimal trxAmount1 =
@@ -525,8 +533,10 @@ public class FullNode {
               } else {
                 // 卖
                 addressAllInfo.trxIn = addressAllInfo.trxIn.add(trxAmount);
+                addressAllInfo.sellTokenCount++;
                 if (blockNum >= recentBlock) {
                   recentaddressAllInfo.trxIn = recentaddressAllInfo.trxIn.add(trxAmount);
+                  recentaddressAllInfo.sellTokenCount++;
                 }
                 if (recordV2.remainingInTokenAmount().compareTo(BigDecimal.ZERO) > 0) {
                   // 有买有卖，或还剩下可以卖的
@@ -549,7 +559,6 @@ public class FullNode {
                   BigDecimal trxProfit = actualTrxInAmount.subtract(recordV2.trxOutAmountToCover());
                   recordV2.addSell(actualTokenOutAmount, actualTrxInAmount, trxProfit);
 
-                  addressAllInfo.sellTokenCount++;
                   addressAllInfo.originTrxIn = addressAllInfo.originTrxIn.add(actualTrxInAmount);
                   if (trxProfit.compareTo(BigDecimal.ZERO) > 0) {
                     addressAllInfo.profit = addressAllInfo.profit.add(trxProfit);
@@ -559,7 +568,6 @@ public class FullNode {
                   }
 
                   if (blockNum >= recentBlock) {
-                    recentaddressAllInfo.sellTokenCount++;
                     recentaddressAllInfo.originTrxIn =
                         recentaddressAllInfo.originTrxIn.add(actualTrxInAmount);
                     if (trxProfit.compareTo(BigDecimal.ZERO) > 0) {
@@ -570,7 +578,7 @@ public class FullNode {
                     }
                   }
                 } else {
-                  // 两块内没有剩余买，但是卖
+                  // 两块内没有剩余买，但是卖, 不记录
 
                 }
               }
