@@ -1011,6 +1011,10 @@ public class FullNode {
       remainingTokenAmount = remainingTokenAmount.add(tokenAmount);
       this.trxOutAmount = this.trxOutAmount.add(trxOutAmount);
     }
+
+    BigDecimal getTrxOutAmount() {
+      return isMatch(remainingTokenAmount, BigDecimal.ONE) ? BigDecimal.ZERO : trxOutAmount;
+    }
   }
 
   @AllArgsConstructor
