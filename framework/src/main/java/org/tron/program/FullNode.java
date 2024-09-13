@@ -694,13 +694,13 @@ public class FullNode {
       pwriter.close();
 
       PrintWriter srwriter = new PrintWriter("finalsr.txt");
-      pwriter.println("SWAP");
+      srwriter.println("SWAP");
       swapSrMap.forEach((k, v) -> srwriter.println(k + " " + v));
-      pwriter.println("RECENTSWAP");
+      srwriter.println("RECENTSWAP");
       recentswapSrMap.forEach((k, v) -> srwriter.println(k + " " + v));
-      pwriter.println("PUMP");
+      srwriter.println("PUMP");
       pumpSrMap.forEach((k, v) -> srwriter.println(k + " " + v));
-      pwriter.println("RECENTPUMP");
+      srwriter.println("RECENTPUMP");
       recentpumpSrMap.forEach((k, v) -> srwriter.println(k + " " + v));
       srwriter.close();
       logger.info(
