@@ -159,10 +159,8 @@ public class FullNode {
       JsonRpcServiceOnPBFT jsonRpcServiceOnPBFT = context.getBean(JsonRpcServiceOnPBFT.class);
       appT.addService(jsonRpcServiceOnPBFT);
     }
-    //    appT.startup();
-    //    appT.blockUntilShutdown();
-
-    long latestBlock = ChainBaseManager.getInstance().getHeadBlockNum();
+//    appT.startup();
+//    appT.blockUntilShutdown();
 
     // 发射前
     byte[] TOKEN_PURCHASE_TOPIC =
@@ -214,8 +212,8 @@ public class FullNode {
       //      long endBlock = latestBlock - 1;
       //      long recentBlock = latestBlock - 3000;
       // todo
-      //      long startBlock = 64184959;
-      long startBlock = 64689819;
+      long startBlock = 64184959;
+      //      long startBlock = 64689819;
       long recentBlock = 64689819;
       long endBlock = 65092826;
       logger.info(
@@ -253,6 +251,11 @@ public class FullNode {
       Map<String, AddrContinusRecord> swapContinusRecordMap = new HashMap<>();
       Map<String, AddrContinusRecord> recentswapContinusRecordMap = new HashMap<>();
 
+      Map<String, Long> swapSrMap = new HashMap<>();
+      Map<String, Long> recentswapSrMap = new HashMap<>();
+      Map<String, Long> pumpSrMap = new HashMap<>();
+      Map<String, Long> recentpumpSrMap = new HashMap<>();
+
       Map<String, String> pairToTokenMap = populateMap();
       DBIterator retIterator =
           (DBIterator) ChainBaseManager.getInstance().getTransactionRetStore().getDb().iterator();
@@ -282,6 +285,7 @@ public class FullNode {
         long timestamp = transactionRetCapsule.getInstance().getBlockTimeStamp();
 
         Map<String, String> txCallerMap = new HashMap<>();
+        String witness = get41Addr(Hex.toHexString(blockCapsule.getWitnessAddress().toByteArray()));
         for (TransactionCapsule tx : blockCapsule.getTransactions()) {
           txCallerMap.put(tx.getTransactionId().toString(), Hex.toHexString(tx.getOwnerAddress()));
         }
@@ -475,11 +479,25 @@ public class FullNode {
           }
         }
         // 当前块交易结束, 处理这个块的买卖，并更新记录
-        proceeToBlock(swapContinusRecordMap, swapAddrInfoRecordMap, blockNum);
-        proceeToBlock(pumpContinusRecordMap, pumpAddrInfoRecordMap, blockNum);
+        boolean swapSuccess = proceeToBlock(swapContinusRecordMap, swapAddrInfoRecordMap, blockNum);
+        if (swapSuccess) {
+          swapSrMap.put(witness, swapSrMap.getOrDefault(witness, 0L) + 1);
+        }
+        boolean pumpSuccess = proceeToBlock(pumpContinusRecordMap, pumpAddrInfoRecordMap, blockNum);
+        if (pumpSuccess) {
+          pumpSrMap.put(witness, pumpSrMap.getOrDefault(witness, 0L) + 1);
+        }
         if (blockNum >= recentBlock) {
-          proceeToBlock(recentswapContinusRecordMap, recentswapAddrInfoRecordMap, blockNum);
-          proceeToBlock(recentpumpContinusRecordMap, recentpumpAddrInfoRecordMap, blockNum);
+          boolean recentswapSuccess =
+              proceeToBlock(recentswapContinusRecordMap, recentswapAddrInfoRecordMap, blockNum);
+          if (recentswapSuccess) {
+            recentswapSrMap.put(witness, recentswapSrMap.getOrDefault(witness, 0L) + 1);
+          }
+          boolean recentpumpSuccess =
+              proceeToBlock(recentpumpContinusRecordMap, recentpumpAddrInfoRecordMap, blockNum);
+          if (recentpumpSuccess) {
+            recentpumpSrMap.put(witness, recentpumpSrMap.getOrDefault(witness, 0L) + 1);
+          }
         }
 
         if (blockNum - logBlock >= 10000) {
@@ -624,6 +642,16 @@ public class FullNode {
                 });
           });
 
+      PrintWriter srwriter = new PrintWriter("finalsr.txt");
+      pwriter.println("SWAP");
+      swapSrMap.forEach((k, v) -> srwriter.println(k + " " + v));
+      pwriter.println("RECENTSWAP");
+      recentswapSrMap.forEach((k, v) -> srwriter.println(k + " " + v));
+      pwriter.println("PUMP");
+      pumpSrMap.forEach((k, v) -> srwriter.println(k + " " + v));
+      pwriter.println("RECENTPUMP");
+      recentpumpSrMap.forEach((k, v) -> srwriter.println(k + " " + v));
+
       pwriter.close();
       logger.info(
           "Final syncing sum p addr {}, s addr {}, p_sum_tx_count {}, p_buy {}, s_sum_tx_count {}, s_buy {}, p_recent_tx_count {}, p_recent_buy {}, s_recent_tx_count {}, s_recent_buy {}",
@@ -645,10 +673,11 @@ public class FullNode {
     logger.info("END");
   }
 
-  private static void proceeToBlock(
+  private static boolean proceeToBlock(
       Map<String, AddrContinusRecord> continusRecordMap,
       Map<String, AddrAllInfoRecord> addrAllInfoRecordMap,
       long blockNum) {
+    boolean blockSuccess = false;
     for (Map.Entry<String, AddrContinusRecord> entry : continusRecordMap.entrySet()) {
       // 每个人
       String addr = entry.getKey();
@@ -676,14 +705,16 @@ public class FullNode {
             addrAllInfoRecord.addBuy();
           } else {
             // 卖，最近两块匹配
-            matchBuySell(
-                buySell,
-                buySellsLastBlocks.records,
-                addrAllInfoRecord,
-                token,
-                buySellsLastBlocks.records.size());
+            blockSuccess =
+                matchBuySell(
+                    buySell,
+                    buySellsLastBlocks.records,
+                    addrAllInfoRecord,
+                    token,
+                    buySellsLastBlocks.records.size());
             if (!buySell.matched) {
-              matchBuySell(buySell, buySellsThisBlocks.records, addrAllInfoRecord, token, i);
+              blockSuccess =
+                  matchBuySell(buySell, buySellsThisBlocks.records, addrAllInfoRecord, token, i);
             }
           }
         }
@@ -784,9 +815,10 @@ public class FullNode {
         it.remove();
       }
     }
+    return blockSuccess;
   }
 
-  private static void matchBuySell(
+  private static boolean matchBuySell(
       SingleBuySellRecord sellRecord,
       List<SingleBuySellRecord> buySells,
       AddrAllInfoRecord record,
@@ -801,9 +833,10 @@ public class FullNode {
         record.addTokenRecord(token, getTrx);
         toMatch.match();
         sellRecord.match();
-        break;
+        return getTrx.compareTo(BigDecimal.ZERO) > 0;
       }
     }
+    return false;
   }
 
   private static String get41Addr(String hexAddr) {
