@@ -159,8 +159,8 @@ public class FullNode {
       JsonRpcServiceOnPBFT jsonRpcServiceOnPBFT = context.getBean(JsonRpcServiceOnPBFT.class);
       appT.addService(jsonRpcServiceOnPBFT);
     }
-//    appT.startup();
-//    appT.blockUntilShutdown();
+    //    appT.startup();
+    //    appT.blockUntilShutdown();
 
     // 发射前
     byte[] TOKEN_PURCHASE_TOPIC =
@@ -776,18 +776,22 @@ public class FullNode {
             removeAll = true;
           } else {
             // 没匹配上，则 上一个块的remaining 和 上一个块的买去平账；本块的记到下一个块
-            BigDecimal actualSellTokenAmount =
-                tokenAllInfoRecord.remainingTokenAmount.compareTo(
-                            buySellsLastBlocks.remainingSellTokenAmount)
-                        < 0
-                    ? tokenAllInfoRecord.remainingTokenAmount
-                    : buySellsLastBlocks.remainingSellTokenAmount;
-            BigDecimal actualGetTrxAmount =
-                actualSellTokenAmount
-                    .multiply(buySellsLastBlocks.remainingGetTrxAmount)
-                    .divide(buySellsLastBlocks.remainingSellTokenAmount, 6, RoundingMode.HALF_EVEN);
-            // 把这个块没匹配上的卖去平账
-            tokenAllInfoRecord.removeRemaining(actualSellTokenAmount, actualGetTrxAmount);
+            if (buySellsLastBlocks.remainingSellTokenAmount.compareTo(BigDecimal.ZERO) > 0) {
+
+              BigDecimal actualSellTokenAmount =
+                  tokenAllInfoRecord.remainingTokenAmount.compareTo(
+                              buySellsLastBlocks.remainingSellTokenAmount)
+                          < 0
+                      ? tokenAllInfoRecord.remainingTokenAmount
+                      : buySellsLastBlocks.remainingSellTokenAmount;
+              BigDecimal actualGetTrxAmount =
+                  actualSellTokenAmount
+                      .multiply(buySellsLastBlocks.remainingGetTrxAmount)
+                      .divide(
+                          buySellsLastBlocks.remainingSellTokenAmount, 6, RoundingMode.HALF_EVEN);
+              // 把这个块没匹配上的卖去平账
+              tokenAllInfoRecord.removeRemaining(actualSellTokenAmount, actualGetTrxAmount);
+            }
           }
         }
         // 把上个块没匹配上的买累计到帐
