@@ -208,16 +208,15 @@ public class FullNode {
       }
 
       long latestBlock = ChainBaseManager.getInstance().getHeadBlockNum();
-      //      long startBlock =
-      //          Math.max(ChainBaseManager.getChainBaseManager().getLowestBlockNum(), latestBlock -
-      // 10000);
-      //      long endBlock = latestBlock - 1;
-      //      long recentBlock = latestBlock - 3000;
+      long startBlock =
+          Math.max(ChainBaseManager.getChainBaseManager().getLowestBlockNum(), latestBlock - 50000);
+      long endBlock = latestBlock - 1;
+      long recentBlock = latestBlock - 3000;
       // todo
-      long startBlock = 64184959;
-      //      long startBlock = 64689819;
-      long recentBlock = 64689819;
-      long endBlock = 65092826;
+      //      long startBlock = 64184959;
+      //      //      long startBlock = 64689819;
+      //      long recentBlock = 64689819;
+      //      long endBlock = 65092826;
       logger.info(
           "Start To Local Test at {}!!! paddr size {}, saddr size {}",
           startBlock,
@@ -304,6 +303,9 @@ public class FullNode {
           // todo remove
           //          String txHash = Hex.toHexString(txId);
           if (Arrays.equals(contractAddress, SWAP_ROUTER)) {
+            if (!saddrs.contains(caller)) {
+              continue;
+            }
             if (!transactionInfo.getResult().equals(SUCESS)) {
               if (!tx.getInstance()
                   .getRawData()
@@ -394,10 +396,6 @@ public class FullNode {
             if (blockNum >= recentBlock) {
               sSumTxCountrecent++;
             }
-            // todo
-            if (!saddrs.contains(caller)) {
-              continue;
-            }
             for (Protocol.TransactionInfo.Log log : transactionInfo.getLogList()) {
               if (!Arrays.equals(log.getTopics(0).toByteArray(), SWAP_TOPIC)) {
                 continue;
@@ -476,6 +474,10 @@ public class FullNode {
               break;
             }
           } else if (Arrays.equals(contractAddress, SUNPUMP_LAUNCH)) {
+
+            if (!paddrs.contains(caller)) {
+              continue;
+            }
             if (!tx.getInstance()
                 .getRawData()
                 .getContract(0)
@@ -557,11 +559,6 @@ public class FullNode {
                   pSumBuyCountrecent++;
                 }
               }
-
-              // todo
-              if (!paddrs.contains(caller)) {
-                continue;
-              }
               String token = get41Addr(Hex.toHexString(log.getAddress().toByteArray()));
               for (Protocol.TransactionInfo.Log log2 : transactionInfo.getLogList()) {
                 if (Arrays.equals(log2.getTopics(0).toByteArray(), TRANSFER_TOPIC)) {
@@ -633,71 +630,84 @@ public class FullNode {
           }
         }
 
-        //        String TestUser = "Test";
-        //        String TestToken = "TestToken";
-        //        if (testFlag == 1) {
-        //          AddrContinusRecord continusRecord = new AddrContinusRecord(TestUser);
-        //          continusRecord.addRecord(
-        //              blockNum,
-        //              TestToken,
-        //              true,
-        //              new BigDecimal("656422.188921251580919528"),
-        //              new BigDecimal("450"));
-        //          continusRecord.addRecord(
-        //              blockNum,
-        //              TestToken,
-        //              false,
-        //              new BigDecimal("656422.188921251580919528"),
-        //              new BigDecimal("450.574233"));
-        //          swapContinusRecordMap.put(TestUser, continusRecord);
-        //        }
-        //        if (testFlag == 2) {
-        //          AddrContinusRecord continusRecord =
-        //              swapContinusRecordMap.getOrDefault(TestUser, new
-        // AddrContinusRecord(TestUser));
-        //          continusRecord.addRecord(
-        //              blockNum, TestToken, true, new BigDecimal("200"), new BigDecimal("22"));
-        //          continusRecord.addRecord(
-        //              blockNum, TestToken, false, new BigDecimal("200"), new BigDecimal("25"));
-        //          swapContinusRecordMap.put(TestUser, continusRecord);
-        //        }
-        //        if (testFlag == 5) {
-        //          AddrContinusRecord continusRecord =
-        //              swapContinusRecordMap.getOrDefault(TestUser, new
-        // AddrContinusRecord(TestUser));
-        //          continusRecord.addRecord(
-        //              blockNum,
-        //              TestToken,
-        //              true,
-        //              new BigDecimal("661198.726493461568666209"),
-        //              new BigDecimal("450"));
-        //          swapContinusRecordMap.put(TestUser, continusRecord);
-        //        }
-        //        if (testFlag == 7) {
-        //          AddrContinusRecord continusRecord =
-        //              swapContinusRecordMap.getOrDefault(TestUser, new
-        // AddrContinusRecord(TestUser));
-        //          //          continusRecord.addRecord(
-        //          //              blockNum, TestToken, true, new BigDecimal("500"), new
-        // BigDecimal("30"));
-        //          continusRecord.addRecord(
-        //              blockNum,
-        //              TestToken,
-        //              false,
-        //              new BigDecimal("661198.726493461568666209"),
-        //              new BigDecimal("447.313866"));
-        //          swapContinusRecordMap.put(TestUser, continusRecord);
-        //        }
-        //        // 1100 -800 = 300
-        //
-        //        if (testFlag == 10) {
-        //          AddrContinusRecord continusRecord =
-        //              swapContinusRecordMap.getOrDefault(TestUser, new
-        // AddrContinusRecord(TestUser));
-        //          continusRecord.addRecord(
-        //              blockNum, TestToken, false, new BigDecimal("200"), new BigDecimal("20"));
-        //          swapContinusRecordMap.put(TestUser, continusRecord);
-        //        }
+        String TestUser = "Test";
+        String TestToken = "TestToken";
+        if (testFlag == 1) {
+          AddrContinusRecord continusRecord = new AddrContinusRecord(TestUser);
+          continusRecord.addRecord(
+              blockNum,
+              TestToken,
+              true,
+              new BigDecimal("656422.188921251580919528"),
+              new BigDecimal("450"),
+              true);
+          continusRecord.addRecord(
+              blockNum,
+              TestToken,
+              false,
+              new BigDecimal("656422.188921251580919528"),
+              new BigDecimal("450.574233"),
+              true);
+          swapContinusRecordMap.put(TestUser, continusRecord);
+        }
+        if (testFlag == 2) {
+          AddrContinusRecord continusRecord =
+              swapContinusRecordMap.getOrDefault(TestUser, new AddrContinusRecord(TestUser));
+          continusRecord.addRecord(
+              blockNum, TestToken, true, new BigDecimal("200"), new BigDecimal("22"), true);
+          continusRecord.addRecord(
+              blockNum, TestToken, false, new BigDecimal("200"), new BigDecimal("25"), true);
+          swapContinusRecordMap.put(TestUser, continusRecord);
+        }
+        if (testFlag == 5) {
+          AddrContinusRecord continusRecord =
+              swapContinusRecordMap.getOrDefault(TestUser, new AddrContinusRecord(TestUser));
+          continusRecord.addRecord(
+              blockNum,
+              TestToken,
+              true,
+              new BigDecimal("661198.726493461568666209"),
+              new BigDecimal("450"),
+              true);
+          swapContinusRecordMap.put(TestUser, continusRecord);
+        }
+        if (testFlag == 6) {
+          AddrContinusRecord continusRecord =
+              swapContinusRecordMap.getOrDefault(TestUser, new AddrContinusRecord(TestUser));
+          continusRecord.addRecord(
+              blockNum,
+              TestToken,
+              false,
+              new BigDecimal("661198.726493461568666209"),
+              new BigDecimal("460"),
+              false);
+          swapContinusRecordMap.put(TestUser, continusRecord);
+        }
+        if (testFlag == 7) {
+          AddrContinusRecord continusRecord =
+              swapContinusRecordMap.getOrDefault(TestUser, new AddrContinusRecord(TestUser));
+          continusRecord.addRecord(
+              blockNum, TestToken, true, new BigDecimal("500"), new BigDecimal("30"), true);
+          continusRecord.addRecord(
+              blockNum,
+              TestToken,
+              false,
+              new BigDecimal("661198.726493461568666209"),
+              new BigDecimal("447.313866"),
+              true);
+          swapContinusRecordMap.put(TestUser, continusRecord);
+        }
+        // 1100 -800 = 300
+
+        if (testFlag == 10) {
+          AddrContinusRecord continusRecord =
+              swapContinusRecordMap.getOrDefault(TestUser, new AddrContinusRecord(TestUser));
+          continusRecord.addRecord(
+              blockNum, TestToken, false, new BigDecimal("200"), new BigDecimal("20"), false);
+          continusRecord.addRecord(
+              blockNum, TestToken, false, new BigDecimal("200"), new BigDecimal("21"), true);
+          swapContinusRecordMap.put(TestUser, continusRecord);
+        }
         // 当前块交易结束, 处理这个块的买卖，并更新记录
         boolean swapSuccess = proceeToBlock(swapContinusRecordMap, swapAddrInfoRecordMap, blockNum);
         //        if (swapSuccess) {
