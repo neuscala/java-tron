@@ -214,7 +214,7 @@ public class FullNode {
       //      long endBlock = latestBlock - 1;
       //      long recentBlock = latestBlock - 3000;
       // todo
-//      long startBlock = 64184959;
+      //      long startBlock = 64184959;
       long startBlock = 64689819;
       long recentBlock = 64689819;
       long endBlock = 65092826;
@@ -728,6 +728,7 @@ public class FullNode {
         }
 
         TokenAllInfoRecord tokenAllInfoRecord = addrAllInfoRecord.getTokenAllInfoRecord(token);
+        boolean removeAll = false;
         if (allSellTokenAmount.compareTo(BigDecimal.ZERO) > 0) {
           if (isMatch(
               allSellTokenAmount.add(buySellsLastBlocks.remainingSellTokenAmount),
@@ -741,6 +742,7 @@ public class FullNode {
             // 这两个块全都匹配上了，不留记录
             buySellsThisBlocks.clearAll();
             buySellsLastBlocks.clearAll();
+            removeAll = true;
           } else {
             // 没匹配上，则 上一个块的remaining 和 上一个块的买去平账；本块的记到下一个块
             BigDecimal actualSellTokenAmount =
@@ -756,7 +758,9 @@ public class FullNode {
           }
         }
         // 把上个块没匹配上的买累计到帐
-        tokenAllInfoRecord.addRemaining(allBuyTokenAmountLastBlock, allOutTrxAmountLastBlock);
+        if (!removeAll) {
+          tokenAllInfoRecord.addRemaining(allBuyTokenAmountLastBlock, allOutTrxAmountLastBlock);
+        }
         addrAllInfoRecord.updateTokenAllInfoRecord(token, tokenAllInfoRecord);
         addrAllInfoRecordMap.put(addr, addrAllInfoRecord);
 
