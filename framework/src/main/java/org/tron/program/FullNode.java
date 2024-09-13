@@ -481,14 +481,14 @@ public class FullNode {
           }
         }
 
-        String TestUser = "Test";
-        String TestToken = "TestToken";
-        if (testFlag == 1) {
-          AddrContinusRecord continusRecord = new AddrContinusRecord(TestUser);
-          continusRecord.addRecord(
-              blockNum, TestToken, true, new BigDecimal("100"), new BigDecimal("10"));
-          swapContinusRecordMap.put(TestUser, continusRecord);
-        }
+        //        String TestUser = "Test";
+        //        String TestToken = "TestToken";
+        //        if (testFlag == 1) {
+        //          AddrContinusRecord continusRecord = new AddrContinusRecord(TestUser);
+        //          continusRecord.addRecord(
+        //              blockNum, TestToken, true, new BigDecimal("100"), new BigDecimal("10"));
+        //          swapContinusRecordMap.put(TestUser, continusRecord);
+        //        }
         //        if (testFlag == 2) {
         //          AddrContinusRecord continusRecord =
         //              swapContinusRecordMap.getOrDefault(TestUser, new
