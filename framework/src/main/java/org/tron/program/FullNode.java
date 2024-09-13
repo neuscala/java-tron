@@ -761,7 +761,11 @@ public class FullNode {
                       + " "
                       + v.getAllAttack()
                       + " "
-                      + v.getTrxOutAmount()));
+                      + v.getTrxOutAmount()
+                      + " "
+                      + v.getMzSucCount()
+                      + " "
+                      + v.getMzLackCount()));
       pwriter.println("RECENTSWAP");
       recentswapAddrInfoRecordMap.forEach(
           (k, v) ->
@@ -778,7 +782,11 @@ public class FullNode {
                       + " "
                       + v.getAllAttack()
                       + " "
-                      + v.getTrxOutAmount()));
+                      + v.getTrxOutAmount()
+                      + " "
+                      + v.getMzSucCount()
+                      + " "
+                      + v.getMzLackCount()));
       pwriter.println("PUMP");
       pumpAddrInfoRecordMap.forEach(
           (k, v) ->
@@ -795,7 +803,11 @@ public class FullNode {
                       + " "
                       + v.getAllAttack()
                       + " "
-                      + v.getTrxOutAmount()));
+                      + v.getTrxOutAmount()
+                      + " "
+                      + v.getMzSucCount()
+                      + " "
+                      + v.getMzLackCount()));
       pwriter.println("RECENTPUMP");
       recentpumpAddrInfoRecordMap.forEach(
           (k, v) ->
@@ -812,7 +824,11 @@ public class FullNode {
                       + " "
                       + v.getAllAttack()
                       + " "
-                      + v.getTrxOutAmount()));
+                      + v.getTrxOutAmount()
+                      + " "
+                      + v.getMzSucCount()
+                      + " "
+                      + v.getMzLackCount()));
 
       pwriter.println("TOKEN_REMAINING");
       pwriter.println("SWAPTOKEN");
@@ -1003,7 +1019,7 @@ public class FullNode {
             BigDecimal actualGetTrxAmount = sell.getActualTrxAmount(actualTokenAmount);
             BigDecimal actualOutTrxAmount = buy.getActualTrxAmount(actualTokenAmount);
             addrAllInfoRecord.addTokenRecord(
-                token, actualGetTrxAmount.subtract(actualOutTrxAmount));
+                token, actualGetTrxAmount.subtract(actualOutTrxAmount), true);
 
             buy.subTokenAmount(actualTokenAmount);
             sell.subTokenAmount(actualTokenAmount);
@@ -1048,7 +1064,7 @@ public class FullNode {
               BigDecimal actualGetTrxAmount = sell.getActualTrxAmount(actualTokenAmount);
               BigDecimal actualOutTrxAmount = buy.getActualTrxAmount(actualTokenAmount);
               addrAllInfoRecord.addTokenRecord(
-                  token, actualGetTrxAmount.subtract(actualOutTrxAmount));
+                  token, actualGetTrxAmount.subtract(actualOutTrxAmount), true);
 
               buy.subTokenAmount(actualTokenAmount);
               sell.subTokenAmount(actualTokenAmount);
@@ -1146,7 +1162,7 @@ public class FullNode {
               BigDecimal actualGetTrxAmount = sell.getActualTrxAmount(actualTokenAmount);
               BigDecimal actualOutTrxAmount = buy.getActualTrxAmount(actualTokenAmount);
               addrAllInfoRecord.addTokenRecord(
-                  tokenEntry.getKey(), actualGetTrxAmount.subtract(actualOutTrxAmount));
+                  tokenEntry.getKey(), actualGetTrxAmount.subtract(actualOutTrxAmount), true);
 
               buy.subTokenAmount(actualTokenAmount);
               sell.subTokenAmount(actualTokenAmount);
@@ -1305,8 +1321,9 @@ public class FullNode {
         trxAmount = BigDecimal.ZERO;
         matched = true;
       } else {
+        BigDecimal actualTrxAmount = getActualTrxAmount(actualTokenAmount);
         tokenAmount = tokenAmount.subtract(actualTokenAmount);
-        trxAmount = tokenAmount.subtract(getActualTrxAmount(actualTokenAmount));
+        trxAmount = trxAmount.subtract(actualTrxAmount);
       }
     }
   }
@@ -1455,6 +1472,8 @@ public class FullNode {
     BigDecimal remainingTokenAmount;
     BigDecimal trxOutAmount;
     long attackCount;
+    long mzsuccessCount;
+    long mzlackCount;
 
     private TokenAllInfoRecord(String token) {
       this.token = token;
@@ -1467,13 +1486,19 @@ public class FullNode {
       attackCount = 0;
     }
 
-    private void addTrxDiff(BigDecimal trxDiff) {
+    private void addTrxDiff(BigDecimal trxDiff, boolean mzzz) {
       if (trxDiff.compareTo(BigDecimal.ZERO) > 0) {
         profit = profit.add(trxDiff);
         successCount++;
+        if (mzzz) {
+          mzsuccessCount++;
+        }
       } else {
         lack = lack.add(trxDiff);
         lackCount++;
+        if (mzzz) {
+          mzlackCount++;
+        }
       }
     }
 
@@ -1518,10 +1543,14 @@ public class FullNode {
     }
 
     private void addTokenRecord(String token, BigDecimal trxDiff) {
+      addTokenRecord(token, trxDiff, false);
+    }
+
+    private void addTokenRecord(String token, BigDecimal trxDiff, boolean mzzz) {
 
       TokenAllInfoRecord tokenAllInfoRecord =
           tokenRecords.getOrDefault(token, new TokenAllInfoRecord(token));
-      tokenAllInfoRecord.addTrxDiff(trxDiff);
+      tokenAllInfoRecord.addTrxDiff(trxDiff, mzzz);
       tokenRecords.put(token, tokenAllInfoRecord);
     }
 
@@ -1567,6 +1596,14 @@ public class FullNode {
       return tokenRecords.values().stream()
           .map(TokenAllInfoRecord::getTrxOutAmount)
           .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private long getMzSucCount() {
+      return tokenRecords.values().stream().mapToLong(TokenAllInfoRecord::getMzsuccessCount).sum();
+    }
+
+    private long getMzLackCount() {
+      return tokenRecords.values().stream().mapToLong(TokenAllInfoRecord::getMzlackCount).sum();
     }
   }
 
