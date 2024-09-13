@@ -809,7 +809,6 @@ public class FullNode {
         }
 
         TokenAllInfoRecord tokenAllInfoRecord = addrAllInfoRecord.getTokenAllInfoRecord(token);
-        boolean removeAll = false;
         if (allSellTokenAmount.compareTo(BigDecimal.ZERO) > 0) {
           if (isMatch(
               allSellTokenAmount.add(buySellsLastBlocks.remainingSellTokenAmount),
@@ -823,7 +822,6 @@ public class FullNode {
             // 这两个块全都匹配上了，不留记录
             buySellsThisBlocks.clearAll();
             buySellsLastBlocks.clearAll();
-            removeAll = true;
           } else {
             tokenAllInfoRecord.addRemaining(allBuyTokenAmountLastBlock, allOutTrxAmountLastBlock);
             // 没匹配上，则 上一个块的remaining 和 上一个块的买去平账；本块的记到下一个块
@@ -844,9 +842,10 @@ public class FullNode {
               tokenAllInfoRecord.removeRemaining(actualSellTokenAmount, actualGetTrxAmount);
             }
           }
-        }
-        // 把上个块没匹配上的买累计到帐
-        if (!removeAll) {
+          buySellsThisBlocks.updateRecords(buyThisBlock, allSellTokenAmount, allGetTrxAmount);
+        } else {
+          // 把上个块没匹配上的买累计到帐
+          tokenAllInfoRecord.addRemaining(allBuyTokenAmountLastBlock, allOutTrxAmountLastBlock);
           // 本块记录移到上一个块
           buySellsThisBlocks.updateRecords(buyThisBlock, allSellTokenAmount, allGetTrxAmount);
         }
