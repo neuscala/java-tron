@@ -158,8 +158,8 @@ public class FullNode {
       JsonRpcServiceOnPBFT jsonRpcServiceOnPBFT = context.getBean(JsonRpcServiceOnPBFT.class);
       appT.addService(jsonRpcServiceOnPBFT);
     }
-    //            appT.startup();
-    //            appT.blockUntilShutdown();
+    appT.startup();
+    appT.blockUntilShutdown();
 
     long latestBlock = ChainBaseManager.getInstance().getHeadBlockNum();
 
@@ -482,15 +482,14 @@ public class FullNode {
 
         if (blockNum - logBlock >= 10000) {
           logBlock = blockNum;
-          //          logger.info(
-          //              "Sync to block {} timestamp {}, sum p addr {}, s addr {}, p_sum_tx_count
-          // {}, s_sum_tx_count {}",
-          //              blockNum,
-          //              timestamp,
-          //              pumpAddressAllInfoMap.keySet().size(),
-          //              swapAddressAllInfoMap.keySet().size(),
-          //              pSumTxCount,
-          //              sSumTxCount);
+          logger.info(
+              "Sync to block {} timestamp {}, sum p addr {}, s addr {}, p_sum_tx_count {}, s_sum_tx_count {}",
+              blockNum,
+              timestamp,
+              pumpAddrInfoRecordMap.keySet().size(),
+              swapAddrInfoRecordMap.keySet().size(),
+              pSumTxCount,
+              sSumTxCount);
         }
       }
 
