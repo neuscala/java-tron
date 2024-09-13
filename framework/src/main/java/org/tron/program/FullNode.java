@@ -288,7 +288,8 @@ public class FullNode {
         long timestamp = transactionRetCapsule.getInstance().getBlockTimeStamp();
 
         Map<String, TransactionCapsule> txCallerMap = new HashMap<>();
-        String witness = get41Addr(Hex.toHexString(blockCapsule.getWitnessAddress().toByteArray()));
+        //        String witness =
+        // get41Addr(Hex.toHexString(blockCapsule.getWitnessAddress().toByteArray()));
         for (TransactionCapsule tx : blockCapsule.getTransactions()) {
           txCallerMap.put(tx.getTransactionId().toString(), tx);
         }
@@ -301,9 +302,16 @@ public class FullNode {
           byte[] contractAddress = transactionInfo.getContractAddress().toByteArray();
 
           // todo remove
-          String txHash = Hex.toHexString(txId);
+          //          String txHash = Hex.toHexString(txId);
           if (Arrays.equals(contractAddress, SWAP_ROUTER)) {
             if (!transactionInfo.getResult().equals(SUCESS)) {
+              if (!tx.getInstance()
+                  .getRawData()
+                  .getContract(0)
+                  .getParameter()
+                  .is(SmartContractOuterClass.TriggerSmartContract.class)) {
+                continue;
+              }
               SmartContractOuterClass.TriggerSmartContract triggerSmartContract =
                   tx.getInstance()
                       .getRawData()
@@ -468,6 +476,13 @@ public class FullNode {
               break;
             }
           } else if (Arrays.equals(contractAddress, SUNPUMP_LAUNCH)) {
+            if (!tx.getInstance()
+                .getRawData()
+                .getContract(0)
+                .getParameter()
+                .is(SmartContractOuterClass.TriggerSmartContract.class)) {
+              continue;
+            }
             SmartContractOuterClass.TriggerSmartContract triggerSmartContract =
                 tx.getInstance()
                     .getRawData()
@@ -910,7 +925,6 @@ public class FullNode {
         ContinusBlockRecord buySellsThisBlocks = tokenEntry.getValue();
         ContinusBlockRecord buySellsLastBlocks =
             lastBlockRecords.getOrDefault(token, new ContinusBlockRecord());
-        long attackCountToRecord = 0;
 
         // 第一遍，match上的
         for (int i = 0; i < buySellsThisBlocks.records.size(); i++) {
@@ -921,6 +935,7 @@ public class FullNode {
               buySellsThisBlocks.addBuyCount();
               addrAllInfoRecord.addBuy();
             } else {
+              buySellsThisBlocks.addSellCount();
               // 卖，最近两块匹配
               blockSuccess =
                   matchBuySell(
@@ -933,17 +948,13 @@ public class FullNode {
                 blockSuccess =
                     matchBuySell(buySell, buySellsThisBlocks.records, addrAllInfoRecord, token, i);
               }
-              if (buySell.matched) {
-                // 记次数
-                attackCountToRecord++;
-              }
             }
           } else {
             // 失败的，先记次数
             if (buySell.isBuy()) {
               buySellsThisBlocks.addBuyCount();
             } else {
-              attackCountToRecord++;
+              buySellsThisBlocks.addSellCount();
             }
           }
         }
@@ -983,7 +994,6 @@ public class FullNode {
 
             buy.subTokenAmount(actualTokenAmount);
             sell.subTokenAmount(actualTokenAmount);
-            attackCountToRecord++;
 
             if (buy.isMatched()) {
               buyRecordIterator.remove();
@@ -1029,7 +1039,6 @@ public class FullNode {
 
               buy.subTokenAmount(actualTokenAmount);
               sell.subTokenAmount(actualTokenAmount);
-              attackCountToRecord++;
 
               if (buy.isMatched()) {
                 buyRecordIterator.remove();
@@ -1059,23 +1068,29 @@ public class FullNode {
         addrAllInfoRecord.updateTokenAllInfoRecord(token, tokenAllInfoRecord);
         addrAllInfoRecordMap.put(addr, addrAllInfoRecord);
 
-        if (attackCountToRecord > 0) {
-          long countAvailableLastBlock = buySellsLastBlocks.buyCount - buySellsLastBlocks.sellCount;
-          if (countAvailableLastBlock > 0) {
-            long toBeRecord = Math.min(attackCountToRecord, countAvailableLastBlock);
-            tokenAllInfoRecord.addAttack(toBeRecord);
-            attackCountToRecord -= countAvailableLastBlock;
-          }
-          if (attackCountToRecord > 0) {
-            long countAvailableThisBlock =
-                buySellsThisBlocks.buyCount - buySellsThisBlocks.sellCount;
-            if (countAvailableThisBlock > 0) {
-              long toBeRecordThisBlock = Math.min(attackCountToRecord, countAvailableLastBlock);
-              tokenAllInfoRecord.addAttack(toBeRecordThisBlock);
-              buySellsThisBlocks.addSellCount(toBeRecordThisBlock);
-            }
-          }
+        long attackCountLastBlock =
+            Math.min(
+                buySellsLastBlocks.availableAttackBuyCount(),
+                buySellsLastBlocks.availableAttackSellCount());
+        long attackCountToRecord = attackCountLastBlock;
+        long remainingBuyCount =
+            buySellsLastBlocks.availableAttackBuyCount() - attackCountLastBlock;
+        if (remainingBuyCount > 0) {
+          long attackCountTwoBlock =
+              Math.min(remainingBuyCount, buySellsThisBlocks.availableAttackSellCount());
+          attackCountToRecord += attackCountTwoBlock;
+          buySellsThisBlocks.recordSellCount += attackCountTwoBlock;
         }
+
+        long attackCountThisBlock =
+            Math.min(
+                buySellsThisBlocks.availableAttackBuyCount(),
+                buySellsThisBlocks.availableAttackSellCount());
+        attackCountToRecord += attackCountThisBlock;
+        buySellsThisBlocks.recordBuyCount += attackCountThisBlock;
+        buySellsThisBlocks.recordSellCount += attackCountThisBlock;
+
+        tokenAllInfoRecord.addAttack(attackCountToRecord);
 
         // update
         buySellsThisBlocks.remainingSellAvailable =
@@ -1092,7 +1107,6 @@ public class FullNode {
       // 处理完本块交易，再看上一个块未匹配上的token
       if (!lastBlockRecords.isEmpty()) {
         for (Map.Entry<String, ContinusBlockRecord> tokenEntry : lastBlockRecords.entrySet()) {
-          long attackCountToRecord = 0;
           ContinusBlockRecord buySellsLastBlocks = tokenEntry.getValue();
           List<SingleBuySellRecord> sellsLastBlock =
               buySellsLastBlocks.records.stream()
@@ -1125,7 +1139,6 @@ public class FullNode {
 
               buy.subTokenAmount(actualTokenAmount);
               sell.subTokenAmount(actualTokenAmount);
-              attackCountToRecord++;
 
               if (buy.isMatched()) {
                 buyRecordIterator.remove();
@@ -1162,14 +1175,11 @@ public class FullNode {
             tokenAllInfoRecord.addRemaining(tokenAmount, trxAmount);
           }
 
-          if (attackCountToRecord > 0) {
-            long countAvailableLastBlock =
-                buySellsLastBlocks.buyCount - buySellsLastBlocks.sellCount;
-            if (countAvailableLastBlock > 0) {
-              long toBeRecord = Math.min(attackCountToRecord, countAvailableLastBlock);
-              tokenAllInfoRecord.addAttack(toBeRecord);
-            }
-          }
+          long attackCountLastBlock =
+              Math.min(
+                  buySellsLastBlocks.availableAttackBuyCount(),
+                  buySellsLastBlocks.availableAttackSellCount());
+          tokenAllInfoRecord.addAttack(attackCountLastBlock);
 
           addrAllInfoRecord.updateTokenAllInfoRecord(tokenEntry.getKey(), tokenAllInfoRecord);
           addrAllInfoRecordMap.put(addr, addrAllInfoRecord);
@@ -1296,6 +1306,8 @@ public class FullNode {
     List<SingleBuySellRecord> records;
     long buyCount;
     long sellCount;
+    long recordBuyCount;
+    long recordSellCount;
     boolean remainingSellAvailable;
     boolean remainingBuyAvailable;
 
@@ -1303,6 +1315,8 @@ public class FullNode {
       records = new ArrayList<>();
       buyCount = 0;
       sellCount = 0;
+      recordBuyCount = 0;
+      recordSellCount = 0;
       remainingSellAvailable = false;
       remainingBuyAvailable = false;
     }
@@ -1364,6 +1378,14 @@ public class FullNode {
 
     private boolean hasBuy() {
       return records.stream().anyMatch(record -> record.isBuy);
+    }
+
+    private long availableAttackBuyCount() {
+      return buyCount - recordBuyCount;
+    }
+
+    private long availableAttackSellCount() {
+      return sellCount - recordSellCount;
     }
   }
 
