@@ -968,7 +968,10 @@ public class FullNode {
             }
           }
         }
-
+        buySellsThisBlocks.remainingSellAvailable =
+            buySellsLastBlocks.buyCount > 0 || buySellsThisBlocks.buyCount > 0;
+        buySellsThisBlocks.remainingBuyAvailable =
+            buySellsLastBlocks.sellCount > 0 || buySellsThisBlocks.sellCount > 0;
         // 清空matched 和 失败的，因为失败的已经记录次数了
         buySellsThisBlocks.removeMatchedAndUnsuccess();
         buySellsLastBlocks.removeMatchedAndUnsuccess();
@@ -1103,10 +1106,6 @@ public class FullNode {
         tokenAllInfoRecord.addAttack(attackCountToRecord);
 
         // update
-        buySellsThisBlocks.remainingSellAvailable =
-            buySellsLastBlocks.buyCount > 0 || buySellsThisBlocks.buyCount > 0;
-        buySellsThisBlocks.remainingBuyAvailable =
-            buySellsLastBlocks.sellCount > 0 || buySellsThisBlocks.sellCount > 0;
         thisBlockRecords.put(token, buySellsThisBlocks);
         addrTwoBlockRecord.updateRecordsByBlockNum(blockNum, thisBlockRecords);
         continusRecordMap.put(addr, addrTwoBlockRecord);
