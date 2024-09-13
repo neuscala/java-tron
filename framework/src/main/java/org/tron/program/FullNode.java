@@ -1065,7 +1065,9 @@ public class FullNode {
           }
         }
 
-        if (!buyLastBlock.isEmpty() && buySellsLastBlocks.remainingBuyAvailable) {
+        if (!buyLastBlock.isEmpty()
+            && (buySellsLastBlocks.remainingBuyAvailable
+                || buySellsThisBlocks.remainingBuyAvailable)) {
           // 全部匹配完还有剩余，记账
           BigDecimal tokenAmount = BigDecimal.ZERO;
           BigDecimal trxAmount = BigDecimal.ZERO;
