@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -750,10 +751,11 @@ public class FullNode {
       }
     }
     // 删除1个块之前记录
-    for (Map.Entry<String, AddrContinusRecord> entry : continusRecordMap.entrySet()) {
+    for (Iterator<Map.Entry<String, AddrContinusRecord>> it = continusRecordMap.entrySet().iterator(); it.hasNext(); ) {
+      Map.Entry<String, AddrContinusRecord> entry = it.next();
       entry.getValue().removeRecordByBlockNum(blockNum - 1);
       if (entry.getValue().records.isEmpty()) {
-        continusRecordMap.remove(entry.getKey());
+        it.remove(); // 使用迭代器的remove方法安全删除
       }
     }
   }
