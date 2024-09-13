@@ -746,13 +746,15 @@ public class FullNode {
           } else {
             // 没匹配上，则 上一个块的remaining 和 上一个块的买去平账；本块的记到下一个块
             BigDecimal actualSellTokenAmount =
-                tokenAllInfoRecord.remainingTokenAmount.compareTo(allSellTokenAmount) < 0
+                tokenAllInfoRecord.remainingTokenAmount.compareTo(
+                            buySellsLastBlocks.remainingSellTokenAmount)
+                        < 0
                     ? tokenAllInfoRecord.remainingTokenAmount
-                    : allSellTokenAmount;
+                    : buySellsLastBlocks.remainingSellTokenAmount;
             BigDecimal actualGetTrxAmount =
                 actualSellTokenAmount
-                    .multiply(allGetTrxAmount)
-                    .divide(allSellTokenAmount, 6, RoundingMode.HALF_EVEN);
+                    .multiply(buySellsLastBlocks.remainingGetTrxAmount)
+                    .divide(buySellsLastBlocks.remainingSellTokenAmount, 6, RoundingMode.HALF_EVEN);
             // 把这个块没匹配上的卖去平账
             tokenAllInfoRecord.removeRemaining(actualSellTokenAmount, actualGetTrxAmount);
           }
@@ -760,12 +762,12 @@ public class FullNode {
         // 把上个块没匹配上的买累计到帐
         if (!removeAll) {
           tokenAllInfoRecord.addRemaining(allBuyTokenAmountLastBlock, allOutTrxAmountLastBlock);
+          // 本块记录移到上一个块
+          buySellsThisBlocks.updateRecords(buyThisBlock, allSellTokenAmount, allGetTrxAmount);
         }
         addrAllInfoRecord.updateTokenAllInfoRecord(token, tokenAllInfoRecord);
         addrAllInfoRecordMap.put(addr, addrAllInfoRecord);
 
-        // 本块记录移到上一个块
-        buySellsThisBlocks.updateRecords(buyThisBlock, allSellTokenAmount, allGetTrxAmount);
         // update
         thisBlockRecords.put(token, buySellsThisBlocks);
         addrTwoBlockRecord.updateRecordsByBlockNum(blockNum, thisBlockRecords);
