@@ -159,8 +159,8 @@ public class FullNode {
       JsonRpcServiceOnPBFT jsonRpcServiceOnPBFT = context.getBean(JsonRpcServiceOnPBFT.class);
       appT.addService(jsonRpcServiceOnPBFT);
     }
-//    appT.startup();
-//    appT.blockUntilShutdown();
+    //    appT.startup();
+    //    appT.blockUntilShutdown();
 
     long latestBlock = ChainBaseManager.getInstance().getHeadBlockNum();
 
@@ -214,7 +214,8 @@ public class FullNode {
       //      long endBlock = latestBlock - 1;
       //      long recentBlock = latestBlock - 3000;
       // todo
-      long startBlock = 64184959;
+//      long startBlock = 64184959;
+      long startBlock = 64689819;
       long recentBlock = 64689819;
       long endBlock = 65092826;
       logger.info(
@@ -500,7 +501,7 @@ public class FullNode {
       swapAddrInfoRecordMap.forEach(
           (k, v) ->
               pwriter.println(
-                  k
+                  StringUtil.encode58Check(Hex.decode(k))
                       + " "
                       + v.getSuccessCount()
                       + " "
@@ -515,7 +516,7 @@ public class FullNode {
       recentswapAddrInfoRecordMap.forEach(
           (k, v) ->
               pwriter.println(
-                  k
+                  StringUtil.encode58Check(Hex.decode(k))
                       + " "
                       + v.getSuccessCount()
                       + " "
@@ -530,7 +531,7 @@ public class FullNode {
       pumpAddrInfoRecordMap.forEach(
           (k, v) ->
               pwriter.println(
-                  k
+                  StringUtil.encode58Check(Hex.decode(k))
                       + " "
                       + v.getSuccessCount()
                       + " "
@@ -545,7 +546,7 @@ public class FullNode {
       recentpumpAddrInfoRecordMap.forEach(
           (k, v) ->
               pwriter.println(
-                  k
+                  StringUtil.encode58Check(Hex.decode(k))
                       + " "
                       + v.getSuccessCount()
                       + " "
@@ -566,7 +567,11 @@ public class FullNode {
                 (k1, v1) -> {
                   if (v.getRemainingTokenAmount().compareTo(BigDecimal.ONE) > 0) {
                     pwriter.println(
-                        "Token " + k1 + " " + v1.remainingTokenAmount + v1.trxOutAmount);
+                        "Token "
+                            + StringUtil.encode58Check(Hex.decode(k1))
+                            + " "
+                            + v1.remainingTokenAmount
+                            + v1.trxOutAmount);
                   }
                 });
           });
@@ -578,7 +583,11 @@ public class FullNode {
                 (k1, v1) -> {
                   if (v.getRemainingTokenAmount().compareTo(BigDecimal.ONE) > 0) {
                     pwriter.println(
-                        "Token " + k1 + " " + v1.remainingTokenAmount + v1.trxOutAmount);
+                        "Token "
+                            + StringUtil.encode58Check(Hex.decode(k1))
+                            + " "
+                            + v1.remainingTokenAmount
+                            + v1.trxOutAmount);
                   }
                 });
           });
@@ -590,7 +599,11 @@ public class FullNode {
                 (k1, v1) -> {
                   if (v.getRemainingTokenAmount().compareTo(BigDecimal.ONE) > 0) {
                     pwriter.println(
-                        "Token " + k1 + " " + v1.remainingTokenAmount + v1.trxOutAmount);
+                        "Token "
+                            + StringUtil.encode58Check(Hex.decode(k1))
+                            + " "
+                            + v1.remainingTokenAmount
+                            + v1.trxOutAmount);
                   }
                 });
           });
@@ -602,7 +615,11 @@ public class FullNode {
                 (k1, v1) -> {
                   if (v.getRemainingTokenAmount().compareTo(BigDecimal.ONE) > 0) {
                     pwriter.println(
-                        "Token " + k1 + " " + v1.remainingTokenAmount + v1.trxOutAmount);
+                        "Token "
+                            + StringUtil.encode58Check(Hex.decode(k1))
+                            + " "
+                            + v1.remainingTokenAmount
+                            + v1.trxOutAmount);
                   }
                 });
           });
@@ -740,6 +757,7 @@ public class FullNode {
         }
         // 把上个块没匹配上的买累计到帐
         tokenAllInfoRecord.addRemaining(allBuyTokenAmountLastBlock, allOutTrxAmountLastBlock);
+        addrAllInfoRecord.updateTokenAllInfoRecord(token, tokenAllInfoRecord);
         addrAllInfoRecordMap.put(addr, addrAllInfoRecord);
 
         // 本块记录移到上一个块
@@ -751,11 +769,13 @@ public class FullNode {
       }
     }
     // 删除1个块之前记录
-    for (Iterator<Map.Entry<String, AddrContinusRecord>> it = continusRecordMap.entrySet().iterator(); it.hasNext(); ) {
+    for (Iterator<Map.Entry<String, AddrContinusRecord>> it =
+            continusRecordMap.entrySet().iterator();
+        it.hasNext(); ) {
       Map.Entry<String, AddrContinusRecord> entry = it.next();
       entry.getValue().removeRecordByBlockNum(blockNum - 1);
       if (entry.getValue().records.isEmpty()) {
-        it.remove(); // 使用迭代器的remove方法安全删除
+        it.remove();
       }
     }
   }
@@ -977,6 +997,10 @@ public class FullNode {
 
     private TokenAllInfoRecord getTokenAllInfoRecord(String token) {
       return records.getOrDefault(token, new TokenAllInfoRecord(token));
+    }
+
+    private void updateTokenAllInfoRecord(String token, TokenAllInfoRecord tokenAllInfoRecord) {
+      records.put(token, tokenAllInfoRecord);
     }
 
     private BigDecimal getAllProfit() {
