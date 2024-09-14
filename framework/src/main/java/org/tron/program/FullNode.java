@@ -1095,7 +1095,8 @@ public class FullNode {
         }
 
         // 上个块卖可以平账，最近2块有卖有卖
-        if (!sellsLastBlock.isEmpty() && buySellsLastBlocks.remainingSellAvailable) {
+//        if (!sellsLastBlock.isEmpty() && buySellsLastBlocks.remainingSellAvailable) {
+        if (!sellsLastBlock.isEmpty()) {
           BigDecimal tokenAmount = BigDecimal.ZERO;
           BigDecimal trxAmount = BigDecimal.ZERO;
           for (SingleBuySellRecord sell : sellsLastBlock) {
@@ -1346,7 +1347,8 @@ public class FullNode {
           }
 
           // 上个块卖可以平账，最近2块有卖有卖
-          if (!sellsLastBlock.isEmpty() && buySellsLastBlocks.remainingSellAvailable) {
+//          if (!sellsLastBlock.isEmpty() && buySellsLastBlocks.remainingSellAvailable) {
+          if (!sellsLastBlock.isEmpty()) {
             BigDecimal tokenAmount = BigDecimal.ZERO;
             BigDecimal trxAmount = BigDecimal.ZERO;
             for (SingleBuySellRecord sell : sellsLastBlock) {
