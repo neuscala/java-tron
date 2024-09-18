@@ -328,10 +328,6 @@ public class FullNode {
             }
 
             if (!transactionInfo.getResult().equals(SUCESS)) {
-
-              if (!saddrs.contains(caller)) {
-                continue;
-              }
               if (!tx.getInstance()
                   .getRawData()
                   .getContract(0)
@@ -349,6 +345,10 @@ public class FullNode {
               String callData = Hex.toHexString(triggerSmartContract.getData().toByteArray());
               BigDecimal tokenAmount = BigDecimal.ZERO;
               boolean isBuy = false;
+              sSumTxCount++;
+              if (blockNum>=recentBlock) {
+                sSumTxCountrecent++;
+              }
               String token;
               if (callData.startsWith(SWAP_SELL_METHOD_1)) {
                 isBuy = false;
@@ -408,6 +408,16 @@ public class FullNode {
                 token = get41Addr(callData.substring(392, 392 + 64)); // token
               } else {
                 // 其他方法
+                continue;
+              }
+              if (isBuy) {
+                sSumBuyCount++;
+                if (blockNum>=recentBlock) {
+                  sSumBuyCountrecent++;
+                }
+              }
+
+              if (!saddrs.contains(caller)) {
                 continue;
               }
               AddrContinusRecord addrContinusRecord =
@@ -575,8 +585,9 @@ public class FullNode {
                     .unpack(SmartContractOuterClass.TriggerSmartContract.class);
             // 只遍历成功交易
             if (!transactionInfo.getResult().equals(SUCESS)) {
-              if (!paddrs.contains(caller)) {
-                continue;
+              pSumTxCount += 1;
+              if (blockNum >= recentBlock) {
+                pSumTxCountrecent+= 1;
               }
               try{
               String callData = Hex.toHexString(triggerSmartContract.getData().toByteArray());
@@ -605,6 +616,15 @@ public class FullNode {
                 //                token = data1.substring(24);
               } else {
                 // 其他方法
+                continue;
+              }
+              if (isBuy) {
+                pSumBuyCount += 1;
+                if (blockNum >= recentBlock) {
+                   pSumBuyCountrecent+= 1;
+                }
+              }
+              if (!paddrs.contains(caller)) {
                 continue;
               }
               AddrContinusRecord addrContinusRecord =
