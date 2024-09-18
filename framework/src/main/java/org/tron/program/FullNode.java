@@ -342,8 +342,8 @@ public class FullNode {
                     new BigDecimal(new BigInteger(callData.substring(8, 8 + 64), 16))
                         .divide(TOKEN_DIVISOR, 18, RoundingMode.HALF_EVEN); // token 个数
                 String token1 = callData.substring(392, 392 + 64).substring(24); // token1
-                String token2 = callData.substring(456).substring(24); // token2 wtrx
-                token = token1.equalsIgnoreCase(WTRX) ? get41Addr(token2) : get41Addr(token1);
+                String token2 = callData.length() >=456? callData.substring(456).substring(24): null; // token2 wtrx
+                token = (token1.equalsIgnoreCase(WTRX) && token2!=null) ? get41Addr(token2) : get41Addr(token1);
               } else if (callData.startsWith(SWAP_SELL_METHOD_3)) {
                 isBuy = false;
                 token = get41Addr(callData.substring(392, 392 + 64)); // token
