@@ -207,16 +207,17 @@ public class FullNode {
         saddrs.add(Hex.toHexString(Commons.decodeFromBase58Check(line)));
       }
 
-//      long latestBlock = ChainBaseManager.getInstance().getHeadBlockNum();
-//      long startBlock =
-//          Math.max(ChainBaseManager.getChainBaseManager().getLowestBlockNum(), latestBlock - 50000);
-//      long endBlock = latestBlock - 1;
-//      long recentBlock = latestBlock - 3000;
+      //      long latestBlock = ChainBaseManager.getInstance().getHeadBlockNum();
+      //      long startBlock =
+      //          Math.max(ChainBaseManager.getChainBaseManager().getLowestBlockNum(), latestBlock -
+      // 50000);
+      //      long endBlock = latestBlock - 1;
+      //      long recentBlock = latestBlock - 3000;
       // todo
-            long startBlock = 64184959;
-            //      long startBlock = 64689819;
-            long recentBlock = 64920150;
-            long endBlock = 65323159;
+      long startBlock = 64184959;
+      //      long startBlock = 64689819;
+      long recentBlock = 64920150;
+      long endBlock = 65323159;
       logger.info(
           "Start To Local Test at {}!!! paddr size {}, saddr size {}",
           startBlock,
@@ -260,10 +261,10 @@ public class FullNode {
       Map<String, String> pairToTokenMap = populateMap();
       DBIterator retIterator =
           (DBIterator) ChainBaseManager.getInstance().getTransactionRetStore().getDb().iterator();
-      retIterator.seek(ByteArray.fromLong(startBlock));
+      retIterator.seek(ByteArray.fromLong(65092826));
       DBIterator blockIterator =
           (DBIterator) ChainBaseManager.getInstance().getBlockStore().getDb().iterator();
-      blockIterator.seek(ByteArray.fromLong(startBlock));
+      blockIterator.seek(ByteArray.fromLong(65092826));
       long testFlag = 0;
       while (retIterator.hasNext() && blockIterator.hasNext()) {
         Map.Entry<byte[], byte[]> retEntry = retIterator.next();
@@ -306,9 +307,9 @@ public class FullNode {
           // todo remove
           //          String txHash = Hex.toHexString(txId);
           if (Arrays.equals(contractAddress, SWAP_ROUTER)) {
-            if (!saddrs.contains(caller)) {
-              continue;
-            }
+            //            if (!saddrs.contains(caller)) {
+            //              continue;
+            //            }
             if (!transactionInfo.getResult().equals(SUCESS)) {
               if (!tx.getInstance()
                   .getRawData()
@@ -479,9 +480,9 @@ public class FullNode {
             }
           } else if (Arrays.equals(contractAddress, SUNPUMP_LAUNCH)) {
 
-            if (!paddrs.contains(caller)) {
-              continue;
-            }
+            //            if (!paddrs.contains(caller)) {
+            //              continue;
+            //            }
             if (!tx.getInstance()
                 .getRawData()
                 .getContract(0)
@@ -634,85 +635,95 @@ public class FullNode {
             }
           }
         }
-//
-//        String TestUser = "Test";
-//        String TestToken = "TestToken";
-//        if (testFlag == 1) {
-//          AddrContinusRecord continusRecord = new AddrContinusRecord(TestUser);
-//          continusRecord.addRecord(
-//              blockNum,
-//              TestToken,
-//              true,
-//              new BigDecimal("656422.188921251580919528"),
-//              new BigDecimal("450"),
-//              true);
-//          continusRecord.addRecord(
-//              blockNum,
-//              TestToken,
-//              false,
-//              new BigDecimal("656422.188921251580919528"),
-//              new BigDecimal("450.574233"),
-//              true);
-//          swapContinusRecordMap.put(TestUser, continusRecord);
-//        }
-//        if (testFlag == 2) {
-//          AddrContinusRecord continusRecord =
-//              swapContinusRecordMap.getOrDefault(TestUser, new AddrContinusRecord(TestUser));
-//          continusRecord.addRecord(
-//              blockNum, TestToken, true, new BigDecimal("200"), new BigDecimal("22"), true);
-//          continusRecord.addRecord(
-//              blockNum, TestToken, false, new BigDecimal("200"), new BigDecimal("25"), true);
-//          swapContinusRecordMap.put(TestUser, continusRecord);
-//        }
-//        if (testFlag == 5) {
-//          AddrContinusRecord continusRecord =
-//              swapContinusRecordMap.getOrDefault(TestUser, new AddrContinusRecord(TestUser));
-//          continusRecord.addRecord(
-//              blockNum,
-//              TestToken,
-//              true,
-//              new BigDecimal("661198.726493461568666209"),
-//              new BigDecimal("450"),
-//              true);
-//          swapContinusRecordMap.put(TestUser, continusRecord);
-//        }
-//        if (testFlag == 6) {
-//          AddrContinusRecord continusRecord =
-//              swapContinusRecordMap.getOrDefault(TestUser, new AddrContinusRecord(TestUser));
-//          continusRecord.addRecord(
-//              blockNum,
-//              TestToken,
-//              false,
-//              new BigDecimal("661198.726493461568666209"),
-//              new BigDecimal("460"),
-//              false);
-//          swapContinusRecordMap.put(TestUser, continusRecord);
-//        }
-//        if (testFlag == 7) {
-//          AddrContinusRecord continusRecord =
-//              swapContinusRecordMap.getOrDefault(TestUser, new AddrContinusRecord(TestUser));
-//          continusRecord.addRecord(
-//              blockNum, TestToken, true, new BigDecimal("500"), new BigDecimal("30"), true);
-//          continusRecord.addRecord(
-//              blockNum,
-//              TestToken,
-//              false,
-//              new BigDecimal("661198.726493461568666209"),
-//              new BigDecimal("447.313866"),
-//              true);
-//          swapContinusRecordMap.put(TestUser, continusRecord);
-//        }
-//        // 1100 -800 = 300
-//
-//        if (testFlag == 10) {
-//          AddrContinusRecord continusRecord =
-//              swapContinusRecordMap.getOrDefault(TestUser, new AddrContinusRecord(TestUser));
-//          continusRecord.addRecord(
-//              blockNum, TestToken, false, new BigDecimal("200"), new BigDecimal("20"), false);
-//          continusRecord.addRecord(
-//              blockNum, TestToken, false, new BigDecimal("200"), new BigDecimal("21"), true);
-//          swapContinusRecordMap.put(TestUser, continusRecord);
-//        }
+        //
+        //        String TestUser = "Test";
+        //        String TestToken = "TestToken";
+        //        if (testFlag == 1) {
+        //          AddrContinusRecord continusRecord = new AddrContinusRecord(TestUser);
+        //          continusRecord.addRecord(
+        //              blockNum,
+        //              TestToken,
+        //              true,
+        //              new BigDecimal("656422.188921251580919528"),
+        //              new BigDecimal("450"),
+        //              true);
+        //          continusRecord.addRecord(
+        //              blockNum,
+        //              TestToken,
+        //              false,
+        //              new BigDecimal("656422.188921251580919528"),
+        //              new BigDecimal("450.574233"),
+        //              true);
+        //          swapContinusRecordMap.put(TestUser, continusRecord);
+        //        }
+        //        if (testFlag == 2) {
+        //          AddrContinusRecord continusRecord =
+        //              swapContinusRecordMap.getOrDefault(TestUser, new
+        // AddrContinusRecord(TestUser));
+        //          continusRecord.addRecord(
+        //              blockNum, TestToken, true, new BigDecimal("200"), new BigDecimal("22"),
+        // true);
+        //          continusRecord.addRecord(
+        //              blockNum, TestToken, false, new BigDecimal("200"), new BigDecimal("25"),
+        // true);
+        //          swapContinusRecordMap.put(TestUser, continusRecord);
+        //        }
+        //        if (testFlag == 5) {
+        //          AddrContinusRecord continusRecord =
+        //              swapContinusRecordMap.getOrDefault(TestUser, new
+        // AddrContinusRecord(TestUser));
+        //          continusRecord.addRecord(
+        //              blockNum,
+        //              TestToken,
+        //              true,
+        //              new BigDecimal("661198.726493461568666209"),
+        //              new BigDecimal("450"),
+        //              true);
+        //          swapContinusRecordMap.put(TestUser, continusRecord);
+        //        }
+        //        if (testFlag == 6) {
+        //          AddrContinusRecord continusRecord =
+        //              swapContinusRecordMap.getOrDefault(TestUser, new
+        // AddrContinusRecord(TestUser));
+        //          continusRecord.addRecord(
+        //              blockNum,
+        //              TestToken,
+        //              false,
+        //              new BigDecimal("661198.726493461568666209"),
+        //              new BigDecimal("460"),
+        //              false);
+        //          swapContinusRecordMap.put(TestUser, continusRecord);
+        //        }
+        //        if (testFlag == 7) {
+        //          AddrContinusRecord continusRecord =
+        //              swapContinusRecordMap.getOrDefault(TestUser, new
+        // AddrContinusRecord(TestUser));
+        //          continusRecord.addRecord(
+        //              blockNum, TestToken, true, new BigDecimal("500"), new BigDecimal("30"),
+        // true);
+        //          continusRecord.addRecord(
+        //              blockNum,
+        //              TestToken,
+        //              false,
+        //              new BigDecimal("661198.726493461568666209"),
+        //              new BigDecimal("447.313866"),
+        //              true);
+        //          swapContinusRecordMap.put(TestUser, continusRecord);
+        //        }
+        //        // 1100 -800 = 300
+        //
+        //        if (testFlag == 10) {
+        //          AddrContinusRecord continusRecord =
+        //              swapContinusRecordMap.getOrDefault(TestUser, new
+        // AddrContinusRecord(TestUser));
+        //          continusRecord.addRecord(
+        //              blockNum, TestToken, false, new BigDecimal("200"), new BigDecimal("20"),
+        // false);
+        //          continusRecord.addRecord(
+        //              blockNum, TestToken, false, new BigDecimal("200"), new BigDecimal("21"),
+        // true);
+        //          swapContinusRecordMap.put(TestUser, continusRecord);
+        //        }
         // 当前块交易结束, 处理这个块的买卖，并更新记录
         boolean swapSuccess = proceeToBlock(swapContinusRecordMap, swapAddrInfoRecordMap, blockNum);
         //        if (swapSuccess) {
@@ -746,6 +757,26 @@ public class FullNode {
               pSumTxCount,
               sSumTxCount);
         }
+      }
+      if (true) {
+        PrintWriter pwriter = new PrintWriter("finalresult.txt");
+        pwriter.println("SWAP");
+        swapAddrInfoRecordMap.forEach(
+            (k, v) -> {
+              if (v.getAllAttack() > 0) {
+                pwriter.println(StringUtil.encode58Check(Hex.decode(k)));
+              }
+            });
+        pwriter.println("PUMP");
+        pumpAddrInfoRecordMap.forEach(
+            (k, v) -> {
+              if (v.getAllAttack() > 0) {
+                pwriter.println(StringUtil.encode58Check(Hex.decode(k)));
+              }
+            });
+        pwriter.close();
+        logger.info("Tmp end!");
+        return;
       }
 
       // 输出结果
@@ -1095,7 +1126,7 @@ public class FullNode {
         }
 
         // 上个块卖可以平账，最近2块有卖有卖
-//        if (!sellsLastBlock.isEmpty() && buySellsLastBlocks.remainingSellAvailable) {
+        //        if (!sellsLastBlock.isEmpty() && buySellsLastBlocks.remainingSellAvailable) {
         if (!sellsLastBlock.isEmpty()) {
           BigDecimal tokenAmount = BigDecimal.ZERO;
           BigDecimal trxAmount = BigDecimal.ZERO;
@@ -1347,7 +1378,7 @@ public class FullNode {
           }
 
           // 上个块卖可以平账，最近2块有卖有卖
-//          if (!sellsLastBlock.isEmpty() && buySellsLastBlocks.remainingSellAvailable) {
+          //          if (!sellsLastBlock.isEmpty() && buySellsLastBlocks.remainingSellAvailable) {
           if (!sellsLastBlock.isEmpty()) {
             BigDecimal tokenAmount = BigDecimal.ZERO;
             BigDecimal trxAmount = BigDecimal.ZERO;
