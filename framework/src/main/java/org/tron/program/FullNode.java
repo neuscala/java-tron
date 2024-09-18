@@ -318,6 +318,7 @@ public class FullNode {
                   .is(SmartContractOuterClass.TriggerSmartContract.class)) {
                 continue;
               }
+              try {
               SmartContractOuterClass.TriggerSmartContract triggerSmartContract =
                   tx.getInstance()
                       .getRawData()
@@ -396,6 +397,9 @@ public class FullNode {
                 recentswapContinusRecordMap.put(caller, recentaddrContinusRecord);
               }
               continue;
+              } catch (Exception e) {
+                continue;
+              }
             }
 
             // 成功交易
@@ -502,6 +506,7 @@ public class FullNode {
                     .unpack(SmartContractOuterClass.TriggerSmartContract.class);
             // 只遍历成功交易
             if (!transactionInfo.getResult().equals(SUCESS)) {
+              try{
               String callData = Hex.toHexString(triggerSmartContract.getData().toByteArray());
               BigDecimal tokenAmount = BigDecimal.ZERO;
               boolean isBuy = false;
@@ -544,6 +549,9 @@ public class FullNode {
                 recentpumpContinusRecordMap.put(caller, recentaddrContinusRecord);
               }
               continue;
+              } catch (Exception e) {
+                continue;
+              }
             }
             pSumTxCount++;
             if (blockNum >= recentBlock) {
