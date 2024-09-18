@@ -333,6 +333,10 @@ public class FullNode {
                 tokenAmount =
                     new BigDecimal(new BigInteger(callData.substring(8, 8 + 64), 16))
                         .divide(TOKEN_DIVISOR, 18, RoundingMode.HALF_EVEN); // token 个数
+                if (callData.length() < 456) {
+                  logger.info(Hex.toHexString(txId));
+                  logger.info(callData);
+                }
                 String token1 = callData.substring(392, 392 + 64).substring(24); // token1
                 String token2 = callData.substring(456).substring(24); // token2 wtrx
                 token = token1.equalsIgnoreCase(WTRX) ? get41Addr(token2) : get41Addr(token1);
