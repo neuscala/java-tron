@@ -215,8 +215,8 @@ public class FullNode {
       // todo
             long startBlock = 64184959;
             //      long startBlock = 64689819;
-            long recentBlock = 64689819;
-            long endBlock = 65092826;
+            long recentBlock = 64920150;
+            long endBlock = 65323159;
       logger.info(
           "Start To Local Test at {}!!! paddr size {}, saddr size {}",
           startBlock,
