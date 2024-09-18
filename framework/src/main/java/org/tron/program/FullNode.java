@@ -80,6 +80,25 @@ public class FullNode {
 
   private static final Map<String, Boolean> compareMap = new HashMap<>();
 
+  private static final Set<String> pumpToRecordSrAddrs =
+      new HashSet<>(
+          Arrays.asList(
+              get41Addr(
+                  Hex.toHexString(
+                      Commons.decodeFromBase58Check("TEmoTK4PyjJVZhqwzkNfGUsTuhbYGvpk4J"))),
+              get41Addr(
+                  Hex.toHexString(
+                      Commons.decodeFromBase58Check("THKX6VFVy4QwA3yLfgPLJKCc6y7ViDTsZ4")))));
+  private static final Set<String> swapToRecordSrAddrs =
+      new HashSet<>(
+          Arrays.asList(
+              get41Addr(
+                  Hex.toHexString(
+                      Commons.decodeFromBase58Check("TPsUGKAoXDSFz332ZYtTGdDHWzftLYWFj7"))),
+              get41Addr(
+                  Hex.toHexString(
+                      Commons.decodeFromBase58Check("TB3JcyXpvv3Rz1X3Qcg1Y4nfBwjkHJduyH")))));
+
   /** Start the FullNode. */
   public static void main(String[] args) {
     logger.info("Full node running.");
@@ -233,14 +252,6 @@ public class FullNode {
       long sSumTxCountrecent = 0;
       long sSumBuyCountrecent = 0;
 
-      //      Map<String, Map<String, BuyAndSellRecordV2>> pumpLastBlockBuyAndSellMap = new
-      // HashMap<>();
-      //      Map<String, Map<String, BuyAndSellRecordV2>> swapLastBlockBuyAndSellMap = new
-      // HashMap<>();
-      //      Map<String, AddressAllInfo> swapAddressAllInfoMap = new HashMap<>();
-      //      Map<String, AddressAllInfo> swapRecentAddressAllInfoMap = new HashMap<>();
-      //      Map<String, AddressAllInfo> pumpAddressAllInfoMap = new HashMap<>();
-      //      Map<String, AddressAllInfo> pumpRecentAddressAllInfoMap = new HashMap<>();
       // 记录区
       // 总记录，最后出数据的结构
       Map<String, AddrAllInfoRecord> pumpAddrInfoRecordMap = new HashMap<>();
@@ -253,18 +264,18 @@ public class FullNode {
       Map<String, AddrContinusRecord> swapContinusRecordMap = new HashMap<>();
       Map<String, AddrContinusRecord> recentswapContinusRecordMap = new HashMap<>();
 
-      //      Map<String, Long> swapSrMap = new HashMap<>();
-      //      Map<String, Long> recentswapSrMap = new HashMap<>();
-      //      Map<String, Long> pumpSrMap = new HashMap<>();
-      //      Map<String, Long> recentpumpSrMap = new HashMap<>();
+      Map<String, Long> swapSrMap = new HashMap<>();
+      Map<String, Long> recentswapSrMap = new HashMap<>();
+      Map<String, Long> pumpSrMap = new HashMap<>();
+      Map<String, Long> recentpumpSrMap = new HashMap<>();
 
       Map<String, String> pairToTokenMap = populateMap();
       DBIterator retIterator =
           (DBIterator) ChainBaseManager.getInstance().getTransactionRetStore().getDb().iterator();
-      retIterator.seek(ByteArray.fromLong(65092826));
+      retIterator.seek(ByteArray.fromLong(startBlock));
       DBIterator blockIterator =
           (DBIterator) ChainBaseManager.getInstance().getBlockStore().getDb().iterator();
-      blockIterator.seek(ByteArray.fromLong(65092826));
+      blockIterator.seek(ByteArray.fromLong(startBlock));
       long testFlag = 0;
       while (retIterator.hasNext() && blockIterator.hasNext()) {
         Map.Entry<byte[], byte[]> retEntry = retIterator.next();
@@ -288,8 +299,7 @@ public class FullNode {
         long timestamp = transactionRetCapsule.getInstance().getBlockTimeStamp();
 
         Map<String, TransactionCapsule> txCallerMap = new HashMap<>();
-        //        String witness =
-        // get41Addr(Hex.toHexString(blockCapsule.getWitnessAddress().toByteArray()));
+        String witness = get41Addr(Hex.toHexString(blockCapsule.getWitnessAddress().toByteArray()));
         for (TransactionCapsule tx : blockCapsule.getTransactions()) {
           txCallerMap.put(tx.getTransactionId().toString(), tx);
         }
@@ -307,10 +317,21 @@ public class FullNode {
           // todo remove
           //          String txHash = Hex.toHexString(txId);
           if (Arrays.equals(contractAddress, SWAP_ROUTER)) {
-            //            if (!saddrs.contains(caller)) {
-            //              continue;
-            //            }
+
+            AddrAllInfoRecord addrAllInfoRecord =
+                swapAddrInfoRecordMap.getOrDefault(caller, new AddrAllInfoRecord(caller));
+            AddrAllInfoRecord recentaddrAllInfoRecord =
+                recentswapAddrInfoRecordMap.getOrDefault(caller, new AddrAllInfoRecord(caller));
+            addrAllInfoRecord.allfee = addrAllInfoRecord.allfee.add(fee);
+            if (blockNum >= recentBlock) {
+              recentaddrAllInfoRecord.allfee = recentaddrAllInfoRecord.allfee.add(fee);
+            }
+
             if (!transactionInfo.getResult().equals(SUCESS)) {
+
+              if (!saddrs.contains(caller)) {
+                continue;
+              }
               if (!tx.getInstance()
                   .getRawData()
                   .getContract(0)
@@ -318,7 +339,7 @@ public class FullNode {
                   .is(SmartContractOuterClass.TriggerSmartContract.class)) {
                 continue;
               }
-              try {
+              try{
               SmartContractOuterClass.TriggerSmartContract triggerSmartContract =
                   tx.getInstance()
                       .getRawData()
@@ -331,7 +352,7 @@ public class FullNode {
               String token;
               if (callData.startsWith(SWAP_SELL_METHOD_1)) {
                 isBuy = false;
-                if(callData.length() < 392) {
+                if (callData.length() < 392) {
                   token = get41Addr(callData.substring(8, 8 + 64).substring(24));
                 } else {
                   tokenAmount =
@@ -347,8 +368,14 @@ public class FullNode {
                     new BigDecimal(new BigInteger(callData.substring(8, 8 + 64), 16))
                         .divide(TOKEN_DIVISOR, 18, RoundingMode.HALF_EVEN); // token 个数
                 String token1 = callData.substring(392, 392 + 64).substring(24); // token1
-                String token2 = callData.length() >=456? callData.substring(456).substring(24): null; // token2 wtrx
-                token = (token1.equalsIgnoreCase(WTRX) && token2!=null) ? get41Addr(token2) : get41Addr(token1);
+                String token2 =
+                    callData.length() >= 456
+                        ? callData.substring(456).substring(24)
+                        : null; // token2 wtrx
+                token =
+                    (token1.equalsIgnoreCase(WTRX) && token2 != null)
+                        ? get41Addr(token2)
+                        : get41Addr(token1);
               } else if (callData.startsWith(SWAP_SELL_METHOD_3)) {
                 isBuy = false;
                 token = get41Addr(callData.substring(392, 392 + 64)); // token
@@ -396,8 +423,25 @@ public class FullNode {
                     blockNum, token, isBuy, tokenAmount, BigDecimal.ZERO, false, fee);
                 recentswapContinusRecordMap.put(caller, recentaddrContinusRecord);
               }
+
+              if (isBuy) {
+                addrAllInfoRecord.failBuy += 1;
+                if (blockNum >= recentBlock) {
+                  recentaddrAllInfoRecord.failBuy += 1;
+                }
+              } else {
+                addrAllInfoRecord.failSell += 1;
+                if (blockNum >= recentBlock) {
+                  recentaddrAllInfoRecord.failSell += 1;
+                }
+              }
+              swapAddrInfoRecordMap.put(caller, addrAllInfoRecord);
+              if (blockNum >= recentBlock) {
+                recentswapAddrInfoRecordMap.put(caller, recentaddrAllInfoRecord);
+              }
+
               continue;
-              } catch (Exception e) {
+              }catch (Exception e) {
                 continue;
               }
             }
@@ -469,6 +513,10 @@ public class FullNode {
                       new BigDecimal(amount1In).divide(TOKEN_DIVISOR, 18, RoundingMode.HALF_EVEN);
                 }
               }
+
+              if (!saddrs.contains(caller)) {
+                continue;
+              }
               // 这里只记录
               AddrContinusRecord addrContinusRecord =
                   swapContinusRecordMap.getOrDefault(caller, new AddrContinusRecord(caller));
@@ -483,20 +531,41 @@ public class FullNode {
                     blockNum, token, isBuy, tokenAmount, trxAmount, true, fee);
                 recentswapContinusRecordMap.put(caller, recentaddrContinusRecord);
               }
+              if (isBuy) {
+                addrAllInfoRecord.successBuy += 1;
+                if (blockNum >= recentBlock) {
+                  recentaddrAllInfoRecord.successBuy += 1;
+                }
+              } else {
+                addrAllInfoRecord.successSell += 1;
+                if (blockNum >= recentBlock) {
+                  recentaddrAllInfoRecord.successSell += 1;
+                }
+              }
+              swapAddrInfoRecordMap.put(caller, addrAllInfoRecord);
+              if (blockNum >= recentBlock) {
+                recentswapAddrInfoRecordMap.put(caller, recentaddrAllInfoRecord);
+              }
               // 找到目标log就跳出
               break;
             }
           } else if (Arrays.equals(contractAddress, SUNPUMP_LAUNCH)) {
 
-            //            if (!paddrs.contains(caller)) {
-            //              continue;
-            //            }
             if (!tx.getInstance()
                 .getRawData()
                 .getContract(0)
                 .getParameter()
                 .is(SmartContractOuterClass.TriggerSmartContract.class)) {
               continue;
+            }
+
+            AddrAllInfoRecord addrAllInfoRecord =
+                pumpAddrInfoRecordMap.getOrDefault(caller, new AddrAllInfoRecord(caller));
+            AddrAllInfoRecord recentaddrAllInfoRecord =
+                recentpumpAddrInfoRecordMap.getOrDefault(caller, new AddrAllInfoRecord(caller));
+            addrAllInfoRecord.allfee = addrAllInfoRecord.allfee.add(fee);
+            if (blockNum >= recentBlock) {
+              recentaddrAllInfoRecord.allfee = recentaddrAllInfoRecord.allfee.add(fee);
             }
             SmartContractOuterClass.TriggerSmartContract triggerSmartContract =
                 tx.getInstance()
@@ -506,6 +575,9 @@ public class FullNode {
                     .unpack(SmartContractOuterClass.TriggerSmartContract.class);
             // 只遍历成功交易
             if (!transactionInfo.getResult().equals(SUCESS)) {
+              if (!paddrs.contains(caller)) {
+                continue;
+              }
               try{
               String callData = Hex.toHexString(triggerSmartContract.getData().toByteArray());
               BigDecimal tokenAmount = BigDecimal.ZERO;
@@ -548,8 +620,24 @@ public class FullNode {
                     blockNum, token, isBuy, tokenAmount, BigDecimal.ZERO, false, fee);
                 recentpumpContinusRecordMap.put(caller, recentaddrContinusRecord);
               }
+              if (isBuy) {
+                addrAllInfoRecord.failBuy += 1;
+                if (blockNum >= recentBlock) {
+                  recentaddrAllInfoRecord.failBuy += 1;
+                }
+              } else {
+                addrAllInfoRecord.failSell += 1;
+                if (blockNum >= recentBlock) {
+                  recentaddrAllInfoRecord.failSell += 1;
+                }
+              }
+              pumpAddrInfoRecordMap.put(caller, addrAllInfoRecord);
+              if (blockNum >= recentBlock) {
+                recentpumpAddrInfoRecordMap.put(caller, recentaddrAllInfoRecord);
+              }
               continue;
-              } catch (Exception e) {
+
+              }catch (Exception e) {
                 continue;
               }
             }
@@ -575,6 +663,9 @@ public class FullNode {
                 if (blockNum >= recentBlock) {
                   pSumBuyCountrecent++;
                 }
+              }
+              if (!paddrs.contains(caller)) {
+                continue;
               }
               String token = get41Addr(Hex.toHexString(log.getAddress().toByteArray()));
               for (Protocol.TransactionInfo.Log log2 : transactionInfo.getLogList()) {
@@ -641,6 +732,22 @@ public class FullNode {
                 recentaddrContinusRecord.addRecord(
                     blockNum, token, isBuy, tokenAmount, trxAmount, true, fee);
                 recentpumpContinusRecordMap.put(caller, recentaddrContinusRecord);
+              }
+
+              if (isBuy) {
+                addrAllInfoRecord.successBuy += 1;
+                if (blockNum >= recentBlock) {
+                  recentaddrAllInfoRecord.successBuy += 1;
+                }
+              } else {
+                addrAllInfoRecord.successSell += 1;
+                if (blockNum >= recentBlock) {
+                  recentaddrAllInfoRecord.successSell += 1;
+                }
+              }
+              pumpAddrInfoRecordMap.put(caller, addrAllInfoRecord);
+              if (blockNum >= recentBlock) {
+                recentpumpAddrInfoRecordMap.put(caller, recentaddrAllInfoRecord);
               }
               // 找到目标log就跳出
               break;
@@ -737,25 +844,47 @@ public class FullNode {
         //          swapContinusRecordMap.put(TestUser, continusRecord);
         //        }
         // 当前块交易结束, 处理这个块的买卖，并更新记录
-        boolean swapSuccess = proceeToBlock(swapContinusRecordMap, swapAddrInfoRecordMap, blockNum);
-        //        if (swapSuccess) {
-        //          swapSrMap.put(witness, swapSrMap.getOrDefault(witness, 0L) + 1);
-        //        }
-        boolean pumpSuccess = proceeToBlock(pumpContinusRecordMap, pumpAddrInfoRecordMap, blockNum);
-        //        if (pumpSuccess) {
-        //          pumpSrMap.put(witness, pumpSrMap.getOrDefault(witness, 0L) + 1);
-        //        }
+        boolean swapSuccess =
+            proceeToBlock(
+                swapContinusRecordMap,
+                swapAddrInfoRecordMap,
+                blockNum,
+                witness,
+                swapToRecordSrAddrs);
+        if (swapSuccess) {
+          swapSrMap.put(witness, swapSrMap.getOrDefault(witness, 0L) + 1);
+        }
+        boolean pumpSuccess =
+            proceeToBlock(
+                pumpContinusRecordMap,
+                pumpAddrInfoRecordMap,
+                blockNum,
+                witness,
+                pumpToRecordSrAddrs);
+        if (pumpSuccess) {
+          pumpSrMap.put(witness, pumpSrMap.getOrDefault(witness, 0L) + 1);
+        }
         if (blockNum >= recentBlock) {
           boolean recentswapSuccess =
-              proceeToBlock(recentswapContinusRecordMap, recentswapAddrInfoRecordMap, blockNum);
-          //          if (recentswapSuccess) {
-          //            recentswapSrMap.put(witness, recentswapSrMap.getOrDefault(witness, 0L) + 1);
-          //          }
+              proceeToBlock(
+                  recentswapContinusRecordMap,
+                  recentswapAddrInfoRecordMap,
+                  blockNum,
+                  witness,
+                  new HashSet<>());
+          if (recentswapSuccess) {
+            recentswapSrMap.put(witness, recentswapSrMap.getOrDefault(witness, 0L) + 1);
+          }
           boolean recentpumpSuccess =
-              proceeToBlock(recentpumpContinusRecordMap, recentpumpAddrInfoRecordMap, blockNum);
-          //          if (recentpumpSuccess) {
-          //            recentpumpSrMap.put(witness, recentpumpSrMap.getOrDefault(witness, 0L) + 1);
-          //          }
+              proceeToBlock(
+                  recentpumpContinusRecordMap,
+                  recentpumpAddrInfoRecordMap,
+                  blockNum,
+                  witness,
+                  new HashSet<>());
+          if (recentpumpSuccess) {
+            recentpumpSrMap.put(witness, recentpumpSrMap.getOrDefault(witness, 0L) + 1);
+          }
         }
 
         if (blockNum - logBlock >= 10000) {
@@ -769,26 +898,6 @@ public class FullNode {
               pSumTxCount,
               sSumTxCount);
         }
-      }
-      if (true) {
-        PrintWriter pwriter = new PrintWriter("finalresult.txt");
-        pwriter.println("SWAP");
-        swapAddrInfoRecordMap.forEach(
-            (k, v) -> {
-              if (v.getAllAttack() > 0) {
-                pwriter.println(StringUtil.encode58Check(Hex.decode(k)));
-              }
-            });
-        pwriter.println("PUMP");
-        pumpAddrInfoRecordMap.forEach(
-            (k, v) -> {
-              if (v.getAllAttack() > 0) {
-                pwriter.println(StringUtil.encode58Check(Hex.decode(k)));
-              }
-            });
-        pwriter.close();
-        logger.info("Tmp end!");
-        return;
       }
 
       // 输出结果
@@ -815,7 +924,17 @@ public class FullNode {
                       + " "
                       + v.getMzLackCount()
                       + " "
-                      + v.getFee()));
+                      + v.getFee()
+                      + " "
+                      + v.getAllfee()
+                      + " "
+                      + v.getSuccessBuy()
+                      + " "
+                      + v.getSuccessSell()
+                      + " "
+                      + v.getFailBuy()
+                      + " "
+                      + v.getFailSell()));
       pwriter.println("RECENTSWAP");
       recentswapAddrInfoRecordMap.forEach(
           (k, v) ->
@@ -838,7 +957,17 @@ public class FullNode {
                       + " "
                       + v.getMzLackCount()
                       + " "
-                      + v.getFee()));
+                      + v.getFee()
+                      + " "
+                      + v.getAllfee()
+                      + " "
+                      + v.getSuccessBuy()
+                      + " "
+                      + v.getSuccessSell()
+                      + " "
+                      + v.getFailBuy()
+                      + " "
+                      + v.getFailSell()));
       pwriter.println("PUMP");
       pumpAddrInfoRecordMap.forEach(
           (k, v) ->
@@ -861,7 +990,17 @@ public class FullNode {
                       + " "
                       + v.getMzLackCount()
                       + " "
-                      + v.getFee()));
+                      + v.getFee()
+                      + " "
+                      + v.getAllfee()
+                      + " "
+                      + v.getSuccessBuy()
+                      + " "
+                      + v.getSuccessSell()
+                      + " "
+                      + v.getFailBuy()
+                      + " "
+                      + v.getFailSell()));
       pwriter.println("RECENTPUMP");
       recentpumpAddrInfoRecordMap.forEach(
           (k, v) ->
@@ -884,7 +1023,17 @@ public class FullNode {
                       + " "
                       + v.getMzLackCount()
                       + " "
-                      + v.getFee()));
+                      + v.getFee()
+                      + " "
+                      + v.getAllfee()
+                      + " "
+                      + v.getSuccessBuy()
+                      + " "
+                      + v.getSuccessSell()
+                      + " "
+                      + v.getFailBuy()
+                      + " "
+                      + v.getFailSell()));
 
       pwriter.println("TOKEN_REMAINING");
       pwriter.println("SWAPTOKEN");
@@ -958,16 +1107,41 @@ public class FullNode {
 
       pwriter.close();
 
-      //      PrintWriter srwriter = new PrintWriter("finalsr.txt");
-      //      srwriter.println("SWAP");
-      //      swapSrMap.forEach((k, v) -> srwriter.println(k + " " + v));
-      //      srwriter.println("RECENTSWAP");
-      //      recentswapSrMap.forEach((k, v) -> srwriter.println(k + " " + v));
-      //      srwriter.println("PUMP");
-      //      pumpSrMap.forEach((k, v) -> srwriter.println(k + " " + v));
-      //      srwriter.println("RECENTPUMP");
-      //      recentpumpSrMap.forEach((k, v) -> srwriter.println(k + " " + v));
-      //      srwriter.close();
+      PrintWriter srwriter = new PrintWriter("finalsr.txt");
+      srwriter.println("SWAP");
+      swapSrMap.forEach(
+          (k, v) -> srwriter.println(StringUtil.encode58Check(Hex.decode(k)) + " " + v));
+      srwriter.println("RECENTSWAP");
+      recentswapSrMap.forEach(
+          (k, v) -> srwriter.println(StringUtil.encode58Check(Hex.decode(k)) + " " + v));
+      srwriter.println("PUMP");
+      pumpSrMap.forEach(
+          (k, v) -> srwriter.println(StringUtil.encode58Check(Hex.decode(k)) + " " + v));
+      srwriter.println("RECENTPUMP");
+      recentpumpSrMap.forEach(
+          (k, v) -> srwriter.println(StringUtil.encode58Check(Hex.decode(k)) + " " + v));
+
+      srwriter.println("SWAPTOP");
+      swapToRecordSrAddrs.forEach(
+          addr -> {
+            srwriter.println(StringUtil.encode58Check(Hex.decode(addr)));
+            AddrAllInfoRecord record =
+                swapAddrInfoRecordMap.getOrDefault(addr, new AddrAllInfoRecord(addr));
+            record.successSrBlock.forEach(
+                (k, v) -> srwriter.println(StringUtil.encode58Check(Hex.decode(k)) + " " + v));
+          });
+
+      srwriter.println("PUMPTOP");
+      pumpToRecordSrAddrs.forEach(
+          addr -> {
+            srwriter.println(StringUtil.encode58Check(Hex.decode(addr)));
+            AddrAllInfoRecord record =
+                pumpAddrInfoRecordMap.getOrDefault(addr, new AddrAllInfoRecord(addr));
+            record.successSrBlock.forEach(
+                (k, v) -> srwriter.println(StringUtil.encode58Check(Hex.decode(k)) + " " + v));
+          });
+
+      srwriter.close();
       logger.info(
           "Final syncing sum p addr {}, s addr {}, p_sum_tx_count {}, p_buy {}, s_sum_tx_count {}, s_buy {}, p_recent_tx_count {}, p_recent_buy {}, s_recent_tx_count {}, s_recent_buy {}",
           pumpAddrInfoRecordMap.keySet().size(),
@@ -991,11 +1165,15 @@ public class FullNode {
   private static boolean proceeToBlock(
       Map<String, AddrContinusRecord> continusRecordMap,
       Map<String, AddrAllInfoRecord> addrAllInfoRecordMap,
-      long blockNum) {
+      long blockNum,
+      String witness,
+      Set<String> toRecordWitness) {
     boolean blockSuccess = false;
     for (Map.Entry<String, AddrContinusRecord> entry : continusRecordMap.entrySet()) {
+      boolean addrBlockSuccess = false;
       // 每个人
       String addr = entry.getKey();
+      boolean toRecordSr = toRecordWitness.contains(addr);
       AddrAllInfoRecord addrAllInfoRecord =
           addrAllInfoRecordMap.getOrDefault(addr, new AddrAllInfoRecord(addr));
       BigDecimal feeToAdd = BigDecimal.ZERO;
@@ -1039,6 +1217,7 @@ public class FullNode {
                 blockSuccess =
                     matchBuySell(buySell, buySellsThisBlocks.records, addrAllInfoRecord, token, i);
               }
+              addrBlockSuccess = blockSuccess;
             }
           } else {
             // 失败的，先记次数
@@ -1450,6 +1629,9 @@ public class FullNode {
       }
 
       addrAllInfoRecord.addFee(feeToAdd);
+      if (addrBlockSuccess && toRecordSr) {
+        addrAllInfoRecord.addWitness(witness);
+      }
       addrAllInfoRecordMap.put(addr, addrAllInfoRecord);
     }
     // 删除1个块之前记录
@@ -1801,12 +1983,24 @@ public class FullNode {
     long buyCount;
     BigDecimal fee;
     Map<String, TokenAllInfoRecord> tokenRecords; // <token, TokenAllInfoRecord>
+    long successBuy;
+    long successSell;
+    long failBuy;
+    long failSell;
+    BigDecimal allfee;
+    Map<String, Long> successSrBlock;
 
     private AddrAllInfoRecord(String caller) {
       this.caller = caller;
       buyCount = 0;
       tokenRecords = new HashMap<>();
       fee = BigDecimal.ZERO;
+      successBuy = 0;
+      successSell = 0;
+      failBuy = 0;
+      failSell = 0;
+      allfee = BigDecimal.ZERO;
+      successSrBlock = new HashMap<>();
     }
 
     private void addBuy() {
@@ -1879,6 +2073,10 @@ public class FullNode {
 
     private BigDecimal addFee(BigDecimal newfee) {
       return this.fee = this.fee.add(newfee);
+    }
+
+    private void addWitness(String witness) {
+      successSrBlock.put(witness, successSrBlock.getOrDefault(witness, 0L) + 1);
     }
   }
 
