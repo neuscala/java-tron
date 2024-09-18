@@ -330,16 +330,16 @@ public class FullNode {
               String token;
               if (callData.startsWith(SWAP_SELL_METHOD_1)) {
                 isBuy = false;
-                tokenAmount =
-                    new BigDecimal(new BigInteger(callData.substring(8, 8 + 64), 16))
-                        .divide(TOKEN_DIVISOR, 18, RoundingMode.HALF_EVEN); // token 个数
-                if (callData.length() < 456) {
-                  logger.info(Hex.toHexString(txId));
-                  logger.info(callData);
+                if(callData.length() < 392) {
+                  token = get41Addr(callData.substring(8, 8 + 64).substring(24));
+                } else {
+                  tokenAmount =
+                      new BigDecimal(new BigInteger(callData.substring(8, 8 + 64), 16))
+                          .divide(TOKEN_DIVISOR, 18, RoundingMode.HALF_EVEN); // token 个数
+                  String token1 = callData.substring(392, 392 + 64).substring(24); // token1
+                  String token2 = callData.substring(456).substring(24); // token2 wtrx
+                  token = token1.equalsIgnoreCase(WTRX) ? get41Addr(token2) : get41Addr(token1);
                 }
-                String token1 = callData.substring(392, 392 + 64).substring(24); // token1
-                String token2 = callData.substring(456).substring(24); // token2 wtrx
-                token = token1.equalsIgnoreCase(WTRX) ? get41Addr(token2) : get41Addr(token1);
               } else if (callData.startsWith(SWAP_SELL_METHOD_2)) {
                 isBuy = false;
                 tokenAmount =
