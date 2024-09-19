@@ -272,10 +272,10 @@ public class FullNode {
       Map<String, String> pairToTokenMap = populateMap();
       DBIterator retIterator =
           (DBIterator) ChainBaseManager.getInstance().getTransactionRetStore().getDb().iterator();
-      retIterator.seek(ByteArray.fromLong(startBlock));
+      retIterator.seek(ByteArray.fromLong(recentBlock));
       DBIterator blockIterator =
           (DBIterator) ChainBaseManager.getInstance().getBlockStore().getDb().iterator();
-      blockIterator.seek(ByteArray.fromLong(startBlock));
+      blockIterator.seek(ByteArray.fromLong(recentBlock));
       long testFlag = 0;
       while (retIterator.hasNext() && blockIterator.hasNext()) {
         Map.Entry<byte[], byte[]> retEntry = retIterator.next();
@@ -288,7 +288,7 @@ public class FullNode {
           blockEntry = blockIterator.next();
           blockStoreNum = Longs.fromByteArray(blockEntry.getKey());
         }
-        if (blockNum > recentBlock) {
+        if (blockNum > endBlock) {
           break;
         }
 
@@ -941,7 +941,7 @@ public class FullNode {
 //      }
 
       // 输出结果
-      PrintWriter pwriter = new PrintWriter("finalresult.txt");
+      PrintWriter pwriter = new PrintWriter("finalresult-recent.txt");
       pwriter.println("SWAP");
       swapAddrInfoRecordMap.forEach(
           (k, v) ->
@@ -1147,7 +1147,7 @@ public class FullNode {
 
       pwriter.close();
 
-      PrintWriter srwriter = new PrintWriter("finalsr.txt");
+      PrintWriter srwriter = new PrintWriter("finalsr-recent.txt");
       srwriter.println("SWAP");
       swapSrMap.forEach(
           (k, v) -> srwriter.println(StringUtil.encode58Check(Hex.decode(k)) + " " + v));
