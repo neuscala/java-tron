@@ -233,9 +233,9 @@ public class FullNode {
       //      long endBlock = latestBlock - 1;
       //      long recentBlock = latestBlock - 3000;
       // todo
-      long startBlock = 64184959;
+      long startBlock = 65092826;
       //      long startBlock = 64689819;
-      long recentBlock = 64920150;
+      long recentBlock = 65294370;
       long endBlock = 65323159;
       logger.info(
           "Start To Local Test at {}!!! paddr size {}, saddr size {}",
@@ -272,10 +272,10 @@ public class FullNode {
       Map<String, String> pairToTokenMap = populateMap();
       DBIterator retIterator =
           (DBIterator) ChainBaseManager.getInstance().getTransactionRetStore().getDb().iterator();
-      retIterator.seek(ByteArray.fromLong(65323159));
+      retIterator.seek(ByteArray.fromLong(startBlock));
       DBIterator blockIterator =
           (DBIterator) ChainBaseManager.getInstance().getBlockStore().getDb().iterator();
-      blockIterator.seek(ByteArray.fromLong(65323159));
+      blockIterator.seek(ByteArray.fromLong(startBlock));
       long testFlag = 0;
       while (retIterator.hasNext() && blockIterator.hasNext()) {
         Map.Entry<byte[], byte[]> retEntry = retIterator.next();
@@ -288,7 +288,7 @@ public class FullNode {
           blockEntry = blockIterator.next();
           blockStoreNum = Longs.fromByteArray(blockEntry.getKey());
         }
-        if (blockNum > 65351950) {
+        if (blockNum > recentBlock) {
           break;
         }
 
@@ -417,9 +417,9 @@ public class FullNode {
                   }
                 }
 
-//                if (!saddrs.contains(caller)) {
-//                  continue;
-//                }
+                if (!saddrs.contains(caller)) {
+                  continue;
+                }
                 AddrContinusRecord addrContinusRecord =
                     swapContinusRecordMap.getOrDefault(caller, new AddrContinusRecord(caller));
                 addrContinusRecord.addRecord(
@@ -524,9 +524,9 @@ public class FullNode {
                 }
               }
 
-//              if (!saddrs.contains(caller)) {
-//                continue;
-//              }
+              if (!saddrs.contains(caller)) {
+                continue;
+              }
               // 这里只记录
               AddrContinusRecord addrContinusRecord =
                   swapContinusRecordMap.getOrDefault(caller, new AddrContinusRecord(caller));
@@ -624,9 +624,9 @@ public class FullNode {
                     pSumBuyCountrecent += 1;
                   }
                 }
-//                if (!paddrs.contains(caller)) {
-//                  continue;
-//                }
+                if (!paddrs.contains(caller)) {
+                  continue;
+                }
                 AddrContinusRecord addrContinusRecord =
                     pumpContinusRecordMap.getOrDefault(caller, new AddrContinusRecord(caller));
                 addrContinusRecord.addRecord(
@@ -684,9 +684,9 @@ public class FullNode {
                   pSumBuyCountrecent++;
                 }
               }
-//              if (!paddrs.contains(caller)) {
-//                continue;
-//              }
+              if (!paddrs.contains(caller)) {
+                continue;
+              }
               String token = get41Addr(Hex.toHexString(log.getAddress().toByteArray()));
               for (Protocol.TransactionInfo.Log log2 : transactionInfo.getLogList()) {
                 if (Arrays.equals(log2.getTopics(0).toByteArray(), TRANSFER_TOPIC)) {
@@ -919,26 +919,26 @@ public class FullNode {
               sSumTxCount);
         }
       }
-      if (true) {
-        PrintWriter pwriter = new PrintWriter("finalresult.txt");
-        pwriter.println("SWAP");
-        swapAddrInfoRecordMap.forEach(
-            (k, v) -> {
-              if (v.getAllAttack() > 0) {
-                pwriter.println(StringUtil.encode58Check(Hex.decode(k)));
-              }
-            });
-        pwriter.println("PUMP");
-        pumpAddrInfoRecordMap.forEach(
-            (k, v) -> {
-              if (v.getAllAttack() > 0) {
-                pwriter.println(StringUtil.encode58Check(Hex.decode(k)));
-              }
-            });
-        pwriter.close();
-        logger.info("Tmp end!");
-        return;
-      }
+//      if (true) {
+//        PrintWriter pwriter = new PrintWriter("finalresult.txt");
+//        pwriter.println("SWAP");
+//        swapAddrInfoRecordMap.forEach(
+//            (k, v) -> {
+//              if (v.getAllAttack() > 0) {
+//                pwriter.println(StringUtil.encode58Check(Hex.decode(k)));
+//              }
+//            });
+//        pwriter.println("PUMP");
+//        pumpAddrInfoRecordMap.forEach(
+//            (k, v) -> {
+//              if (v.getAllAttack() > 0) {
+//                pwriter.println(StringUtil.encode58Check(Hex.decode(k)));
+//              }
+//            });
+//        pwriter.close();
+//        logger.info("Tmp end!");
+//        return;
+//      }
 
       // 输出结果
       PrintWriter pwriter = new PrintWriter("finalresult.txt");
