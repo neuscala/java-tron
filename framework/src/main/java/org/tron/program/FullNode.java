@@ -624,9 +624,9 @@ public class FullNode {
                     pSumBuyCountrecent += 1;
                   }
                 }
-                if (!paddrs.contains(caller)) {
-                  continue;
-                }
+//                if (!paddrs.contains(caller)) {
+//                  continue;
+//                }
                 AddrContinusRecord addrContinusRecord =
                     pumpContinusRecordMap.getOrDefault(caller, new AddrContinusRecord(caller));
                 addrContinusRecord.addRecord(
@@ -684,9 +684,9 @@ public class FullNode {
                   pSumBuyCountrecent++;
                 }
               }
-              if (!paddrs.contains(caller)) {
-                continue;
-              }
+//              if (!paddrs.contains(caller)) {
+//                continue;
+//              }
               String token = get41Addr(Hex.toHexString(log.getAddress().toByteArray()));
               for (Protocol.TransactionInfo.Log log2 : transactionInfo.getLogList()) {
                 if (Arrays.equals(log2.getTopics(0).toByteArray(), TRANSFER_TOPIC)) {
