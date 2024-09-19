@@ -233,10 +233,10 @@ public class FullNode {
       //      long endBlock = latestBlock - 1;
       //      long recentBlock = latestBlock - 3000;
       // todo
-      long startBlock = 65092826;
+      long startBlock = 65121618;
       //      long startBlock = 64689819;
-      long recentBlock = 65294370;
-      long endBlock = 65323159;
+      long recentBlock = 65323159;
+      long endBlock = 65360346;
       logger.info(
           "Start To Local Test at {}!!! paddr size {}, saddr size {}",
           startBlock,
@@ -417,9 +417,9 @@ public class FullNode {
                   }
                 }
 
-                if (!saddrs.contains(caller)) {
-                  continue;
-                }
+//                if (!saddrs.contains(caller)) {
+//                  continue;
+//                }
                 AddrContinusRecord addrContinusRecord =
                     swapContinusRecordMap.getOrDefault(caller, new AddrContinusRecord(caller));
                 addrContinusRecord.addRecord(
@@ -524,9 +524,9 @@ public class FullNode {
                 }
               }
 
-              if (!saddrs.contains(caller)) {
-                continue;
-              }
+//              if (!saddrs.contains(caller)) {
+//                continue;
+//              }
               // 这里只记录
               AddrContinusRecord addrContinusRecord =
                   swapContinusRecordMap.getOrDefault(caller, new AddrContinusRecord(caller));
@@ -624,9 +624,9 @@ public class FullNode {
                     pSumBuyCountrecent += 1;
                   }
                 }
-                if (!paddrs.contains(caller)) {
-                  continue;
-                }
+//                if (!paddrs.contains(caller)) {
+//                  continue;
+//                }
                 AddrContinusRecord addrContinusRecord =
                     pumpContinusRecordMap.getOrDefault(caller, new AddrContinusRecord(caller));
                 addrContinusRecord.addRecord(
@@ -684,9 +684,9 @@ public class FullNode {
                   pSumBuyCountrecent++;
                 }
               }
-              if (!paddrs.contains(caller)) {
-                continue;
-              }
+//              if (!paddrs.contains(caller)) {
+//                continue;
+//              }
               String token = get41Addr(Hex.toHexString(log.getAddress().toByteArray()));
               for (Protocol.TransactionInfo.Log log2 : transactionInfo.getLogList()) {
                 if (Arrays.equals(log2.getTopics(0).toByteArray(), TRANSFER_TOPIC)) {
@@ -919,26 +919,26 @@ public class FullNode {
               sSumTxCount);
         }
       }
-//      if (true) {
-//        PrintWriter pwriter = new PrintWriter("finalresult.txt");
-//        pwriter.println("SWAP");
-//        swapAddrInfoRecordMap.forEach(
-//            (k, v) -> {
-//              if (v.getAllAttack() > 0) {
-//                pwriter.println(StringUtil.encode58Check(Hex.decode(k)));
-//              }
-//            });
-//        pwriter.println("PUMP");
-//        pumpAddrInfoRecordMap.forEach(
-//            (k, v) -> {
-//              if (v.getAllAttack() > 0) {
-//                pwriter.println(StringUtil.encode58Check(Hex.decode(k)));
-//              }
-//            });
-//        pwriter.close();
-//        logger.info("Tmp end!");
-//        return;
-//      }
+      if (true) {
+        PrintWriter pwriter = new PrintWriter("finalresult.txt");
+        pwriter.println("SWAP");
+        swapAddrInfoRecordMap.forEach(
+            (k, v) -> {
+              if (v.getAllAttack() > 0) {
+                pwriter.println(StringUtil.encode58Check(Hex.decode(k)));
+              }
+            });
+        pwriter.println("PUMP");
+        pumpAddrInfoRecordMap.forEach(
+            (k, v) -> {
+              if (v.getAllAttack() > 0) {
+                pwriter.println(StringUtil.encode58Check(Hex.decode(k)));
+              }
+            });
+        pwriter.close();
+        logger.info("Tmp end!");
+        return;
+      }
 
       // 输出结果
       PrintWriter pwriter = new PrintWriter("finalresult-recent.txt");
