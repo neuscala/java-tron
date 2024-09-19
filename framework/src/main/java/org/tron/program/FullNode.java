@@ -417,9 +417,9 @@ public class FullNode {
                   }
                 }
 
-//                if (!saddrs.contains(caller)) {
-//                  continue;
-//                }
+                if (!saddrs.contains(caller)) {
+                  continue;
+                }
                 AddrContinusRecord addrContinusRecord =
                     swapContinusRecordMap.getOrDefault(caller, new AddrContinusRecord(caller));
                 addrContinusRecord.addRecord(
@@ -524,9 +524,9 @@ public class FullNode {
                 }
               }
 
-//              if (!saddrs.contains(caller)) {
-//                continue;
-//              }
+              if (!saddrs.contains(caller)) {
+                continue;
+              }
               // 这里只记录
               AddrContinusRecord addrContinusRecord =
                   swapContinusRecordMap.getOrDefault(caller, new AddrContinusRecord(caller));
@@ -624,9 +624,9 @@ public class FullNode {
                     pSumBuyCountrecent += 1;
                   }
                 }
-//                if (!paddrs.contains(caller)) {
-//                  continue;
-//                }
+                if (!paddrs.contains(caller)) {
+                  continue;
+                }
                 AddrContinusRecord addrContinusRecord =
                     pumpContinusRecordMap.getOrDefault(caller, new AddrContinusRecord(caller));
                 addrContinusRecord.addRecord(
@@ -684,9 +684,9 @@ public class FullNode {
                   pSumBuyCountrecent++;
                 }
               }
-//              if (!paddrs.contains(caller)) {
-//                continue;
-//              }
+              if (!paddrs.contains(caller)) {
+                continue;
+              }
               String token = get41Addr(Hex.toHexString(log.getAddress().toByteArray()));
               for (Protocol.TransactionInfo.Log log2 : transactionInfo.getLogList()) {
                 if (Arrays.equals(log2.getTopics(0).toByteArray(), TRANSFER_TOPIC)) {
@@ -919,26 +919,26 @@ public class FullNode {
               sSumTxCount);
         }
       }
-      if (true) {
-        PrintWriter pwriter = new PrintWriter("finalresult.txt");
-        pwriter.println("SWAP");
-        swapAddrInfoRecordMap.forEach(
-            (k, v) -> {
-              if (v.getAllAttack() > 0) {
-                pwriter.println(StringUtil.encode58Check(Hex.decode(k)));
-              }
-            });
-        pwriter.println("PUMP");
-        pumpAddrInfoRecordMap.forEach(
-            (k, v) -> {
-              if (v.getAllAttack() > 0) {
-                pwriter.println(StringUtil.encode58Check(Hex.decode(k)));
-              }
-            });
-        pwriter.close();
-        logger.info("Tmp end!");
-        return;
-      }
+//      if (true) {
+//        PrintWriter pwriter = new PrintWriter("finalresult.txt");
+//        pwriter.println("SWAP");
+//        swapAddrInfoRecordMap.forEach(
+//            (k, v) -> {
+//              if (v.getAllAttack() > 0) {
+//                pwriter.println(StringUtil.encode58Check(Hex.decode(k)));
+//              }
+//            });
+//        pwriter.println("PUMP");
+//        pumpAddrInfoRecordMap.forEach(
+//            (k, v) -> {
+//              if (v.getAllAttack() > 0) {
+//                pwriter.println(StringUtil.encode58Check(Hex.decode(k)));
+//              }
+//            });
+//        pwriter.close();
+//        logger.info("Tmp end!");
+//        return;
+//      }
 
       // 输出结果
       PrintWriter pwriter = new PrintWriter("finalresult-recent.txt");
