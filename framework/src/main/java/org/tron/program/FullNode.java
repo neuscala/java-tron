@@ -2287,7 +2287,8 @@ public class FullNode {
           long energyCost = transactionInfo.getReceipt().getEnergyUsageTotal();
           long burnEnergy =
               transactionInfo.getReceipt().getEnergyUsageTotal()
-                  - transactionInfo.getReceipt().getEnergyUsage();
+                  - transactionInfo.getReceipt().getEnergyUsage()
+                  - transactionInfo.getReceipt().getOriginEnergyUsage();
           // 全网
           record.addMainnetRecord(energyCost, burnEnergy, fee);
 
