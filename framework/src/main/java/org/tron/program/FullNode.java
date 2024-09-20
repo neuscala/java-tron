@@ -2194,7 +2194,7 @@ public class FullNode {
       //      thirdDayEndBlock = 64387840;
       // 总的充币地址
       Map<String, Set<String>> chargeAddrs =
-          getChargeAddrs(cexAddrs, firstDayStartBlock - 10 * 28800, thirdDayEndBlock);
+          getChargeAddrs(cexAddrs, firstDayStartBlock - 7 * 28800, thirdDayEndBlock);
       logger.info(
           "Get cex charge addrs success, Binance {}, Okex {}, Bybit {}, start sync energy data ...",
           chargeAddrs.get("Binance").size(),
