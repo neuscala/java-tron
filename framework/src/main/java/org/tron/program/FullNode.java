@@ -2397,7 +2397,7 @@ public class FullNode {
                   }
                 }
               }
-            } catch (InvalidProtocolBufferException e) {
+            } catch (Exception e) {
 //              throw new RuntimeException(e);
 //              logger.error(txHash);
             }
