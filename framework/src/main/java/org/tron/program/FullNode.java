@@ -2505,7 +2505,8 @@ public class FullNode {
       if (blockNum - logBlockNum >= 10000) {
         logBlockNum = blockNum;
         logger.info(
-            "Getting charge addrs, Binance {}, Okex {}, Bybit {}",
+            "Getting charge addrs to timestamp {}, Binance {}, Okex {}, Bybit {}",
+            transactionRetCapsule.getInstance().getBlockTimeStamp(),
             chargeAddrs.get("Binance").size(),
             chargeAddrs.get("Okex").size(),
             chargeAddrs.get("Bybit").size());
