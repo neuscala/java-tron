@@ -2188,13 +2188,13 @@ public class FullNode {
       //      long latestBlockNum = ChainBaseManager.getInstance().getHeadBlockNum();
       //      long lowestBlockNum = ChainBaseManager.getInstance().getLowestBlockNum();
       // 08-16 08:00
-//      firstDayStartBlock = 64366247;
-//      // 08-16 14:00
-//      secondDayStartBlock = 64373445;
-//      // 08-16 20:00
-//      thirdDayStartBlock = 64380643;
-//      // 08-16 20:00
-//      thirdDayEndBlock = 64387840;
+      //      firstDayStartBlock = 64366247;
+      //      // 08-16 14:00
+      //      secondDayStartBlock = 64373445;
+      //      // 08-16 20:00
+      //      thirdDayStartBlock = 64380643;
+      //      // 08-16 20:00
+      //      thirdDayEndBlock = 64387840;
       // 总的充币地址
       Map<String, Set<String>> chargeAddrs =
           getChargeAddrsV2(
@@ -2398,7 +2398,7 @@ public class FullNode {
                       record.addOkChargeRecord(energyCost, burnEnergy, fee);
                     }
 
-                  } else if (curChargeAddrs.contains(fromAddress) && curCexAddrs.contains(toAddress)) {
+                  } else if (curCexAddrs.contains(toAddress)) {
                     // 归集
                     if (cexName.equalsIgnoreCase("Binance")) {
                       record.addBinanceCollectRecord(energyCost, burnEnergy, fee);
@@ -2639,21 +2639,21 @@ public class FullNode {
                 if (binanceAddrs.contains(toAddress)) {
                   Set<String> interAds =
                       binanceInterAddrs.getOrDefault(fromAddress, new HashSet<>());
-                  if (interAds.size() < 3) {
-                    interAds.add(toAddress);
-                  }
+                  //                  if (interAds.size() < 3) {
+                  //                    interAds.add(toAddress);
+                  //                  }
                   binanceInterAddrs.put(fromAddress, interAds);
                 } else if (okAddrs.contains(toAddress)) {
                   Set<String> interAds = okInterAddrs.getOrDefault(fromAddress, new HashSet<>());
-                  if (interAds.size() < 3) {
-                    interAds.add(toAddress);
-                  }
+                  //                  if (interAds.size() < 3) {
+                  //                    interAds.add(toAddress);
+                  //                  }
                   okInterAddrs.put(fromAddress, interAds);
                 } else if (bybitAddrs.contains(toAddress)) {
                   Set<String> interAds = bybitInterAddrs.getOrDefault(fromAddress, new HashSet<>());
-                  if (interAds.size() < 3) {
-                    interAds.add(toAddress);
-                  }
+                  //                  if (interAds.size() < 3) {
+                  //                    interAds.add(toAddress);
+                  //                  }
                   bybitInterAddrs.put(fromAddress, interAds);
                 }
               }
@@ -2742,49 +2742,62 @@ public class FullNode {
               }
 
               if (binanceInterAddrs.containsKey(toAddress)) {
-                Set<String> curInterAddrs =
-                    binanceInterAddrs.getOrDefault(toAddress, new HashSet<>());
-                if (curInterAddrs.size() < 3) {
-                  curInterAddrs.add(fromAddress);
+                if (!allCexAddrs.contains(fromAddress)) {
+                  Set<String> curInterAddrs =
+                      binanceInterAddrs.getOrDefault(toAddress, new HashSet<>());
+                  if (curInterAddrs.size() < 3) {
+                    curInterAddrs.add(fromAddress);
+                  }
+                  binanceInterAddrs.put(toAddress, curInterAddrs);
                 }
-                binanceInterAddrs.put(toAddress, curInterAddrs);
               } else if (binanceInterAddrs.containsKey(fromAddress)) {
-                Set<String> curInterAddrs =
-                    binanceInterAddrs.getOrDefault(fromAddress, new HashSet<>());
-                if (curInterAddrs.size() < 3) {
-                  curInterAddrs.add(toAddress);
+                if (!allCexAddrs.contains(toAddress)) {
+                  Set<String> curInterAddrs =
+                      binanceInterAddrs.getOrDefault(fromAddress, new HashSet<>());
+                  if (curInterAddrs.size() < 3) {
+                    curInterAddrs.add(toAddress);
+                  }
+                  binanceInterAddrs.put(fromAddress, curInterAddrs);
                 }
-                binanceInterAddrs.put(fromAddress, curInterAddrs);
               }
 
               if (okInterAddrs.containsKey(toAddress)) {
-                Set<String> curInterAddrs = okInterAddrs.getOrDefault(toAddress, new HashSet<>());
-                if (curInterAddrs.size() < 3) {
-                  curInterAddrs.add(fromAddress);
+                if (!allCexAddrs.contains(fromAddress)) {
+                  Set<String> curInterAddrs = okInterAddrs.getOrDefault(toAddress, new HashSet<>());
+                  if (curInterAddrs.size() < 3) {
+                    curInterAddrs.add(fromAddress);
+                  }
+                  okInterAddrs.put(toAddress, curInterAddrs);
                 }
-                okInterAddrs.put(toAddress, curInterAddrs);
               } else if (okInterAddrs.containsKey(fromAddress)) {
-                Set<String> curInterAddrs = okInterAddrs.getOrDefault(fromAddress, new HashSet<>());
-                if (curInterAddrs.size() < 3) {
-                  curInterAddrs.add(toAddress);
+                if (!allCexAddrs.contains(toAddress)) {
+                  Set<String> curInterAddrs =
+                      okInterAddrs.getOrDefault(fromAddress, new HashSet<>());
+                  if (curInterAddrs.size() < 3) {
+                    curInterAddrs.add(toAddress);
+                  }
+                  okInterAddrs.put(fromAddress, curInterAddrs);
                 }
-                okInterAddrs.put(fromAddress, curInterAddrs);
               }
 
               if (bybitInterAddrs.containsKey(toAddress)) {
-                Set<String> curInterAddrs =
-                    bybitInterAddrs.getOrDefault(toAddress, new HashSet<>());
-                if (curInterAddrs.size() < 3) {
-                  curInterAddrs.add(fromAddress);
+                if (!allCexAddrs.contains(fromAddress)) {
+                  Set<String> curInterAddrs =
+                      bybitInterAddrs.getOrDefault(toAddress, new HashSet<>());
+                  if (curInterAddrs.size() < 3) {
+                    curInterAddrs.add(fromAddress);
+                  }
+                  bybitInterAddrs.put(toAddress, curInterAddrs);
                 }
-                bybitInterAddrs.put(toAddress, curInterAddrs);
               } else if (bybitInterAddrs.containsKey(fromAddress)) {
-                Set<String> curInterAddrs =
-                    bybitInterAddrs.getOrDefault(fromAddress, new HashSet<>());
-                if (curInterAddrs.size() < 3) {
-                  curInterAddrs.add(toAddress);
+                if (!allCexAddrs.contains(toAddress)) {
+                  Set<String> curInterAddrs =
+                      bybitInterAddrs.getOrDefault(fromAddress, new HashSet<>());
+                  if (curInterAddrs.size() < 3) {
+                    curInterAddrs.add(toAddress);
+                  }
+                  bybitInterAddrs.put(fromAddress, curInterAddrs);
                 }
-                bybitInterAddrs.put(fromAddress, curInterAddrs);
               }
             }
           } catch (InvalidProtocolBufferException e) {
