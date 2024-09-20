@@ -2501,7 +2501,7 @@ public class FullNode {
           }
         }
       }
-      if (logBlockNum - blockNum >= 10000) {
+      if (blockNum - logBlockNum >= 10000) {
         logBlockNum = blockNum;
         logger.info(
             "Getting charge addrs, Binance {}, Okex {}, Bybit {}",
