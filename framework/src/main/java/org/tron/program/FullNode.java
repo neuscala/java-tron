@@ -2,6 +2,7 @@ package org.tron.program;
 
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
+import com.alibaba.fastjson.JSONObject;
 import com.beust.jcommander.JCommander;
 
 import java.io.BufferedReader;
@@ -21,8 +22,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.google.common.primitives.Longs;
+import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -40,11 +43,13 @@ import org.tron.common.utils.StringUtil;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.ContractStateCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionRetCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.common.iterator.DBIterator;
+import org.tron.core.exception.BadItemException;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.http.FullNodeHttpApiService;
 import org.tron.core.services.interfaceJsonRpcOnPBFT.JsonRpcServiceOnPBFT;
@@ -179,6 +184,11 @@ public class FullNode {
     }
     //                appT.startup();
     //                appT.blockUntilShutdown();
+
+    if (true) {
+      syncEnergy();
+      return;
+    }
 
     // 发射前
     byte[] TOKEN_PURCHASE_TOPIC =
@@ -919,26 +929,26 @@ public class FullNode {
               sSumTxCount);
         }
       }
-//      if (true) {
-//        PrintWriter pwriter = new PrintWriter("finalresult.txt");
-//        pwriter.println("SWAP");
-//        swapAddrInfoRecordMap.forEach(
-//            (k, v) -> {
-//              if (v.getAllAttack() > 0) {
-//                pwriter.println(StringUtil.encode58Check(Hex.decode(k)));
-//              }
-//            });
-//        pwriter.println("PUMP");
-//        pumpAddrInfoRecordMap.forEach(
-//            (k, v) -> {
-//              if (v.getAllAttack() > 0) {
-//                pwriter.println(StringUtil.encode58Check(Hex.decode(k)));
-//              }
-//            });
-//        pwriter.close();
-//        logger.info("Tmp end!");
-//        return;
-//      }
+      //      if (true) {
+      //        PrintWriter pwriter = new PrintWriter("finalresult.txt");
+      //        pwriter.println("SWAP");
+      //        swapAddrInfoRecordMap.forEach(
+      //            (k, v) -> {
+      //              if (v.getAllAttack() > 0) {
+      //                pwriter.println(StringUtil.encode58Check(Hex.decode(k)));
+      //              }
+      //            });
+      //        pwriter.println("PUMP");
+      //        pumpAddrInfoRecordMap.forEach(
+      //            (k, v) -> {
+      //              if (v.getAllAttack() > 0) {
+      //                pwriter.println(StringUtil.encode58Check(Hex.decode(k)));
+      //              }
+      //            });
+      //        pwriter.close();
+      //        logger.info("Tmp end!");
+      //        return;
+      //      }
 
       // 输出结果
       PrintWriter pwriter = new PrintWriter("finalresult.txt");
@@ -2135,5 +2145,635 @@ public class FullNode {
 
     // 比较绝对值是否小于 1
     return difference.compareTo(threshold) <= 0;
+  }
+
+  private static final byte[] USDT_ADDR = Hex.decode("41a614f803B6FD780986A42c78Ec9c7f77e6DeD13C");
+  private static final byte[] SWAP_ADDR = Hex.decode("416E0617948FE030a7E4970f8389d4Ad295f249B7e");
+  private static final byte[] PUMP_ADDR_1 =
+      Hex.decode("41B7bc8fc76aF164029c27d4104b09f83b607e45bB");
+  private static final byte[] PUMP_ADDR_2 =
+      Hex.decode("41C22DD1b7Bc7574e94563C8282F64B065bC07b2fa");
+  private static final byte[] PUMP_ADDR_3 =
+      Hex.decode("41fF7155b5df8008fbF3834922B2D52430b27874f5");
+
+  private static void syncEnergy() {
+    try {
+      logger.info("Start energy task ...");
+      // pump
+      // TSiiYf1b1PV1fpT9T7V4wy11btsNVajw1g
+      // TTfvyrAz86hbZk5iDpKD78pqLGgi8C7AAw
+      // TZFs5ch1R1C4mmjwrrmZqeqbUgGpxY1yWB
+      // sunswap v2 TKzxdSv2FZKQrEqkKVgp5DcwEXBEKMg2Ax
+      //      Set<String> pumpAddrs =
+      //          Stream.of(
+      //                  "TSiiYf1b1PV1fpT9T7V4wy11btsNVajw1g",
+      //                  "TTfvyrAz86hbZk5iDpKD78pqLGgi8C7AAw",
+      //                  "TZFs5ch1R1C4mmjwrrmZqeqbUgGpxY1yWB")
+      //              .map(s -> get41Addr(Hex.toHexString(Commons.decodeFromBase58Check(s))))
+      //              .collect(Collectors.toSet());
+      //      Set<String> swapAddrs =
+      //          Stream.of("TKzxdSv2FZKQrEqkKVgp5DcwEXBEKMg2Ax")
+      //              .map(s -> get41Addr(Hex.toHexString(Commons.decodeFromBase58Check(s))))
+      //              .collect(Collectors.toSet());
+      Map<String, Set<String>> cexAddrs = getTronCexAddresses();
+      // todo
+      long firstDayStartBlock = 65337555;
+      long secondDayStartBlock = 65366347;
+      long thirdDayStartBlock = 0;
+      long thirdDayEndBlock = 0;
+      // todo
+      //      long latestBlockNum = ChainBaseManager.getInstance().getHeadBlockNum();
+      //      long lowestBlockNum = ChainBaseManager.getInstance().getLowestBlockNum();
+      //      // 08-16 08:00
+      //      firstDayStartBlock = 64366247;
+      //      // 08-16 14:00
+      //      secondDayStartBlock = 64373445;
+      //      // 08-16 20:00
+      //      thirdDayStartBlock = 64380643;
+      //      // 08-16 20:00
+      //      thirdDayEndBlock = 64387840;
+      // 总的充币地址
+      Map<String, Set<String>> chargeAddrs =
+          getChargeAddrs(cexAddrs, firstDayStartBlock - 10 * 28800, thirdDayEndBlock);
+      logger.info(
+          "Get cex charge addrs success, Binance {}, Okex {}, Bybit {}, start sync energy data ...",
+          chargeAddrs.get("Binance").size(),
+          chargeAddrs.get("Okex").size(),
+          chargeAddrs.get("Bybit").size());
+      StringBuilder res = new StringBuilder();
+
+      if (secondDayStartBlock > 0) {
+        EnergyRecord firstDay =
+            syncOneDayEnergy(cexAddrs, chargeAddrs, firstDayStartBlock, secondDayStartBlock - 1);
+        res.append("\n").append(getRecordMsg(firstDay));
+      }
+      if (thirdDayStartBlock > 0) {
+        EnergyRecord secondDay =
+            syncOneDayEnergy(cexAddrs, chargeAddrs, secondDayStartBlock, thirdDayStartBlock - 1);
+        res.append("\n").append(getRecordMsg(secondDay));
+      }
+      if (thirdDayEndBlock > 0) {
+        EnergyRecord thirdDay =
+            syncOneDayEnergy(cexAddrs, chargeAddrs, thirdDayStartBlock, thirdDayEndBlock);
+        res.append("\n").append(getRecordMsg(thirdDay));
+      }
+
+      logger.info(res.toString());
+      System.out.println(res);
+      logger.info("Energy task end!!!");
+    } catch (Exception e) {
+      logger.error("Sync energy error", e);
+    }
+  }
+
+  private static EnergyRecord syncOneDayEnergy(
+      Map<String, Set<String>> cexAddrs,
+      Map<String, Set<String>> chargeAddrs,
+      long startBlockNum,
+      long endBlockNum)
+      throws BadItemException {
+    logger.info("Start syncing one day energy from {} to {}", startBlockNum, endBlockNum);
+
+    // get energy record
+    DBIterator retIterator =
+        (DBIterator) ChainBaseManager.getInstance().getTransactionRetStore().getDb().iterator();
+    retIterator.seek(ByteArray.fromLong(startBlockNum));
+    DBIterator blockIterator =
+        (DBIterator) ChainBaseManager.getInstance().getBlockStore().getDb().iterator();
+    blockIterator.seek(ByteArray.fromLong(startBlockNum));
+
+    EnergyRecord record = new EnergyRecord();
+    while (retIterator.hasNext() && blockIterator.hasNext()) {
+      Map.Entry<byte[], byte[]> retEntry = retIterator.next();
+      Map.Entry<byte[], byte[]> blockEntry = blockIterator.next();
+      byte[] key = retEntry.getKey();
+      long blockNum = Longs.fromByteArray(key);
+      long blockStoreNum = Longs.fromByteArray(blockEntry.getKey());
+      while (blockNum != blockStoreNum) {
+        blockEntry = blockIterator.next();
+        blockStoreNum = Longs.fromByteArray(blockEntry.getKey());
+      }
+      if (blockNum > endBlockNum) {
+        break;
+      }
+
+      byte[] value = retEntry.getValue();
+      TransactionRetCapsule transactionRetCapsule = new TransactionRetCapsule(value);
+      BlockCapsule blockCapsule = new BlockCapsule(blockEntry.getValue());
+      Map<String, TransactionCapsule> txCallerMap = new HashMap<>();
+      for (TransactionCapsule tx : blockCapsule.getTransactions()) {
+        txCallerMap.put(tx.getTransactionId().toString(), tx);
+      }
+
+      for (Protocol.TransactionInfo transactionInfo :
+          transactionRetCapsule.getInstance().getTransactioninfoList()) {
+        byte[] txId = transactionInfo.getId().toByteArray();
+        // toodo remove
+        String txHash = Hex.toHexString(txId);
+        TransactionCapsule tx = txCallerMap.get(Hex.toHexString(txId));
+
+        if (tx.getInstance()
+                .getRawData()
+                .getContract(0)
+                .getParameter()
+                .is(SmartContractOuterClass.TriggerSmartContract.class)
+            || tx.getInstance()
+                .getRawData()
+                .getContract(0)
+                .getParameter()
+                .is(SmartContractOuterClass.CreateSmartContract.class)) {
+          byte[] contractAddress = transactionInfo.getContractAddress().toByteArray();
+          long fee = transactionInfo.getReceipt().getEnergyFee();
+          long energyCost = transactionInfo.getReceipt().getEnergyUsageTotal();
+          long burnEnergy =
+              transactionInfo.getReceipt().getEnergyUsageTotal()
+                  - transactionInfo.getReceipt().getEnergyUsage();
+          // 全网
+          record.addMainnetRecord(energyCost, burnEnergy, fee);
+
+          if (Arrays.equals(contractAddress, USDT_ADDR)) {
+            try {
+              StringBuilder calldata =
+                  new StringBuilder(
+                      Hex.toHexString(
+                          tx.getInstance()
+                              .getRawData()
+                              .getContract(0)
+                              .getParameter()
+                              .unpack(SmartContractOuterClass.TriggerSmartContract.class)
+                              .getData()
+                              .toByteArray()));
+              if (calldata.toString().startsWith("a9059cbb")
+                  || calldata.toString().startsWith("23b872dd")) {
+                String fromAddress;
+                String toAddress;
+                if (calldata.toString().startsWith("a9059cbb")) {
+                  fromAddress = get41Addr(Hex.toHexString(tx.getOwnerAddress()));
+                  toAddress = "41" + calldata.substring(32, 36 * 2);
+                } else {
+                  fromAddress = "41" + calldata.substring(32, 36 * 2);
+                  if (calldata.length() < 136) {
+                    int appendLen = 136 - calldata.length();
+                    for (int i = 0; i < appendLen; i++) {
+                      calldata.append("0");
+                    }
+                  }
+                  toAddress = "41" + calldata.substring(32 * 3, 68 * 2);
+                }
+
+                //                cexAddrs.forEach(
+                //                    (k, v) -> {
+                //                      Set<String> curChargeAddrs = chargeAddrs.get(k);
+                //                      if (curChargeAddrs.contains(toAddress)) {
+                //                        // 充币
+                //                        if (k.equalsIgnoreCase("Binance")) {
+                //                          record.addBinanceChargeRecord(energyCost, burnEnergy,
+                // fee);
+                //                        } else if (k.equalsIgnoreCase("Bybit")) {
+                //                          record.addBybitChargeRecord(energyCost, burnEnergy,
+                // fee);
+                //                        } else if (k.equalsIgnoreCase("Okex")) {
+                //                          record.addOkChargeRecord(energyCost, burnEnergy, fee);
+                //                        }
+                //                      } else if (v.contains(toAddress)) {
+                //                        // 归集
+                //                        if (k.equalsIgnoreCase("Binance")) {
+                //                          record.addBinanceCollectRecord(energyCost, burnEnergy,
+                // fee);
+                //                        } else if (k.equalsIgnoreCase("Bybit")) {
+                //                          record.addBybitCollectRecord(energyCost, burnEnergy,
+                // fee);
+                //                        } else if (k.equalsIgnoreCase("Okex")) {
+                //                          record.addOkCollectRecord(energyCost, burnEnergy, fee);
+                //                        }
+                //                      } else if (v.contains(fromAddress)) {
+                //                        // 提币
+                //                        if (k.equalsIgnoreCase("Binance")) {
+                //                          record.addBinanceWithdrawRecord(energyCost, burnEnergy,
+                // fee);
+                //                        } else if (k.equalsIgnoreCase("Bybit")) {
+                //                          record.addBybitWithdrawRecord(energyCost, burnEnergy,
+                // fee);
+                //                        } else if (k.equalsIgnoreCase("Okex")) {
+                //                          record.addOkWithdrawRecord(energyCost, burnEnergy, fee);
+                //                        }
+                //                      }
+                //                    });
+
+                for (Map.Entry<String, Set<String>> entry : cexAddrs.entrySet()) {
+                  String cexName = entry.getKey();
+                  Set<String> curCexAddrs = entry.getValue();
+                  Set<String> curChargeAddrs = chargeAddrs.get(cexName);
+                  if (curChargeAddrs.contains(toAddress)) {
+                    // 充币
+                    if (cexName.equalsIgnoreCase("Binance")) {
+                      record.addBinanceChargeRecord(energyCost, burnEnergy, fee);
+                    } else if (cexName.equalsIgnoreCase("Bybit")) {
+                      record.addBybitChargeRecord(energyCost, burnEnergy, fee);
+                    } else if (cexName.equalsIgnoreCase("Okex")) {
+                      record.addOkChargeRecord(energyCost, burnEnergy, fee);
+                    }
+
+                  } else if (curCexAddrs.contains(toAddress)) {
+                    // 归集
+                    if (cexName.equalsIgnoreCase("Binance")) {
+                      record.addBinanceCollectRecord(energyCost, burnEnergy, fee);
+                    } else if (cexName.equalsIgnoreCase("Bybit")) {
+                      record.addBybitCollectRecord(energyCost, burnEnergy, fee);
+                    } else if (cexName.equalsIgnoreCase("Okex")) {
+                      record.addOkCollectRecord(energyCost, burnEnergy, fee);
+                    }
+
+                  } else if (curCexAddrs.contains(fromAddress)) {
+                    // 提币
+                    if (cexName.equalsIgnoreCase("Binance")) {
+                      record.addBinanceWithdrawRecord(energyCost, burnEnergy, fee);
+                    } else if (cexName.equalsIgnoreCase("Bybit")) {
+                      record.addBybitWithdrawRecord(energyCost, burnEnergy, fee);
+                    } else if (cexName.equalsIgnoreCase("Okex")) {
+                      record.addOkWithdrawRecord(energyCost, burnEnergy, fee);
+                    }
+                  }
+                }
+              }
+            } catch (InvalidProtocolBufferException e) {
+              throw new RuntimeException(e);
+            }
+          } else if (Arrays.equals(contractAddress, SWAP_ADDR)) {
+            record.addSwapRecord(energyCost, burnEnergy, fee);
+
+          } else if (Arrays.equals(contractAddress, PUMP_ADDR_1)
+              || Arrays.equals(contractAddress, PUMP_ADDR_2)
+              || Arrays.equals(contractAddress, PUMP_ADDR_3)) {
+            record.addPumpRecord(energyCost, burnEnergy, fee);
+          }
+        }
+      }
+    }
+
+    logger.info("End syncing one day energy from {} to {} !!!", startBlockNum, endBlockNum);
+    return record;
+  }
+
+  private static Map<String, Set<String>> getChargeAddrs(
+      Map<String, Set<String>> cexAddrs, long startBlockNum, long endBlockNum)
+      throws BadItemException {
+
+    DBIterator retIterator =
+        (DBIterator) ChainBaseManager.getInstance().getTransactionRetStore().getDb().iterator();
+    retIterator.seek(ByteArray.fromLong(startBlockNum));
+    DBIterator blockIterator =
+        (DBIterator) ChainBaseManager.getInstance().getBlockStore().getDb().iterator();
+    blockIterator.seek(ByteArray.fromLong(startBlockNum));
+    Map<String, Set<String>> chargeAddrs = new HashMap<>();
+    long logBlockNum = startBlockNum;
+
+    while (retIterator.hasNext() && blockIterator.hasNext()) {
+      Map.Entry<byte[], byte[]> retEntry = retIterator.next();
+      Map.Entry<byte[], byte[]> blockEntry = blockIterator.next();
+      byte[] key = retEntry.getKey();
+      long blockNum = Longs.fromByteArray(key);
+      long blockStoreNum = Longs.fromByteArray(blockEntry.getKey());
+      while (blockNum != blockStoreNum) {
+        blockEntry = blockIterator.next();
+        blockStoreNum = Longs.fromByteArray(blockEntry.getKey());
+      }
+      if (blockNum > endBlockNum) {
+        break;
+      }
+
+      byte[] value = retEntry.getValue();
+      TransactionRetCapsule transactionRetCapsule = new TransactionRetCapsule(value);
+      BlockCapsule blockCapsule = new BlockCapsule(blockEntry.getValue());
+      Map<String, TransactionCapsule> txCallerMap = new HashMap<>();
+      for (TransactionCapsule tx : blockCapsule.getTransactions()) {
+        txCallerMap.put(tx.getTransactionId().toString(), tx);
+      }
+
+      for (Protocol.TransactionInfo transactionInfo :
+          transactionRetCapsule.getInstance().getTransactioninfoList()) {
+        byte[] txId = transactionInfo.getId().toByteArray();
+        TransactionCapsule tx = txCallerMap.get(Hex.toHexString(txId));
+        byte[] contractAddress = transactionInfo.getContractAddress().toByteArray();
+        if (Arrays.equals(contractAddress, USDT_ADDR)
+            && transactionInfo.getResult().equals(SUCESS)) {
+          try {
+            StringBuilder calldata =
+                new StringBuilder(
+                    Hex.toHexString(
+                        tx.getInstance()
+                            .getRawData()
+                            .getContract(0)
+                            .getParameter()
+                            .unpack(SmartContractOuterClass.TriggerSmartContract.class)
+                            .getData()
+                            .toByteArray()));
+            if (calldata.toString().startsWith("a9059cbb")
+                || calldata.toString().startsWith("23b872dd")) {
+              String fromAddress;
+              String toAddress;
+              if (calldata.toString().startsWith("a9059cbb")) {
+                fromAddress = get41Addr(Hex.toHexString(tx.getOwnerAddress()));
+                toAddress = "41" + calldata.substring(32, 36 * 2);
+              } else {
+                fromAddress = "41" + calldata.substring(32, 36 * 2);
+                if (calldata.length() < 136) {
+                  int appendLen = 136 - calldata.length();
+                  for (int i = 0; i < appendLen; i++) {
+                    calldata.append("0");
+                  }
+                }
+                toAddress = "41" + calldata.substring(32 * 3, 68 * 2);
+              }
+
+              cexAddrs.forEach(
+                  (k, v) -> {
+                    if (v.contains(toAddress) && !v.contains(fromAddress)) {
+                      Set<String> curChargeAddrs = chargeAddrs.getOrDefault(k, new HashSet<>());
+                      curChargeAddrs.add(fromAddress);
+                      chargeAddrs.put(k, curChargeAddrs);
+                    }
+                  });
+            }
+          } catch (InvalidProtocolBufferException e) {
+            throw new RuntimeException(e);
+          }
+        }
+      }
+      if (logBlockNum - blockNum >= 10000) {
+        logBlockNum = blockNum;
+        logger.info(
+            "Getting charge addrs, Binance {}, Okex {}, Bybit {}",
+            chargeAddrs.get("Binance").size(),
+            chargeAddrs.get("Okex").size(),
+            chargeAddrs.get("Bybit").size());
+      }
+    }
+
+    return chargeAddrs;
+  }
+
+  private static Map<String, Set<String>> getTronCexAddresses() {
+    try {
+      JSONObject resObject =
+          JSONObject.parseObject(NetUtil.get("https://apilist.tronscanapi.com/api/hot/exchanges"));
+
+      Map<String, Set<String>> res = new HashMap<>();
+
+      resObject
+          .getJSONArray("exchanges")
+          .forEach(
+              obj -> {
+                JSONObject jo = (JSONObject) obj;
+                String addr = jo.getString("address");
+                String name = jo.getString("name");
+                String cexName = null;
+                if (name.contains("binance") || name.contains("Binance")) {
+                  cexName = "Binance";
+                } else if (name.contains("Okex") || name.contains("okex")) {
+                  cexName = "Okex";
+                } else if (name.contains("bybit") || name.contains("Bybit")) {
+                  cexName = "Bybit";
+                }
+                if (cexName != null) {
+                  Set<String> addrs = res.getOrDefault(cexName, new HashSet<>());
+                  addrs.add(get41Addr(Hex.toHexString(Commons.decodeFromBase58Check(addr))));
+                  res.put(cexName, addrs);
+                }
+              });
+      return res;
+    } catch (Exception e) {
+      logger.error("Stat task getTronCexAddresses error, {}", e.getMessage());
+      return new HashMap<>();
+    }
+  }
+
+  @AllArgsConstructor
+  @Getter
+  private static class EnergyRecord {
+    private SingleEnergyRecord mainnetRecord;
+    private SingleEnergyRecord pumpRecord;
+    private SingleEnergyRecord swapRecord;
+    private CexRecord binanceRecord;
+    private CexRecord bybitRecord;
+    private CexRecord okRecord;
+
+    private EnergyRecord() {
+      this.mainnetRecord = new SingleEnergyRecord();
+      this.pumpRecord = new SingleEnergyRecord();
+      this.swapRecord = new SingleEnergyRecord();
+      this.binanceRecord = new CexRecord();
+      this.bybitRecord = new CexRecord();
+      this.okRecord = new CexRecord();
+    }
+
+    private void addPumpRecord(long energyCostToAdd, long burnEnergyToAdd, long feeToAdd) {
+      pumpRecord.addRecord(energyCostToAdd, burnEnergyToAdd, feeToAdd);
+    }
+
+    private void addSwapRecord(long energyCostToAdd, long burnEnergyToAdd, long feeToAdd) {
+      swapRecord.addRecord(energyCostToAdd, burnEnergyToAdd, feeToAdd);
+    }
+
+    private void addMainnetRecord(long energyCostToAdd, long burnEnergyToAdd, long feeToAdd) {
+      mainnetRecord.addRecord(energyCostToAdd, burnEnergyToAdd, feeToAdd);
+    }
+
+    private void addBinanceChargeRecord(long energyCostToAdd, long burnEnergyToAdd, long feeToAdd) {
+      binanceRecord.getChargeRecord().addRecord(energyCostToAdd, burnEnergyToAdd, feeToAdd);
+    }
+
+    private void addBinanceWithdrawRecord(
+        long energyCostToAdd, long burnEnergyToAdd, long feeToAdd) {
+      binanceRecord.getWithdrawRecord().addRecord(energyCostToAdd, burnEnergyToAdd, feeToAdd);
+    }
+
+    private void addBinanceCollectRecord(
+        long energyCostToAdd, long burnEnergyToAdd, long feeToAdd) {
+      binanceRecord.getCollectRecord().addRecord(energyCostToAdd, burnEnergyToAdd, feeToAdd);
+    }
+
+    private void addOkChargeRecord(long energyCostToAdd, long burnEnergyToAdd, long feeToAdd) {
+      okRecord.getChargeRecord().addRecord(energyCostToAdd, burnEnergyToAdd, feeToAdd);
+    }
+
+    private void addOkWithdrawRecord(long energyCostToAdd, long burnEnergyToAdd, long feeToAdd) {
+      okRecord.getWithdrawRecord().addRecord(energyCostToAdd, burnEnergyToAdd, feeToAdd);
+    }
+
+    private void addOkCollectRecord(long energyCostToAdd, long burnEnergyToAdd, long feeToAdd) {
+      okRecord.getCollectRecord().addRecord(energyCostToAdd, burnEnergyToAdd, feeToAdd);
+    }
+
+    private void addBybitChargeRecord(long energyCostToAdd, long burnEnergyToAdd, long feeToAdd) {
+      bybitRecord.getChargeRecord().addRecord(energyCostToAdd, burnEnergyToAdd, feeToAdd);
+    }
+
+    private void addBybitWithdrawRecord(long energyCostToAdd, long burnEnergyToAdd, long feeToAdd) {
+      bybitRecord.getWithdrawRecord().addRecord(energyCostToAdd, burnEnergyToAdd, feeToAdd);
+    }
+
+    private void addBybitCollectRecord(long energyCostToAdd, long burnEnergyToAdd, long feeToAdd) {
+      bybitRecord.getCollectRecord().addRecord(energyCostToAdd, burnEnergyToAdd, feeToAdd);
+    }
+  }
+
+  @AllArgsConstructor
+  @Getter
+  private static class SingleEnergyRecord {
+    long txCount;
+
+    long energyCost;
+
+    long burnEnergy;
+
+    long fee;
+
+    private SingleEnergyRecord() {
+      this.txCount = 0;
+      this.energyCost = 0;
+      this.burnEnergy = 0;
+      this.fee = 0;
+    }
+
+    private void addRecord(long energyCostToAdd, long burnEnergyToAdd, long feeToAdd) {
+      this.txCount++;
+      this.energyCost += energyCostToAdd;
+      this.burnEnergy += burnEnergyToAdd;
+      this.fee += feeToAdd;
+    }
+  }
+
+  @AllArgsConstructor
+  @Getter
+  private static class CexRecord {
+    SingleEnergyRecord collectRecord;
+    SingleEnergyRecord withdrawRecord;
+    SingleEnergyRecord chargeRecord;
+
+    private CexRecord() {
+      this.collectRecord = new SingleEnergyRecord();
+      this.withdrawRecord = new SingleEnergyRecord();
+      this.chargeRecord = new SingleEnergyRecord();
+    }
+
+    private void addCollectRecord(long energyCostToAdd, long burnEnergyToAdd, long feeToAdd) {
+      this.collectRecord.addRecord(energyCostToAdd, burnEnergyToAdd, feeToAdd);
+    }
+
+    private void addWithdrawRecord(long energyCostToAdd, long burnEnergyToAdd, long feeToAdd) {
+      this.withdrawRecord.addRecord(energyCostToAdd, burnEnergyToAdd, feeToAdd);
+    }
+
+    private void addChargeRecord(long energyCostToAdd, long burnEnergyToAdd, long feeToAdd) {
+      this.chargeRecord.addRecord(energyCostToAdd, burnEnergyToAdd, feeToAdd);
+    }
+
+    private long getAllTxCount() {
+      return chargeRecord.getTxCount() + withdrawRecord.getTxCount() + collectRecord.getTxCount();
+    }
+
+    private long getAllEnergyCost() {
+      return chargeRecord.getEnergyCost()
+          + withdrawRecord.getEnergyCost()
+          + collectRecord.getEnergyCost();
+    }
+
+    private long getAllBurnEnergy() {
+      return chargeRecord.getBurnEnergy()
+          + withdrawRecord.getBurnEnergy()
+          + collectRecord.getBurnEnergy();
+    }
+
+    private long getAllFee() {
+      return chargeRecord.getFee() + withdrawRecord.getFee() + collectRecord.getFee();
+    }
+  }
+
+  private static String getRecordMsg(EnergyRecord record) {
+    return getCexRecordString(record.getBinanceRecord())
+        + " "
+        + getCexRecordString(record.getOkRecord())
+        + " "
+        + getCexRecordString(record.getBybitRecord())
+        + " "
+        + getSingleRecordString(record.getPumpRecord())
+        + " "
+        + getSingleRecordString(record.getSwapRecord())
+        + " "
+        + getSingleRecordString(record.getMainnetRecord());
+  }
+
+  private static String getCexRecordString(CexRecord record) {
+    return record.getAllTxCount()
+        + " "
+        + record.getAllEnergyCost()
+        + " "
+        + record.getAllBurnEnergy()
+        + " "
+        + ((double) record.getAllBurnEnergy() / record.getAllEnergyCost())
+        + " "
+        + ((double) record.getAllFee() / 1000000)
+        + " "
+        + ((double) record.getAllFee() / record.getAllTxCount() / 1000000)
+        + " "
+        + record.getChargeRecord().getTxCount()
+        + " "
+        + record.getChargeRecord().getEnergyCost()
+        + " "
+        + record.getChargeRecord().getBurnEnergy()
+        + " "
+        + ((double) record.getChargeRecord().getBurnEnergy()
+            / record.getChargeRecord().getEnergyCost())
+        + " "
+        + ((double) record.getChargeRecord().getFee() / 1000000)
+        + " "
+        + ((double) record.getChargeRecord().getFee()
+            / record.getChargeRecord().getTxCount()
+            / 1000000)
+        + " "
+        + record.getWithdrawRecord().getTxCount()
+        + " "
+        + record.getWithdrawRecord().getEnergyCost()
+        + " "
+        + record.getWithdrawRecord().getBurnEnergy()
+        + " "
+        + ((double) record.getWithdrawRecord().getBurnEnergy()
+            / record.getWithdrawRecord().getEnergyCost())
+        + " "
+        + ((double) record.getWithdrawRecord().getFee() / 1000000)
+        + " "
+        + ((double) record.getWithdrawRecord().getFee()
+            / record.getWithdrawRecord().getTxCount()
+            / 1000000)
+        + " "
+        + record.getCollectRecord().getTxCount()
+        + " "
+        + record.getCollectRecord().getEnergyCost()
+        + " "
+        + record.getCollectRecord().getBurnEnergy()
+        + " "
+        + ((double) record.getCollectRecord().getBurnEnergy()
+            / record.getCollectRecord().getEnergyCost())
+        + " "
+        + ((double) record.getCollectRecord().getFee() / 1000000)
+        + " "
+        + ((double) record.getCollectRecord().getFee()
+            / record.getCollectRecord().getTxCount()
+            / 1000000);
+  }
+
+  private static String getSingleRecordString(SingleEnergyRecord record) {
+    return record.getTxCount()
+        + " "
+        + record.getEnergyCost()
+        + " "
+        + record.getBurnEnergy()
+        + " "
+        + ((double) record.getBurnEnergy() / record.getEnergyCost())
+        + " "
+        + ((double) record.getFee() / 1000000)
+        + " "
+        + ((double) record.getFee() / record.getTxCount() / 1000000);
   }
 }

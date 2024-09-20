@@ -70,6 +70,7 @@ dependencies {
     compile project(":protocol")
     compile project(":actuator")
     compile project(":consensus")
+    implementation 'com.squareup.okhttp3:okhttp:4.10.0'
 }
 
 check.dependsOn 'lint'
