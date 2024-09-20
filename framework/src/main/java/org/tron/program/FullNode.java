@@ -2179,7 +2179,7 @@ public class FullNode {
       // todo
       long firstDayStartBlock = 65337555;
       long secondDayStartBlock = 65366347;
-      long thirdDayStartBlock = 0;
+      long thirdDayStartBlock = 65395139;
       long thirdDayEndBlock = 0;
       // todo
       //      long latestBlockNum = ChainBaseManager.getInstance().getHeadBlockNum();
