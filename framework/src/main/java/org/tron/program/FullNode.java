@@ -2398,7 +2398,7 @@ public class FullNode {
                       record.addOkChargeRecord(energyCost, burnEnergy, fee);
                     }
 
-                  } else if (curCexAddrs.contains(toAddress)) {
+                  } else if (curChargeAddrs.contains(fromAddress) && curCexAddrs.contains(toAddress)) {
                     // 归集
                     if (cexName.equalsIgnoreCase("Binance")) {
                       record.addBinanceCollectRecord(energyCost, burnEnergy, fee);
