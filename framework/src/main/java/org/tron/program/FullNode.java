@@ -2181,17 +2181,100 @@ public class FullNode {
       long secondDayStartBlock = 65366347;
       long thirdDayStartBlock = 65395139;
       long thirdDayEndBlock = 0;
-      // todo
+
+      if (true) {
+        DBIterator retIterator =
+            (DBIterator) ChainBaseManager.getInstance().getTransactionRetStore().getDb().iterator();
+        retIterator.seek(ByteArray.fromLong(65366347));
+        DBIterator blockIterator =
+            (DBIterator) ChainBaseManager.getInstance().getBlockStore().getDb().iterator();
+        blockIterator.seek(ByteArray.fromLong(65366347));
+
+        EnergyRecord record = new EnergyRecord();
+        while (retIterator.hasNext() && blockIterator.hasNext()) {
+          Map.Entry<byte[], byte[]> retEntry = retIterator.next();
+          Map.Entry<byte[], byte[]> blockEntry = blockIterator.next();
+          byte[] key = retEntry.getKey();
+          long blockNum = Longs.fromByteArray(key);
+          long blockStoreNum = Longs.fromByteArray(blockEntry.getKey());
+          while (blockNum != blockStoreNum) {
+            blockEntry = blockIterator.next();
+            blockStoreNum = Longs.fromByteArray(blockEntry.getKey());
+          }
+          if (blockNum > 65395138) {
+            break;
+          }
+
+          byte[] value = retEntry.getValue();
+          TransactionRetCapsule transactionRetCapsule = new TransactionRetCapsule(value);
+          BlockCapsule blockCapsule = new BlockCapsule(blockEntry.getValue());
+          Map<String, TransactionCapsule> txCallerMap = new HashMap<>();
+          for (TransactionCapsule tx : blockCapsule.getTransactions()) {
+            txCallerMap.put(tx.getTransactionId().toString(), tx);
+          }
+
+          for (Protocol.TransactionInfo transactionInfo :
+              transactionRetCapsule.getInstance().getTransactioninfoList()) {
+            byte[] txId = transactionInfo.getId().toByteArray();
+            // toodo remove
+            String txHash = Hex.toHexString(txId);
+            TransactionCapsule tx = txCallerMap.get(Hex.toHexString(txId));
+
+            if (tx.getInstance()
+                    .getRawData()
+                    .getContract(0)
+                    .getParameter()
+                    .is(SmartContractOuterClass.TriggerSmartContract.class)
+                || tx.getInstance()
+                    .getRawData()
+                    .getContract(0)
+                    .getParameter()
+                    .is(SmartContractOuterClass.CreateSmartContract.class)) {
+              byte[] contractAddress = transactionInfo.getContractAddress().toByteArray();
+              long fee = transactionInfo.getReceipt().getEnergyFee();
+              long energyCost = transactionInfo.getReceipt().getEnergyUsageTotal();
+              long burnEnergy =
+                  transactionInfo.getReceipt().getEnergyUsageTotal()
+                      - transactionInfo.getReceipt().getEnergyUsage()
+                      - transactionInfo.getReceipt().getOriginEnergyUsage();
+              // 全网
+
+              if (Arrays.equals(contractAddress, USDT_ADDR)) {
+                record.addMainnetRecord(energyCost, burnEnergy, fee);
+              }
+            }
+          }
+        }
+        System.out.println(
+            record.mainnetRecord.getTxCount()
+                + " "
+                + record.mainnetRecord.getEnergyCost()
+                + " "
+                + record.mainnetRecord.burnEnergy
+                + " "
+                + record.mainnetRecord.fee);
+
+        logger.info(
+            record.mainnetRecord.getTxCount()
+                + " "
+                + record.mainnetRecord.getEnergyCost()
+                + " "
+                + record.mainnetRecord.burnEnergy
+                + " "
+                + record.mainnetRecord.fee);
+        return;
+      }
+
       //      long latestBlockNum = ChainBaseManager.getInstance().getHeadBlockNum();
       //      long lowestBlockNum = ChainBaseManager.getInstance().getLowestBlockNum();
-      //      // 08-16 08:00
-      //      firstDayStartBlock = 64366247;
-      //      // 08-16 14:00
-      //      secondDayStartBlock = 64373445;
-      //      // 08-16 20:00
-      //      thirdDayStartBlock = 64380643;
-      //      // 08-16 20:00
-      //      thirdDayEndBlock = 64387840;
+      // 08-16 08:00
+      firstDayStartBlock = 64366247;
+      // 08-16 14:00
+      secondDayStartBlock = 64373445;
+      // 08-16 20:00
+      thirdDayStartBlock = 64380643;
+      // 08-16 20:00
+      thirdDayEndBlock = 64387840;
       // 总的充币地址
       Map<String, Set<String>> chargeAddrs =
           getChargeAddrs(cexAddrs, firstDayStartBlock - 7 * 28800, thirdDayStartBlock);
@@ -2292,7 +2375,8 @@ public class FullNode {
           // 全网
           record.addMainnetRecord(energyCost, burnEnergy, fee);
 
-          if (Arrays.equals(contractAddress, USDT_ADDR) && transactionInfo.getResult().equals(SUCESS)) {
+          if (Arrays.equals(contractAddress, USDT_ADDR)
+              && transactionInfo.getResult().equals(SUCESS)) {
             try {
               StringBuilder calldata =
                   new StringBuilder(
@@ -2398,8 +2482,8 @@ public class FullNode {
                 }
               }
             } catch (Exception e) {
-//              throw new RuntimeException(e);
-//              logger.error(txHash);
+              //              throw new RuntimeException(e);
+              //              logger.error(txHash);
             }
           } else if (Arrays.equals(contractAddress, SWAP_ADDR)) {
             record.addSwapRecord(energyCost, burnEnergy, fee);
@@ -2427,7 +2511,7 @@ public class FullNode {
     DBIterator blockIterator =
         (DBIterator) ChainBaseManager.getInstance().getBlockStore().getDb().iterator();
     blockIterator.seek(ByteArray.fromLong(startBlockNum));
-    Map<String, Set<String>> chargeAddrs = new HashMap<>();
+    Map<String, Map<String, Set<String>>> chargeAddrs = new HashMap<>();
     long logBlockNum = startBlockNum;
 
     while (retIterator.hasNext() && blockIterator.hasNext()) {
@@ -2457,8 +2541,7 @@ public class FullNode {
         byte[] txId = transactionInfo.getId().toByteArray();
         TransactionCapsule tx = txCallerMap.get(Hex.toHexString(txId));
         byte[] contractAddress = transactionInfo.getContractAddress().toByteArray();
-        if (Arrays.equals(contractAddress, USDT_ADDR)
-            && transactionInfo.getResult().equals(SUCESS)) {
+        if (Arrays.equals(contractAddress, USDT_ADDR)) {
           try {
             StringBuilder calldata =
                 new StringBuilder(
@@ -2491,8 +2574,14 @@ public class FullNode {
               cexAddrs.forEach(
                   (k, v) -> {
                     if (v.contains(toAddress) && !v.contains(fromAddress)) {
-                      Set<String> curChargeAddrs = chargeAddrs.getOrDefault(k, new HashSet<>());
-                      curChargeAddrs.add(fromAddress);
+                      Map<String, Set<String>> curChargeAddrs =
+                          chargeAddrs.getOrDefault(k, new HashMap<>());
+                      Set<String> interAddrs =
+                          curChargeAddrs.getOrDefault(fromAddress, new HashSet<>());
+                      if (interAddrs.size() < 3) {
+                        interAddrs.add(toAddress);
+                      }
+                      curChargeAddrs.put(fromAddress, interAddrs);
                       chargeAddrs.put(k, curChargeAddrs);
                     }
                   });
@@ -2513,7 +2602,24 @@ public class FullNode {
       }
     }
 
-    return chargeAddrs;
+    chargeAddrs.forEach(
+        (k, v) -> {
+          for (Iterator<Map.Entry<String, Set<String>>> it = v.entrySet().iterator();
+              it.hasNext(); ) {
+            Map.Entry<String, Set<String>> entry = it.next();
+            if (entry.getValue().size() >= 3) {
+              it.remove();
+            }
+          }
+        });
+
+    Map<String, Set<String>> res = new HashMap<>();
+    chargeAddrs.forEach(
+        (k, v) -> {
+          Set<String> chargeAds = new HashSet<>(v.keySet());
+          res.put(k, chargeAds);
+        });
+    return res;
   }
 
   private static Map<String, Set<String>> getTronCexAddresses() {
