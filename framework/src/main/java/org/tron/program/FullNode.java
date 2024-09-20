@@ -2398,7 +2398,8 @@ public class FullNode {
                 }
               }
             } catch (InvalidProtocolBufferException e) {
-              throw new RuntimeException(e);
+//              throw new RuntimeException(e);
+//              logger.error(txHash);
             }
           } else if (Arrays.equals(contractAddress, SWAP_ADDR)) {
             record.addSwapRecord(energyCost, burnEnergy, fee);
