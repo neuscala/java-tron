@@ -2176,108 +2176,47 @@ public class FullNode {
       //              .map(s -> get41Addr(Hex.toHexString(Commons.decodeFromBase58Check(s))))
       //              .collect(Collectors.toSet());
       Map<String, Set<String>> cexAddrs = getTronCexAddresses();
+      Set<String> allCexAddrs =
+          cexAddrs.values().stream().flatMap(Set::stream).collect(Collectors.toSet());
+      cexAddrs.remove("Others");
       // todo
       long firstDayStartBlock = 65337555;
       long secondDayStartBlock = 65366347;
       long thirdDayStartBlock = 65395139;
       long thirdDayEndBlock = 0;
 
-      if (true) {
-        DBIterator retIterator =
-            (DBIterator) ChainBaseManager.getInstance().getTransactionRetStore().getDb().iterator();
-        retIterator.seek(ByteArray.fromLong(65366347));
-        DBIterator blockIterator =
-            (DBIterator) ChainBaseManager.getInstance().getBlockStore().getDb().iterator();
-        blockIterator.seek(ByteArray.fromLong(65366347));
-
-        EnergyRecord record = new EnergyRecord();
-        while (retIterator.hasNext() && blockIterator.hasNext()) {
-          Map.Entry<byte[], byte[]> retEntry = retIterator.next();
-          Map.Entry<byte[], byte[]> blockEntry = blockIterator.next();
-          byte[] key = retEntry.getKey();
-          long blockNum = Longs.fromByteArray(key);
-          long blockStoreNum = Longs.fromByteArray(blockEntry.getKey());
-          while (blockNum != blockStoreNum) {
-            blockEntry = blockIterator.next();
-            blockStoreNum = Longs.fromByteArray(blockEntry.getKey());
-          }
-          if (blockNum > 65395138) {
-            break;
-          }
-
-          byte[] value = retEntry.getValue();
-          TransactionRetCapsule transactionRetCapsule = new TransactionRetCapsule(value);
-          BlockCapsule blockCapsule = new BlockCapsule(blockEntry.getValue());
-          Map<String, TransactionCapsule> txCallerMap = new HashMap<>();
-          for (TransactionCapsule tx : blockCapsule.getTransactions()) {
-            txCallerMap.put(tx.getTransactionId().toString(), tx);
-          }
-
-          for (Protocol.TransactionInfo transactionInfo :
-              transactionRetCapsule.getInstance().getTransactioninfoList()) {
-            byte[] txId = transactionInfo.getId().toByteArray();
-            // toodo remove
-            String txHash = Hex.toHexString(txId);
-            TransactionCapsule tx = txCallerMap.get(Hex.toHexString(txId));
-
-            if (tx.getInstance()
-                    .getRawData()
-                    .getContract(0)
-                    .getParameter()
-                    .is(SmartContractOuterClass.TriggerSmartContract.class)
-                || tx.getInstance()
-                    .getRawData()
-                    .getContract(0)
-                    .getParameter()
-                    .is(SmartContractOuterClass.CreateSmartContract.class)) {
-              byte[] contractAddress = transactionInfo.getContractAddress().toByteArray();
-              long fee = transactionInfo.getReceipt().getEnergyFee();
-              long energyCost = transactionInfo.getReceipt().getEnergyUsageTotal();
-              long burnEnergy =
-                  transactionInfo.getReceipt().getEnergyUsageTotal()
-                      - transactionInfo.getReceipt().getEnergyUsage()
-                      - transactionInfo.getReceipt().getOriginEnergyUsage();
-              // 全网
-
-              if (Arrays.equals(contractAddress, USDT_ADDR)) {
-                record.addMainnetRecord(energyCost, burnEnergy, fee);
-              }
-            }
-          }
-        }
-        System.out.println(
-            record.mainnetRecord.getTxCount()
-                + " "
-                + record.mainnetRecord.getEnergyCost()
-                + " "
-                + record.mainnetRecord.burnEnergy
-                + " "
-                + record.mainnetRecord.fee);
-
-        logger.info(
-            record.mainnetRecord.getTxCount()
-                + " "
-                + record.mainnetRecord.getEnergyCost()
-                + " "
-                + record.mainnetRecord.burnEnergy
-                + " "
-                + record.mainnetRecord.fee);
-        return;
-      }
-
       //      long latestBlockNum = ChainBaseManager.getInstance().getHeadBlockNum();
       //      long lowestBlockNum = ChainBaseManager.getInstance().getLowestBlockNum();
       // 08-16 08:00
-      firstDayStartBlock = 64366247;
-      // 08-16 14:00
-      secondDayStartBlock = 64373445;
-      // 08-16 20:00
-      thirdDayStartBlock = 64380643;
-      // 08-16 20:00
-      thirdDayEndBlock = 64387840;
+//      firstDayStartBlock = 64366247;
+//      // 08-16 14:00
+//      secondDayStartBlock = 64373445;
+//      // 08-16 20:00
+//      thirdDayStartBlock = 64380643;
+//      // 08-16 20:00
+//      thirdDayEndBlock = 64387840;
       // 总的充币地址
       Map<String, Set<String>> chargeAddrs =
-          getChargeAddrs(cexAddrs, firstDayStartBlock - 7 * 28800, thirdDayStartBlock);
+          getChargeAddrsV2(
+              "All",
+              cexAddrs.get("Binance"),
+              cexAddrs.get("Okex"),
+              cexAddrs.get("Bybit"),
+              allCexAddrs,
+              firstDayStartBlock - 7 * 28800,
+              thirdDayStartBlock);
+      //      for (Map.Entry<String, Set<String>> entry : cexAddrs.entrySet()) {
+      //        if (!entry.getKey().equalsIgnoreCase("Others")) {
+      //          chargeAddrs.put(
+      //              entry.getKey(),
+      //              getChargeAddrsV2(
+      //                  entry.getKey(),
+      //                  entry.getValue(),
+      //                  allCexAddrs,
+      //                  firstDayStartBlock - 7 * 28800,
+      //                  thirdDayEndBlock));
+      //        }
+      //      }
       logger.info(
           "Get cex charge addrs success, Binance {}, Okex {}, Bybit {}, start sync energy data ...",
           chargeAddrs.get("Binance").size(),
@@ -2511,7 +2450,7 @@ public class FullNode {
     DBIterator blockIterator =
         (DBIterator) ChainBaseManager.getInstance().getBlockStore().getDb().iterator();
     blockIterator.seek(ByteArray.fromLong(startBlockNum));
-    Map<String, Map<String, Set<String>>> chargeAddrs = new HashMap<>();
+    Map<String, Set<String>> chargeAddrs = new HashMap<>();
     long logBlockNum = startBlockNum;
 
     while (retIterator.hasNext() && blockIterator.hasNext()) {
@@ -2541,7 +2480,8 @@ public class FullNode {
         byte[] txId = transactionInfo.getId().toByteArray();
         TransactionCapsule tx = txCallerMap.get(Hex.toHexString(txId));
         byte[] contractAddress = transactionInfo.getContractAddress().toByteArray();
-        if (Arrays.equals(contractAddress, USDT_ADDR)) {
+        if (Arrays.equals(contractAddress, USDT_ADDR)
+            && transactionInfo.getResult().equals(SUCESS)) {
           try {
             StringBuilder calldata =
                 new StringBuilder(
@@ -2574,14 +2514,8 @@ public class FullNode {
               cexAddrs.forEach(
                   (k, v) -> {
                     if (v.contains(toAddress) && !v.contains(fromAddress)) {
-                      Map<String, Set<String>> curChargeAddrs =
-                          chargeAddrs.getOrDefault(k, new HashMap<>());
-                      Set<String> interAddrs =
-                          curChargeAddrs.getOrDefault(fromAddress, new HashSet<>());
-                      if (interAddrs.size() < 3) {
-                        interAddrs.add(toAddress);
-                      }
-                      curChargeAddrs.put(fromAddress, interAddrs);
+                      Set<String> curChargeAddrs = chargeAddrs.getOrDefault(k, new HashSet<>());
+                      curChargeAddrs.add(fromAddress);
                       chargeAddrs.put(k, curChargeAddrs);
                     }
                   });
@@ -2601,24 +2535,283 @@ public class FullNode {
             chargeAddrs.get("Bybit").size());
       }
     }
+    //
+    //    chargeAddrs.forEach(
+    //        (k, v) -> {
+    //          for (Iterator<Map.Entry<String, Set<String>>> it = v.entrySet().iterator();
+    //              it.hasNext(); ) {
+    //            Map.Entry<String, Set<String>> entry = it.next();
+    //            if (entry.getValue().size() >= 3) {
+    //              it.remove();
+    //            }
+    //          }
+    //        });
+    //
+    //    Map<String, Set<String>> res = new HashMap<>();
+    //    chargeAddrs.forEach(
+    //        (k, v) -> {
+    //          Set<String> chargeAds = new HashSet<>(v.keySet());
+    //          res.put(k, chargeAds);
+    //        });
+    return chargeAddrs;
+  }
 
-    chargeAddrs.forEach(
-        (k, v) -> {
-          for (Iterator<Map.Entry<String, Set<String>>> it = v.entrySet().iterator();
-              it.hasNext(); ) {
-            Map.Entry<String, Set<String>> entry = it.next();
-            if (entry.getValue().size() >= 3) {
-              it.remove();
+  private static Map<String, Set<String>> getChargeAddrsV2(
+      String cexName,
+      Set<String> binanceAddrs,
+      Set<String> okAddrs,
+      Set<String> bybitAddrs,
+      Set<String> allCexAddrs,
+      long startBlockNum,
+      long endBlockNum)
+      throws BadItemException {
+
+    DBIterator retIterator =
+        (DBIterator) ChainBaseManager.getInstance().getTransactionRetStore().getDb().iterator();
+    retIterator.seek(ByteArray.fromLong(startBlockNum));
+    DBIterator blockIterator =
+        (DBIterator) ChainBaseManager.getInstance().getBlockStore().getDb().iterator();
+    blockIterator.seek(ByteArray.fromLong(startBlockNum));
+    Map<String, Set<String>> binanceInterAddrs = new HashMap<>();
+    Map<String, Set<String>> okInterAddrs = new HashMap<>();
+    Map<String, Set<String>> bybitInterAddrs = new HashMap<>();
+    long logBlockNum = startBlockNum;
+
+    while (retIterator.hasNext() && blockIterator.hasNext()) {
+      Map.Entry<byte[], byte[]> retEntry = retIterator.next();
+      Map.Entry<byte[], byte[]> blockEntry = blockIterator.next();
+      byte[] key = retEntry.getKey();
+      long blockNum = Longs.fromByteArray(key);
+      long blockStoreNum = Longs.fromByteArray(blockEntry.getKey());
+      while (blockNum != blockStoreNum) {
+        blockEntry = blockIterator.next();
+        blockStoreNum = Longs.fromByteArray(blockEntry.getKey());
+      }
+      if (blockNum > endBlockNum) {
+        break;
+      }
+
+      byte[] value = retEntry.getValue();
+      TransactionRetCapsule transactionRetCapsule = new TransactionRetCapsule(value);
+      BlockCapsule blockCapsule = new BlockCapsule(blockEntry.getValue());
+      Map<String, TransactionCapsule> txCallerMap = new HashMap<>();
+      for (TransactionCapsule tx : blockCapsule.getTransactions()) {
+        txCallerMap.put(tx.getTransactionId().toString(), tx);
+      }
+
+      for (Protocol.TransactionInfo transactionInfo :
+          transactionRetCapsule.getInstance().getTransactioninfoList()) {
+        byte[] txId = transactionInfo.getId().toByteArray();
+        TransactionCapsule tx = txCallerMap.get(Hex.toHexString(txId));
+        byte[] contractAddress = transactionInfo.getContractAddress().toByteArray();
+        if (Arrays.equals(contractAddress, USDT_ADDR)
+            && transactionInfo.getResult().equals(SUCESS)) {
+          try {
+            StringBuilder calldata =
+                new StringBuilder(
+                    Hex.toHexString(
+                        tx.getInstance()
+                            .getRawData()
+                            .getContract(0)
+                            .getParameter()
+                            .unpack(SmartContractOuterClass.TriggerSmartContract.class)
+                            .getData()
+                            .toByteArray()));
+            if (calldata.toString().startsWith("a9059cbb")
+                || calldata.toString().startsWith("23b872dd")) {
+              String fromAddress;
+              String toAddress;
+              if (calldata.toString().startsWith("a9059cbb")) {
+                fromAddress = get41Addr(Hex.toHexString(tx.getOwnerAddress()));
+                toAddress = "41" + calldata.substring(32, 36 * 2);
+              } else {
+                fromAddress = "41" + calldata.substring(32, 36 * 2);
+                if (calldata.length() < 136) {
+                  int appendLen = 136 - calldata.length();
+                  for (int i = 0; i < appendLen; i++) {
+                    calldata.append("0");
+                  }
+                }
+                toAddress = "41" + calldata.substring(32 * 3, 68 * 2);
+              }
+
+              if (!allCexAddrs.contains(fromAddress)) {
+                if (binanceAddrs.contains(toAddress)) {
+                  Set<String> interAds =
+                      binanceInterAddrs.getOrDefault(fromAddress, new HashSet<>());
+                  if (interAds.size() < 3) {
+                    interAds.add(toAddress);
+                  }
+                  binanceInterAddrs.put(fromAddress, interAds);
+                } else if (okAddrs.contains(toAddress)) {
+                  Set<String> interAds = okInterAddrs.getOrDefault(fromAddress, new HashSet<>());
+                  if (interAds.size() < 3) {
+                    interAds.add(toAddress);
+                  }
+                  okInterAddrs.put(fromAddress, interAds);
+                } else if (bybitAddrs.contains(toAddress)) {
+                  Set<String> interAds = bybitInterAddrs.getOrDefault(fromAddress, new HashSet<>());
+                  if (interAds.size() < 3) {
+                    interAds.add(toAddress);
+                  }
+                  bybitInterAddrs.put(fromAddress, interAds);
+                }
+              }
             }
+          } catch (InvalidProtocolBufferException e) {
+            throw new RuntimeException(e);
           }
-        });
+        }
+      }
+      if (blockNum - logBlockNum >= 10000) {
+        logBlockNum = blockNum;
+        logger.info(
+            "Getting {} charge addrs to timestamp {}, binance {}, okex {}, bybit {}",
+            cexName,
+            transactionRetCapsule.getInstance().getBlockTimeStamp(),
+            binanceInterAddrs.keySet().size(),
+            okInterAddrs.keySet().size(),
+            bybitInterAddrs.keySet().size());
+      }
+    }
+
+    // filter
+    retIterator =
+        (DBIterator) ChainBaseManager.getInstance().getTransactionRetStore().getDb().iterator();
+    retIterator.seek(ByteArray.fromLong(startBlockNum));
+    blockIterator = (DBIterator) ChainBaseManager.getInstance().getBlockStore().getDb().iterator();
+    blockIterator.seek(ByteArray.fromLong(startBlockNum));
+    logBlockNum = startBlockNum;
+
+    while (retIterator.hasNext() && blockIterator.hasNext()) {
+      Map.Entry<byte[], byte[]> retEntry = retIterator.next();
+      Map.Entry<byte[], byte[]> blockEntry = blockIterator.next();
+      byte[] key = retEntry.getKey();
+      long blockNum = Longs.fromByteArray(key);
+      long blockStoreNum = Longs.fromByteArray(blockEntry.getKey());
+      while (blockNum != blockStoreNum) {
+        blockEntry = blockIterator.next();
+        blockStoreNum = Longs.fromByteArray(blockEntry.getKey());
+      }
+      if (blockNum > endBlockNum) {
+        break;
+      }
+
+      byte[] value = retEntry.getValue();
+      TransactionRetCapsule transactionRetCapsule = new TransactionRetCapsule(value);
+      BlockCapsule blockCapsule = new BlockCapsule(blockEntry.getValue());
+      Map<String, TransactionCapsule> txCallerMap = new HashMap<>();
+      for (TransactionCapsule tx : blockCapsule.getTransactions()) {
+        txCallerMap.put(tx.getTransactionId().toString(), tx);
+      }
+
+      for (Protocol.TransactionInfo transactionInfo :
+          transactionRetCapsule.getInstance().getTransactioninfoList()) {
+        byte[] txId = transactionInfo.getId().toByteArray();
+        TransactionCapsule tx = txCallerMap.get(Hex.toHexString(txId));
+        byte[] contractAddress = transactionInfo.getContractAddress().toByteArray();
+        if (Arrays.equals(contractAddress, USDT_ADDR)
+            && transactionInfo.getResult().equals(SUCESS)) {
+          try {
+            StringBuilder calldata =
+                new StringBuilder(
+                    Hex.toHexString(
+                        tx.getInstance()
+                            .getRawData()
+                            .getContract(0)
+                            .getParameter()
+                            .unpack(SmartContractOuterClass.TriggerSmartContract.class)
+                            .getData()
+                            .toByteArray()));
+            if (calldata.toString().startsWith("a9059cbb")
+                || calldata.toString().startsWith("23b872dd")) {
+              String fromAddress;
+              String toAddress;
+              if (calldata.toString().startsWith("a9059cbb")) {
+                fromAddress = get41Addr(Hex.toHexString(tx.getOwnerAddress()));
+                toAddress = "41" + calldata.substring(32, 36 * 2);
+              } else {
+                fromAddress = "41" + calldata.substring(32, 36 * 2);
+                if (calldata.length() < 136) {
+                  int appendLen = 136 - calldata.length();
+                  for (int i = 0; i < appendLen; i++) {
+                    calldata.append("0");
+                  }
+                }
+                toAddress = "41" + calldata.substring(32 * 3, 68 * 2);
+              }
+
+              if (binanceInterAddrs.containsKey(toAddress)) {
+                Set<String> curInterAddrs =
+                    binanceInterAddrs.getOrDefault(toAddress, new HashSet<>());
+                if (curInterAddrs.size() < 3) {
+                  curInterAddrs.add(fromAddress);
+                }
+                binanceInterAddrs.put(toAddress, curInterAddrs);
+              } else if (binanceInterAddrs.containsKey(fromAddress)) {
+                Set<String> curInterAddrs =
+                    binanceInterAddrs.getOrDefault(fromAddress, new HashSet<>());
+                if (curInterAddrs.size() < 3) {
+                  curInterAddrs.add(toAddress);
+                }
+                binanceInterAddrs.put(fromAddress, curInterAddrs);
+              }
+
+              if (okInterAddrs.containsKey(toAddress)) {
+                Set<String> curInterAddrs = okInterAddrs.getOrDefault(toAddress, new HashSet<>());
+                if (curInterAddrs.size() < 3) {
+                  curInterAddrs.add(fromAddress);
+                }
+                okInterAddrs.put(toAddress, curInterAddrs);
+              } else if (okInterAddrs.containsKey(fromAddress)) {
+                Set<String> curInterAddrs = okInterAddrs.getOrDefault(fromAddress, new HashSet<>());
+                if (curInterAddrs.size() < 3) {
+                  curInterAddrs.add(toAddress);
+                }
+                okInterAddrs.put(fromAddress, curInterAddrs);
+              }
+
+              if (bybitInterAddrs.containsKey(toAddress)) {
+                Set<String> curInterAddrs =
+                    bybitInterAddrs.getOrDefault(toAddress, new HashSet<>());
+                if (curInterAddrs.size() < 3) {
+                  curInterAddrs.add(fromAddress);
+                }
+                bybitInterAddrs.put(toAddress, curInterAddrs);
+              } else if (bybitInterAddrs.containsKey(fromAddress)) {
+                Set<String> curInterAddrs =
+                    bybitInterAddrs.getOrDefault(fromAddress, new HashSet<>());
+                if (curInterAddrs.size() < 3) {
+                  curInterAddrs.add(toAddress);
+                }
+                bybitInterAddrs.put(fromAddress, curInterAddrs);
+              }
+            }
+          } catch (InvalidProtocolBufferException e) {
+            throw new RuntimeException(e);
+          }
+        }
+      }
+      if (blockNum - logBlockNum >= 10000) {
+        logBlockNum = blockNum;
+        logger.info(
+            "Filtering {} charge addrs to timestamp {}",
+            cexName,
+            transactionRetCapsule.getInstance().getBlockTimeStamp());
+      }
+    }
+
+    binanceInterAddrs.entrySet().removeIf(entry -> entry.getValue().size() >= 3);
+    okInterAddrs.entrySet().removeIf(entry -> entry.getValue().size() >= 3);
+    bybitInterAddrs.entrySet().removeIf(entry -> entry.getValue().size() >= 3);
 
     Map<String, Set<String>> res = new HashMap<>();
-    chargeAddrs.forEach(
-        (k, v) -> {
-          Set<String> chargeAds = new HashSet<>(v.keySet());
-          res.put(k, chargeAds);
-        });
+    res.put("Binance", binanceInterAddrs.keySet());
+    res.put("Okex", okInterAddrs.keySet());
+    res.put("Bybit", bybitInterAddrs.keySet());
+
+    allCexAddrs.forEach(cexAd -> res.values().forEach(set -> set.remove(cexAd)));
+
     return res;
   }
 
@@ -2643,12 +2836,12 @@ public class FullNode {
                   cexName = "Okex";
                 } else if (name.contains("bybit") || name.contains("Bybit")) {
                   cexName = "Bybit";
+                } else {
+                  cexName = "Others";
                 }
-                if (cexName != null) {
-                  Set<String> addrs = res.getOrDefault(cexName, new HashSet<>());
-                  addrs.add(get41Addr(Hex.toHexString(Commons.decodeFromBase58Check(addr))));
-                  res.put(cexName, addrs);
-                }
+                Set<String> addrs = res.getOrDefault(cexName, new HashSet<>());
+                addrs.add(get41Addr(Hex.toHexString(Commons.decodeFromBase58Check(addr))));
+                res.put(cexName, addrs);
               });
       return res;
     } catch (Exception e) {
@@ -2884,5 +3077,88 @@ public class FullNode {
         + ((double) record.getFee() / 1000000)
         + " "
         + ((double) record.getFee() / record.getTxCount() / 1000000);
+  }
+
+  private static void tmpSync() throws BadItemException {
+
+    DBIterator retIterator =
+        (DBIterator) ChainBaseManager.getInstance().getTransactionRetStore().getDb().iterator();
+    retIterator.seek(ByteArray.fromLong(65366347));
+    DBIterator blockIterator =
+        (DBIterator) ChainBaseManager.getInstance().getBlockStore().getDb().iterator();
+    blockIterator.seek(ByteArray.fromLong(65366347));
+
+    EnergyRecord record = new EnergyRecord();
+    while (retIterator.hasNext() && blockIterator.hasNext()) {
+      Map.Entry<byte[], byte[]> retEntry = retIterator.next();
+      Map.Entry<byte[], byte[]> blockEntry = blockIterator.next();
+      byte[] key = retEntry.getKey();
+      long blockNum = Longs.fromByteArray(key);
+      long blockStoreNum = Longs.fromByteArray(blockEntry.getKey());
+      while (blockNum != blockStoreNum) {
+        blockEntry = blockIterator.next();
+        blockStoreNum = Longs.fromByteArray(blockEntry.getKey());
+      }
+      if (blockNum > 65395138) {
+        break;
+      }
+
+      byte[] value = retEntry.getValue();
+      TransactionRetCapsule transactionRetCapsule = new TransactionRetCapsule(value);
+      BlockCapsule blockCapsule = new BlockCapsule(blockEntry.getValue());
+      Map<String, TransactionCapsule> txCallerMap = new HashMap<>();
+      for (TransactionCapsule tx : blockCapsule.getTransactions()) {
+        txCallerMap.put(tx.getTransactionId().toString(), tx);
+      }
+
+      for (Protocol.TransactionInfo transactionInfo :
+          transactionRetCapsule.getInstance().getTransactioninfoList()) {
+        byte[] txId = transactionInfo.getId().toByteArray();
+        // toodo remove
+        String txHash = Hex.toHexString(txId);
+        TransactionCapsule tx = txCallerMap.get(Hex.toHexString(txId));
+
+        if (tx.getInstance()
+                .getRawData()
+                .getContract(0)
+                .getParameter()
+                .is(SmartContractOuterClass.TriggerSmartContract.class)
+            || tx.getInstance()
+                .getRawData()
+                .getContract(0)
+                .getParameter()
+                .is(SmartContractOuterClass.CreateSmartContract.class)) {
+          byte[] contractAddress = transactionInfo.getContractAddress().toByteArray();
+          long fee = transactionInfo.getReceipt().getEnergyFee();
+          long energyCost = transactionInfo.getReceipt().getEnergyUsageTotal();
+          long burnEnergy =
+              transactionInfo.getReceipt().getEnergyUsageTotal()
+                  - transactionInfo.getReceipt().getEnergyUsage()
+                  - transactionInfo.getReceipt().getOriginEnergyUsage();
+          // 全网
+
+          if (Arrays.equals(contractAddress, USDT_ADDR)) {
+            record.addMainnetRecord(energyCost, burnEnergy, fee);
+          }
+        }
+      }
+    }
+    System.out.println(
+        record.mainnetRecord.getTxCount()
+            + " "
+            + record.mainnetRecord.getEnergyCost()
+            + " "
+            + record.mainnetRecord.burnEnergy
+            + " "
+            + record.mainnetRecord.fee);
+
+    logger.info(
+        record.mainnetRecord.getTxCount()
+            + " "
+            + record.mainnetRecord.getEnergyCost()
+            + " "
+            + record.mainnetRecord.burnEnergy
+            + " "
+            + record.mainnetRecord.fee);
   }
 }
