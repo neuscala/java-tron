@@ -2275,25 +2275,24 @@ public class FullNode {
           chargeAddrs.get("Bybit").size());
       StringBuilder res = new StringBuilder();
 
-      Set<String> allCexAddrs =
-          cexAddrs.values().stream().flatMap(Set::stream).collect(Collectors.toSet());
+      Map<String, Set<String>> originCexAddrs = new HashMap<>(cexAddrs);
       cexAddrs.remove("Others");
       if (secondDayStartBlock > 0) {
         EnergyRecord firstDay =
             syncOneDayEnergy(
-                cexAddrs, chargeAddrs, allCexAddrs, firstDayStartBlock, secondDayStartBlock - 1);
+                cexAddrs, chargeAddrs, originCexAddrs, firstDayStartBlock, secondDayStartBlock - 1);
         res.append("\n").append(getRecordMsg(firstDay));
       }
       if (thirdDayStartBlock > 0) {
         EnergyRecord secondDay =
             syncOneDayEnergy(
-                cexAddrs, chargeAddrs, allCexAddrs, secondDayStartBlock, thirdDayStartBlock - 1);
+                cexAddrs, chargeAddrs, originCexAddrs, secondDayStartBlock, thirdDayStartBlock - 1);
         res.append("\n").append(getRecordMsg(secondDay));
       }
       if (thirdDayEndBlock > 0) {
         EnergyRecord thirdDay =
             syncOneDayEnergy(
-                cexAddrs, chargeAddrs, allCexAddrs, thirdDayStartBlock, thirdDayEndBlock);
+                cexAddrs, chargeAddrs, originCexAddrs, thirdDayStartBlock, thirdDayEndBlock);
         res.append("\n").append(getRecordMsg(thirdDay));
       }
 
@@ -2308,7 +2307,7 @@ public class FullNode {
   private static EnergyRecord syncOneDayEnergy(
       Map<String, Set<String>> cexAddrs,
       Map<String, Set<String>> chargeAddrs,
-      Set<String> allCexAddrs,
+      Map<String, Set<String>> originCexAddrs,
       long startBlockNum,
       long endBlockNum)
       throws BadItemException {
@@ -2446,7 +2445,7 @@ public class FullNode {
                   String cexName = entry.getKey();
                   Set<String> curCexAddrs = entry.getValue();
                   Set<String> curChargeAddrs = chargeAddrs.get(cexName);
-                  if (!allCexAddrs.contains(fromAddress) && curChargeAddrs.contains(toAddress)) {
+                  if (!curCexAddrs.contains(fromAddress) && curChargeAddrs.contains(toAddress)) {
                     // 充币
                     if (cexName.equalsIgnoreCase("Binance")) {
                       record.addBinanceChargeRecord(energyCost, burnEnergy, fee);
