@@ -2176,6 +2176,12 @@ public class FullNode {
       //              .map(s -> get41Addr(Hex.toHexString(Commons.decodeFromBase58Check(s))))
       //              .collect(Collectors.toSet());
       Map<String, Set<String>> cexAddrs = getTronCexAddresses();
+      cexAddrs
+          .get("Bybit")
+          .add(
+              get41Addr(
+                  Hex.toHexString(
+                      Commons.decodeFromBase58Check("TZBAacgmAa84RPwa1aSWL6eMc7B9GmBDrK"))));
       //      Set<String> allCexAddrs =
       //          cexAddrs.values().stream().flatMap(Set::stream).collect(Collectors.toSet());
       //      cexAddrs.remove("Others");
@@ -2312,7 +2318,8 @@ public class FullNode {
       long endBlockNum)
       throws BadItemException {
     logger.info("Start syncing one day energy from {} to {}", startBlockNum, endBlockNum);
-
+    Set<String> allCexAddrs =
+        originCexAddrs.values().stream().flatMap(Set::stream).collect(Collectors.toSet());
     // get energy record
     DBIterator retIterator =
         (DBIterator) ChainBaseManager.getInstance().getTransactionRetStore().getDb().iterator();
@@ -2445,7 +2452,7 @@ public class FullNode {
                   String cexName = entry.getKey();
                   Set<String> curCexAddrs = entry.getValue();
                   Set<String> curChargeAddrs = chargeAddrs.get(cexName);
-                  if (!curCexAddrs.contains(fromAddress) && curChargeAddrs.contains(toAddress)) {
+                  if (!allCexAddrs.contains(fromAddress) && curChargeAddrs.contains(toAddress)) {
                     // 充币
                     if (cexName.equalsIgnoreCase("Binance")) {
                       record.addBinanceChargeRecord(energyCost, burnEnergy, fee);
@@ -2466,7 +2473,8 @@ public class FullNode {
                       record.addOkCollectRecord(energyCost, burnEnergy, fee);
                     }
 
-                  } else if (curCexAddrs.contains(fromAddress)) {
+                  } else if (curCexAddrs.contains(fromAddress)
+                      && !curChargeAddrs.contains(toAddress)) {
                     // 提币
                     if (cexName.equalsIgnoreCase("Binance")) {
                       record.addBinanceWithdrawRecord(energyCost, burnEnergy, fee);
