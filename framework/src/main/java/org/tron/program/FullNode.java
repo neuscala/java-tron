@@ -2366,8 +2366,7 @@ public class FullNode {
           // 全网
           record.addMainnetRecord(energyCost, burnEnergy, fee);
 
-          if (Arrays.equals(contractAddress, USDT_ADDR)
-              && transactionInfo.getResult().equals(SUCESS)) {
+          if (Arrays.equals(contractAddress, USDT_ADDR)) {
             try {
               StringBuilder calldata =
                   new StringBuilder(
