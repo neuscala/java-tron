@@ -2189,8 +2189,8 @@ public class FullNode {
       // todo
       long firstDayStartBlock = 65337555;
       long secondDayStartBlock = 65366347;
-      long thirdDayStartBlock = 65395139;
-      long thirdDayEndBlock = 0;
+      long thirdDayStartBlock = 65387941;
+      long thirdDayEndBlock = 65416732;
 
       //      long latestBlockNum = ChainBaseManager.getInstance().getHeadBlockNum();
       //      long lowestBlockNum = ChainBaseManager.getInstance().getLowestBlockNum();
@@ -2296,18 +2296,18 @@ public class FullNode {
 
       Map<String, Set<String>> originCexAddrs = new HashMap<>(cexAddrs);
       cexAddrs.remove("Others");
-      if (secondDayStartBlock > 0) {
-        EnergyRecord firstDay =
-            syncOneDayEnergy(
-                cexAddrs, chargeAddrs, originCexAddrs, firstDayStartBlock, secondDayStartBlock - 1);
-        res.append("\n").append(getRecordMsg(firstDay));
-      }
-      if (thirdDayStartBlock > 0) {
-        EnergyRecord secondDay =
-            syncOneDayEnergy(
-                cexAddrs, chargeAddrs, originCexAddrs, secondDayStartBlock, thirdDayStartBlock - 1);
-        res.append("\n").append(getRecordMsg(secondDay));
-      }
+//      if (secondDayStartBlock > 0) {
+//        EnergyRecord firstDay =
+//            syncOneDayEnergy(
+//                cexAddrs, chargeAddrs, originCexAddrs, firstDayStartBlock, secondDayStartBlock - 1);
+//        res.append("\n").append(getRecordMsg(firstDay));
+//      }
+//      if (thirdDayStartBlock > 0) {
+//        EnergyRecord secondDay =
+//            syncOneDayEnergy(
+//                cexAddrs, chargeAddrs, originCexAddrs, secondDayStartBlock, thirdDayStartBlock - 1);
+//        res.append("\n").append(getRecordMsg(secondDay));
+//      }
       if (thirdDayEndBlock > 0) {
         EnergyRecord thirdDay =
             syncOneDayEnergy(
