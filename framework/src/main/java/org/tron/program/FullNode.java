@@ -2176,12 +2176,13 @@ public class FullNode {
       //              .map(s -> get41Addr(Hex.toHexString(Commons.decodeFromBase58Check(s))))
       //              .collect(Collectors.toSet());
       Map<String, Set<String>> cexAddrs = getTronCexAddresses();
-      cexAddrs
-          .get("Bybit")
-          .add(
-              get41Addr(
-                  Hex.toHexString(
-                      Commons.decodeFromBase58Check("TZBAacgmAa84RPwa1aSWL6eMc7B9GmBDrK"))));
+      //      cexAddrs
+      //          .get("Bybit")
+      //          .add(
+      //              get41Addr(
+      //                  Hex.toHexString(
+      //
+      // Commons.decodeFromBase58Check("TZBAacgmAa84RPwa1aSWL6eMc7B9GmBDrK"))));
       //      Set<String> allCexAddrs =
       //          cexAddrs.values().stream().flatMap(Set::stream).collect(Collectors.toSet());
       //      cexAddrs.remove("Others");
@@ -2261,7 +2262,19 @@ public class FullNode {
         chargeAddrs.put("Okex", okexChargers);
       }
 
-      file = new File("bybit.txt");
+      file = new File("bybit1.txt");
+      if (file.exists()) {
+        BufferedReader reader = new BufferedReader(new FileReader(file));
+        String line;
+        Set<String> bybitChargers = chargeAddrs.get("Bybit");
+        while ((line = reader.readLine()) != null) {
+          if (line.startsWith("T")) {
+            bybitChargers.add(get41Addr(Hex.toHexString(Commons.decodeFromBase58Check(line))));
+          }
+        }
+        chargeAddrs.put("Bybit", bybitChargers);
+      }
+      file = new File("bybit2.txt");
       if (file.exists()) {
         BufferedReader reader = new BufferedReader(new FileReader(file));
         String line;
