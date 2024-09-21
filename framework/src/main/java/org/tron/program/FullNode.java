@@ -2296,18 +2296,18 @@ public class FullNode {
 
       Map<String, Set<String>> originCexAddrs = new HashMap<>(cexAddrs);
       cexAddrs.remove("Others");
-//      if (secondDayStartBlock > 0) {
-//        EnergyRecord firstDay =
-//            syncOneDayEnergy(
-//                cexAddrs, chargeAddrs, originCexAddrs, firstDayStartBlock, secondDayStartBlock - 1);
-//        res.append("\n").append(getRecordMsg(firstDay));
-//      }
-//      if (thirdDayStartBlock > 0) {
-//        EnergyRecord secondDay =
-//            syncOneDayEnergy(
-//                cexAddrs, chargeAddrs, originCexAddrs, secondDayStartBlock, thirdDayStartBlock - 1);
-//        res.append("\n").append(getRecordMsg(secondDay));
-//      }
+      if (secondDayStartBlock > 0) {
+        EnergyRecord firstDay =
+            syncOneDayEnergy(
+                cexAddrs, chargeAddrs, originCexAddrs, firstDayStartBlock, secondDayStartBlock - 1);
+        res.append("\n").append(getRecordMsg(firstDay));
+      }
+      if (thirdDayStartBlock > 0) {
+        EnergyRecord secondDay =
+            syncOneDayEnergy(
+                cexAddrs, chargeAddrs, originCexAddrs, secondDayStartBlock, thirdDayStartBlock - 1);
+        res.append("\n").append(getRecordMsg(secondDay));
+      }
       if (thirdDayEndBlock > 0) {
         EnergyRecord thirdDay =
             syncOneDayEnergy(
@@ -2408,15 +2408,15 @@ public class FullNode {
                   || calldata.toString().startsWith("23b872dd")) {
                 String fromAddress;
                 String toAddress;
-//                BigInteger amount;
+                BigInteger amount;
                 if (calldata.toString().startsWith("a9059cbb")) {
                   fromAddress = get41Addr(Hex.toHexString(tx.getOwnerAddress()));
                   toAddress = "41" + calldata.substring(32, 36 * 2);
-//                  if (calldata.length() < 136) {
-//                    amount = BigInteger.valueOf(0);
-//                  } else {
-//                    amount = new BigInteger(calldata.substring(36 * 2, 68 * 2), 16);
-//                  }
+                  if (calldata.length() < 136) {
+                    amount = BigInteger.valueOf(0);
+                  } else {
+                    amount = new BigInteger(calldata.substring(36 * 2, 68 * 2), 16);
+                  }
                 } else {
                   fromAddress = "41" + calldata.substring(32, 36 * 2);
                   if (calldata.length() < 136) {
@@ -2426,11 +2426,11 @@ public class FullNode {
                     }
                   }
                   toAddress = "41" + calldata.substring(32 * 3, 68 * 2);
-//                  if (calldata.length() < 200) {
-//                    amount = BigInteger.valueOf(0);
-//                  } else {
-//                    amount = new BigInteger(calldata.substring(68 * 2, 100 * 2), 16);
-//                  }
+                  if (calldata.length() < 200) {
+                    amount = BigInteger.valueOf(0);
+                  } else {
+                    amount = new BigInteger(calldata.substring(68 * 2, 100 * 2), 16);
+                  }
                 }
 
                 //                cexAddrs.forEach(
@@ -2476,9 +2476,10 @@ public class FullNode {
                   String cexName = entry.getKey();
                   Set<String> curCexAddrs = entry.getValue();
                   Set<String> curChargeAddrs = chargeAddrs.get(cexName);
-                  if (!curCexAddrs.contains(fromAddress) && curChargeAddrs.contains(toAddress)) {
-//                  amount.compareTo(new BigInteger("500000")) > 0;
-                    // todo amount > 0.1
+                  if (curChargeAddrs.contains(toAddress)
+                      && amount.compareTo(new BigInteger("500000")) > 0) {
+                    //                  amount.compareTo(new BigInteger("500000")) > 0;
+                    // todo amount > 0.5
                     // 充币
                     if (cexName.equalsIgnoreCase("Binance")) {
                       record.addBinanceChargeRecord(energyCost, burnEnergy, fee);
