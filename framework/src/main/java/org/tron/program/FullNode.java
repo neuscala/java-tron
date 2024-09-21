@@ -2275,20 +2275,25 @@ public class FullNode {
           chargeAddrs.get("Bybit").size());
       StringBuilder res = new StringBuilder();
 
+      Set<String> allCexAddrs =
+          cexAddrs.values().stream().flatMap(Set::stream).collect(Collectors.toSet());
       cexAddrs.remove("Others");
       if (secondDayStartBlock > 0) {
         EnergyRecord firstDay =
-            syncOneDayEnergy(cexAddrs, chargeAddrs, firstDayStartBlock, secondDayStartBlock - 1);
+            syncOneDayEnergy(
+                cexAddrs, chargeAddrs, allCexAddrs, firstDayStartBlock, secondDayStartBlock - 1);
         res.append("\n").append(getRecordMsg(firstDay));
       }
       if (thirdDayStartBlock > 0) {
         EnergyRecord secondDay =
-            syncOneDayEnergy(cexAddrs, chargeAddrs, secondDayStartBlock, thirdDayStartBlock - 1);
+            syncOneDayEnergy(
+                cexAddrs, chargeAddrs, allCexAddrs, secondDayStartBlock, thirdDayStartBlock - 1);
         res.append("\n").append(getRecordMsg(secondDay));
       }
       if (thirdDayEndBlock > 0) {
         EnergyRecord thirdDay =
-            syncOneDayEnergy(cexAddrs, chargeAddrs, thirdDayStartBlock, thirdDayEndBlock);
+            syncOneDayEnergy(
+                cexAddrs, chargeAddrs, allCexAddrs, thirdDayStartBlock, thirdDayEndBlock);
         res.append("\n").append(getRecordMsg(thirdDay));
       }
 
@@ -2303,6 +2308,7 @@ public class FullNode {
   private static EnergyRecord syncOneDayEnergy(
       Map<String, Set<String>> cexAddrs,
       Map<String, Set<String>> chargeAddrs,
+      Set<String> allCexAddrs,
       long startBlockNum,
       long endBlockNum)
       throws BadItemException {
@@ -2366,8 +2372,8 @@ public class FullNode {
           // 全网
           record.addMainnetRecord(energyCost, burnEnergy, fee);
 
-          if (Arrays.equals(contractAddress, USDT_ADDR)
-              && transactionInfo.getResult().equals(SUCESS)) {
+          // todo remove success
+          if (Arrays.equals(contractAddress, USDT_ADDR)) {
             try {
               StringBuilder calldata =
                   new StringBuilder(
@@ -2440,7 +2446,7 @@ public class FullNode {
                   String cexName = entry.getKey();
                   Set<String> curCexAddrs = entry.getValue();
                   Set<String> curChargeAddrs = chargeAddrs.get(cexName);
-                  if (curChargeAddrs.contains(toAddress)) {
+                  if (!allCexAddrs.contains(fromAddress) && curChargeAddrs.contains(toAddress)) {
                     // 充币
                     if (cexName.equalsIgnoreCase("Binance")) {
                       record.addBinanceChargeRecord(energyCost, burnEnergy, fee);
@@ -2450,7 +2456,8 @@ public class FullNode {
                       record.addOkChargeRecord(energyCost, burnEnergy, fee);
                     }
 
-                  } else if (curChargeAddrs.contains(fromAddress) && curCexAddrs.contains(toAddress)) {
+                  } else if (curChargeAddrs.contains(fromAddress)
+                      && curCexAddrs.contains(toAddress)) {
                     // 归集
                     if (cexName.equalsIgnoreCase("Binance")) {
                       record.addBinanceCollectRecord(energyCost, burnEnergy, fee);
