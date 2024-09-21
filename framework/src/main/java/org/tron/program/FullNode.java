@@ -2189,8 +2189,8 @@ public class FullNode {
       // todo
       long firstDayStartBlock = 65337555;
       long secondDayStartBlock = 65366347;
-      long thirdDayStartBlock = 65387941;
-      long thirdDayEndBlock = 65416732;
+      long thirdDayStartBlock = 65395139;
+      long thirdDayEndBlock = 65423930;
 
       //      long latestBlockNum = ChainBaseManager.getInstance().getHeadBlockNum();
       //      long lowestBlockNum = ChainBaseManager.getInstance().getLowestBlockNum();
@@ -2408,9 +2408,15 @@ public class FullNode {
                   || calldata.toString().startsWith("23b872dd")) {
                 String fromAddress;
                 String toAddress;
+//                BigInteger amount;
                 if (calldata.toString().startsWith("a9059cbb")) {
                   fromAddress = get41Addr(Hex.toHexString(tx.getOwnerAddress()));
                   toAddress = "41" + calldata.substring(32, 36 * 2);
+//                  if (calldata.length() < 136) {
+//                    amount = BigInteger.valueOf(0);
+//                  } else {
+//                    amount = new BigInteger(calldata.substring(36 * 2, 68 * 2), 16);
+//                  }
                 } else {
                   fromAddress = "41" + calldata.substring(32, 36 * 2);
                   if (calldata.length() < 136) {
@@ -2420,6 +2426,11 @@ public class FullNode {
                     }
                   }
                   toAddress = "41" + calldata.substring(32 * 3, 68 * 2);
+//                  if (calldata.length() < 200) {
+//                    amount = BigInteger.valueOf(0);
+//                  } else {
+//                    amount = new BigInteger(calldata.substring(68 * 2, 100 * 2), 16);
+//                  }
                 }
 
                 //                cexAddrs.forEach(
@@ -2466,6 +2477,8 @@ public class FullNode {
                   Set<String> curCexAddrs = entry.getValue();
                   Set<String> curChargeAddrs = chargeAddrs.get(cexName);
                   if (!curCexAddrs.contains(fromAddress) && curChargeAddrs.contains(toAddress)) {
+//                  amount.compareTo(new BigInteger("500000")) > 0;
+                    // todo amount > 0.1
                     // 充币
                     if (cexName.equalsIgnoreCase("Binance")) {
                       record.addBinanceChargeRecord(energyCost, burnEnergy, fee);
