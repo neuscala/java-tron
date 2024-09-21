@@ -2218,7 +2218,19 @@ public class FullNode {
       //        }
       //      }
 
-      File file = new File("binance.txt");
+      File file = new File("binance1.txt");
+      if (file.exists()) {
+        BufferedReader reader = new BufferedReader(new FileReader(file));
+        String line;
+        Set<String> binanceChargers = chargeAddrs.get("Binance");
+        while ((line = reader.readLine()) != null) {
+          if (line.startsWith("T")) {
+            binanceChargers.add(get41Addr(Hex.toHexString(Commons.decodeFromBase58Check(line))));
+          }
+        }
+        chargeAddrs.put("Binance", binanceChargers);
+      }
+      file = new File("binance2.txt");
       if (file.exists()) {
         BufferedReader reader = new BufferedReader(new FileReader(file));
         String line;
@@ -2438,7 +2450,7 @@ public class FullNode {
                       record.addOkChargeRecord(energyCost, burnEnergy, fee);
                     }
 
-                  } else if (curCexAddrs.contains(toAddress)) {
+                  } else if (curChargeAddrs.contains(fromAddress) && curCexAddrs.contains(toAddress)) {
                     // 归集
                     if (cexName.equalsIgnoreCase("Binance")) {
                       record.addBinanceCollectRecord(energyCost, burnEnergy, fee);
