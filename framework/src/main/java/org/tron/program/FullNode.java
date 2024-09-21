@@ -2263,6 +2263,7 @@ public class FullNode {
           chargeAddrs.get("Bybit").size());
       StringBuilder res = new StringBuilder();
 
+      cexAddrs.remove("Others");
       if (secondDayStartBlock > 0) {
         EnergyRecord firstDay =
             syncOneDayEnergy(cexAddrs, chargeAddrs, firstDayStartBlock, secondDayStartBlock - 1);
