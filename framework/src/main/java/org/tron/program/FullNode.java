@@ -2176,9 +2176,9 @@ public class FullNode {
       //              .map(s -> get41Addr(Hex.toHexString(Commons.decodeFromBase58Check(s))))
       //              .collect(Collectors.toSet());
       Map<String, Set<String>> cexAddrs = getTronCexAddresses();
-      Set<String> allCexAddrs =
-          cexAddrs.values().stream().flatMap(Set::stream).collect(Collectors.toSet());
-      cexAddrs.remove("Others");
+      //      Set<String> allCexAddrs =
+      //          cexAddrs.values().stream().flatMap(Set::stream).collect(Collectors.toSet());
+      //      cexAddrs.remove("Others");
       // todo
       long firstDayStartBlock = 65337555;
       long secondDayStartBlock = 65366347;
@@ -2202,9 +2202,9 @@ public class FullNode {
               cexAddrs.get("Binance"),
               cexAddrs.get("Okex"),
               cexAddrs.get("Bybit"),
-              allCexAddrs,
-              firstDayStartBlock - 7 * 28800,
-              thirdDayStartBlock);
+              cexAddrs,
+              thirdDayStartBlock,
+              thirdDayEndBlock);
       //      for (Map.Entry<String, Set<String>> entry : cexAddrs.entrySet()) {
       //        if (!entry.getKey().equalsIgnoreCase("Others")) {
       //          chargeAddrs.put(
@@ -2217,6 +2217,45 @@ public class FullNode {
       //                  thirdDayEndBlock));
       //        }
       //      }
+
+      File file = new File("binance.txt");
+      if (file.exists()) {
+        BufferedReader reader = new BufferedReader(new FileReader(file));
+        String line;
+        Set<String> binanceChargers = chargeAddrs.get("Binance");
+        while ((line = reader.readLine()) != null) {
+          if (line.startsWith("T")) {
+            binanceChargers.add(get41Addr(Hex.toHexString(Commons.decodeFromBase58Check(line))));
+          }
+        }
+        chargeAddrs.put("Binance", binanceChargers);
+      }
+      file = new File("okex.txt");
+      if (file.exists()) {
+        BufferedReader reader = new BufferedReader(new FileReader(file));
+        String line;
+        Set<String> okexChargers = chargeAddrs.get("Okex");
+        while ((line = reader.readLine()) != null) {
+          if (line.startsWith("T")) {
+            okexChargers.add(get41Addr(Hex.toHexString(Commons.decodeFromBase58Check(line))));
+          }
+        }
+        chargeAddrs.put("Okex", okexChargers);
+      }
+
+      file = new File("bybit.txt");
+      if (file.exists()) {
+        BufferedReader reader = new BufferedReader(new FileReader(file));
+        String line;
+        Set<String> bybitChargers = chargeAddrs.get("Bybit");
+        while ((line = reader.readLine()) != null) {
+          if (line.startsWith("T")) {
+            bybitChargers.add(get41Addr(Hex.toHexString(Commons.decodeFromBase58Check(line))));
+          }
+        }
+        chargeAddrs.put("Bybit", bybitChargers);
+      }
+
       logger.info(
           "Get cex charge addrs success, Binance {}, Okex {}, Bybit {}, start sync energy data ...",
           chargeAddrs.get("Binance").size(),
@@ -2561,10 +2600,13 @@ public class FullNode {
       Set<String> binanceAddrs,
       Set<String> okAddrs,
       Set<String> bybitAddrs,
-      Set<String> allCexAddrs,
+      Map<String, Set<String>> cexAddrs,
       long startBlockNum,
       long endBlockNum)
       throws BadItemException {
+
+    Set<String> allCexAddrs =
+        cexAddrs.values().stream().flatMap(Set::stream).collect(Collectors.toSet());
 
     DBIterator retIterator =
         (DBIterator) ChainBaseManager.getInstance().getTransactionRetStore().getDb().iterator();
@@ -2639,21 +2681,15 @@ public class FullNode {
                 if (binanceAddrs.contains(toAddress)) {
                   Set<String> interAds =
                       binanceInterAddrs.getOrDefault(fromAddress, new HashSet<>());
-                  //                  if (interAds.size() < 3) {
-                  //                    interAds.add(toAddress);
-                  //                  }
+                  interAds.add("Binance");
                   binanceInterAddrs.put(fromAddress, interAds);
                 } else if (okAddrs.contains(toAddress)) {
                   Set<String> interAds = okInterAddrs.getOrDefault(fromAddress, new HashSet<>());
-                  //                  if (interAds.size() < 3) {
-                  //                    interAds.add(toAddress);
-                  //                  }
+                  interAds.add("Okex");
                   okInterAddrs.put(fromAddress, interAds);
                 } else if (bybitAddrs.contains(toAddress)) {
                   Set<String> interAds = bybitInterAddrs.getOrDefault(fromAddress, new HashSet<>());
-                  //                  if (interAds.size() < 3) {
-                  //                    interAds.add(toAddress);
-                  //                  }
+                  interAds.add("Bybit");
                   bybitInterAddrs.put(fromAddress, interAds);
                 }
               }
@@ -2741,60 +2777,57 @@ public class FullNode {
                 toAddress = "41" + calldata.substring(32 * 3, 68 * 2);
               }
 
-              if (binanceInterAddrs.containsKey(toAddress)) {
-                if (!allCexAddrs.contains(fromAddress)) {
-                  Set<String> curInterAddrs =
-                      binanceInterAddrs.getOrDefault(toAddress, new HashSet<>());
-                  if (curInterAddrs.size() < 3) {
-                    curInterAddrs.add(fromAddress);
-                  }
-                  binanceInterAddrs.put(toAddress, curInterAddrs);
-                }
-              } else if (binanceInterAddrs.containsKey(fromAddress)) {
-                if (!allCexAddrs.contains(toAddress)) {
+              if (binanceInterAddrs.containsKey(fromAddress)) {
+                if (!cexAddrs.get("Binance").contains(toAddress)) {
                   Set<String> curInterAddrs =
                       binanceInterAddrs.getOrDefault(fromAddress, new HashSet<>());
+                  String toAdd = toAddress;
+                  if (cexAddrs.get("Okex").contains(toAddress)) {
+                    toAdd = "Okex";
+                  } else if (cexAddrs.get("Bybit").contains(toAddress)) {
+                    toAdd = "Bybit";
+                  } else if (cexAddrs.get("Others").contains(toAddress)) {
+                    toAdd = "Others";
+                  }
                   if (curInterAddrs.size() < 3) {
-                    curInterAddrs.add(toAddress);
+                    curInterAddrs.add(toAdd);
                   }
                   binanceInterAddrs.put(fromAddress, curInterAddrs);
                 }
               }
 
-              if (okInterAddrs.containsKey(toAddress)) {
-                if (!allCexAddrs.contains(fromAddress)) {
-                  Set<String> curInterAddrs = okInterAddrs.getOrDefault(toAddress, new HashSet<>());
-                  if (curInterAddrs.size() < 3) {
-                    curInterAddrs.add(fromAddress);
-                  }
-                  okInterAddrs.put(toAddress, curInterAddrs);
-                }
-              } else if (okInterAddrs.containsKey(fromAddress)) {
-                if (!allCexAddrs.contains(toAddress)) {
+              if (okInterAddrs.containsKey(fromAddress)) {
+                if (!cexAddrs.get("Okex").contains(toAddress)) {
                   Set<String> curInterAddrs =
                       okInterAddrs.getOrDefault(fromAddress, new HashSet<>());
+                  String toAdd = toAddress;
+                  if (cexAddrs.get("Binance").contains(toAddress)) {
+                    toAdd = "Binance";
+                  } else if (cexAddrs.get("Bybit").contains(toAddress)) {
+                    toAdd = "Bybit";
+                  } else if (cexAddrs.get("Others").contains(toAddress)) {
+                    toAdd = "Others";
+                  }
                   if (curInterAddrs.size() < 3) {
-                    curInterAddrs.add(toAddress);
+                    curInterAddrs.add(toAdd);
                   }
                   okInterAddrs.put(fromAddress, curInterAddrs);
                 }
               }
-
-              if (bybitInterAddrs.containsKey(toAddress)) {
-                if (!allCexAddrs.contains(fromAddress)) {
-                  Set<String> curInterAddrs =
-                      bybitInterAddrs.getOrDefault(toAddress, new HashSet<>());
-                  if (curInterAddrs.size() < 3) {
-                    curInterAddrs.add(fromAddress);
-                  }
-                  bybitInterAddrs.put(toAddress, curInterAddrs);
-                }
-              } else if (bybitInterAddrs.containsKey(fromAddress)) {
-                if (!allCexAddrs.contains(toAddress)) {
+              if (bybitInterAddrs.containsKey(fromAddress)) {
+                if (!cexAddrs.get("Bybit").contains(toAddress)) {
                   Set<String> curInterAddrs =
                       bybitInterAddrs.getOrDefault(fromAddress, new HashSet<>());
+                  String toAdd = toAddress;
+                  if (cexAddrs.get("Okex").contains(toAddress)) {
+                    toAdd = "Okex";
+                  } else if (cexAddrs.get("Binance").contains(toAddress)) {
+                    toAdd = "Binance";
+                  } else if (cexAddrs.get("Others").contains(toAddress)) {
+                    toAdd = "Others";
+                  }
                   if (curInterAddrs.size() < 3) {
-                    curInterAddrs.add(toAddress);
+                    curInterAddrs.add(toAdd);
                   }
                   bybitInterAddrs.put(fromAddress, curInterAddrs);
                 }
@@ -2814,14 +2847,35 @@ public class FullNode {
       }
     }
 
-    binanceInterAddrs.entrySet().removeIf(entry -> entry.getValue().size() >= 3);
-    okInterAddrs.entrySet().removeIf(entry -> entry.getValue().size() >= 3);
-    bybitInterAddrs.entrySet().removeIf(entry -> entry.getValue().size() >= 3);
+    binanceInterAddrs
+        .entrySet()
+        .removeIf(
+            entry ->
+                entry.getValue().size() >= 3
+                    || entry.getValue().contains("Okex")
+                    || entry.getValue().contains("Bybit")
+                    || entry.getValue().contains("Others"));
+    okInterAddrs
+        .entrySet()
+        .removeIf(
+            entry ->
+                entry.getValue().size() >= 3
+                    || entry.getValue().contains("Binance")
+                    || entry.getValue().contains("Bybit")
+                    || entry.getValue().contains("Others"));
+    bybitInterAddrs
+        .entrySet()
+        .removeIf(
+            entry ->
+                entry.getValue().size() >= 3
+                    || entry.getValue().contains("Binance")
+                    || entry.getValue().contains("Okex")
+                    || entry.getValue().contains("Others"));
 
     Map<String, Set<String>> res = new HashMap<>();
-    res.put("Binance", binanceInterAddrs.keySet());
-    res.put("Okex", okInterAddrs.keySet());
-    res.put("Bybit", bybitInterAddrs.keySet());
+    res.put("Binance", new HashSet<>(binanceInterAddrs.keySet()));
+    res.put("Okex", new HashSet<>(okInterAddrs.keySet()));
+    res.put("Bybit", new HashSet<>(bybitInterAddrs.keySet()));
 
     allCexAddrs.forEach(cexAd -> res.values().forEach(set -> set.remove(cexAd)));
 
