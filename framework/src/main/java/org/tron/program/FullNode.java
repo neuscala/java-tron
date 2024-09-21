@@ -2465,7 +2465,7 @@ public class FullNode {
                   String cexName = entry.getKey();
                   Set<String> curCexAddrs = entry.getValue();
                   Set<String> curChargeAddrs = chargeAddrs.get(cexName);
-                  if (!allCexAddrs.contains(fromAddress) && curChargeAddrs.contains(toAddress)) {
+                  if (!curCexAddrs.contains(fromAddress) && curChargeAddrs.contains(toAddress)) {
                     // 充币
                     if (cexName.equalsIgnoreCase("Binance")) {
                       record.addBinanceChargeRecord(energyCost, burnEnergy, fee);
