@@ -2303,17 +2303,17 @@ public class FullNode {
 //        res.append("\n").append(getRecordMsg(firstDay));
 //      }
 //      if (thirdDayStartBlock > 0) {
-//        EnergyRecord secondDay =
-//            syncOneDayEnergy(
-//                cexAddrs, chargeAddrs, originCexAddrs, secondDayStartBlock, thirdDayStartBlock - 1);
-//        res.append("\n").append(getRecordMsg(secondDay));
+        EnergyRecord secondDay =
+            syncOneDayEnergy(
+                cexAddrs, chargeAddrs, originCexAddrs, 65467119, 65481514);
+        res.append("\n").append(getRecordMsg(secondDay));
 //      }
-      if (thirdDayEndBlock > 0) {
+//      if (thirdDayEndBlock > 0) {
         EnergyRecord thirdDay =
             syncOneDayEnergy(
                 cexAddrs, chargeAddrs, originCexAddrs, 65452723, 65481514);
         res.append("\n").append(getRecordMsg(thirdDay));
-      }
+//      }
 
       logger.info(res.toString());
       System.out.println(res);
