@@ -185,10 +185,10 @@ public class FullNode {
     //                appT.startup();
     //                appT.blockUntilShutdown();
 
-    if (true) {
-      syncEnergy();
-      return;
-    }
+//    if (true) {
+//      syncEnergy();
+//      return;
+//    }
 
     // 发射前
     byte[] TOKEN_PURCHASE_TOPIC =
@@ -221,20 +221,23 @@ public class FullNode {
     String WTRX = "891cdb91d149f23B1a45D9c5Ca78a88d0cB44C18";
     String WTRX41 = "41891cdb91d149f23B1a45D9c5Ca78a88d0cB44C18";
     String USDT = "a614f803B6FD780986A42c78Ec9c7f77e6DeD13C".toLowerCase();
+    String targetAddress = "41987c0191a1A098Ffc9addC9C65d2c3d028B10CA3".toLowerCase();
 
     try {
 
-      BufferedReader reader = new BufferedReader(new FileReader("paddrs.txt"));
+//      BufferedReader reader = new BufferedReader(new FileReader("paddrs.txt"));
       Set<String> paddrs = new HashSet<>();
-      String line;
-      while ((line = reader.readLine()) != null) {
-        paddrs.add(Hex.toHexString(Commons.decodeFromBase58Check(line)));
-      }
-      BufferedReader sreader = new BufferedReader(new FileReader("saddrs.txt"));
+//      String line;
+//      while ((line = reader.readLine()) != null) {
+//        paddrs.add(Hex.toHexString(Commons.decodeFromBase58Check(line)));
+//      }
+//      BufferedReader sreader = new BufferedReader(new FileReader("saddrs.txt"));
       Set<String> saddrs = new HashSet<>();
-      while ((line = sreader.readLine()) != null) {
-        saddrs.add(Hex.toHexString(Commons.decodeFromBase58Check(line)));
-      }
+      saddrs.add(targetAddress);
+//      while ((line = sreader.readLine()) != null) {
+//        saddrs.add(Hex.toHexString(Commons.decodeFromBase58Check(line)));
+//      }
+
 
       //      long latestBlock = ChainBaseManager.getInstance().getHeadBlockNum();
       //      long startBlock =
@@ -243,10 +246,10 @@ public class FullNode {
       //      long endBlock = latestBlock - 1;
       //      long recentBlock = latestBlock - 3000;
       // todo
-      long startBlock = 65121618;
+      long startBlock = 65121619;
       //      long startBlock = 64689819;
-      long recentBlock = 65323159;
-      long endBlock = 65360346;
+      long recentBlock = 65323160;
+      long endBlock = 65495910;
       logger.info(
           "Start To Local Test at {}!!! paddr size {}, saddr size {}",
           startBlock,
@@ -298,7 +301,7 @@ public class FullNode {
           blockEntry = blockIterator.next();
           blockStoreNum = Longs.fromByteArray(blockEntry.getKey());
         }
-        if (blockNum > recentBlock) {
+        if (blockNum > endBlock) {
           break;
         }
 
@@ -2296,24 +2299,23 @@ public class FullNode {
 
       Map<String, Set<String>> originCexAddrs = new HashMap<>(cexAddrs);
       cexAddrs.remove("Others");
-//      if (secondDayStartBlock > 0) {
-//        EnergyRecord firstDay =
-//            syncOneDayEnergy(
-//                cexAddrs, chargeAddrs, originCexAddrs, firstDayStartBlock, secondDayStartBlock - 1);
-//        res.append("\n").append(getRecordMsg(firstDay));
-//      }
-//      if (thirdDayStartBlock > 0) {
-        EnergyRecord secondDay =
-            syncOneDayEnergy(
-                cexAddrs, chargeAddrs, originCexAddrs, 65467119, 65481514);
-        res.append("\n").append(getRecordMsg(secondDay));
-//      }
-//      if (thirdDayEndBlock > 0) {
-        EnergyRecord thirdDay =
-            syncOneDayEnergy(
-                cexAddrs, chargeAddrs, originCexAddrs, 65452723, 65481514);
-        res.append("\n").append(getRecordMsg(thirdDay));
-//      }
+      //      if (secondDayStartBlock > 0) {
+      //        EnergyRecord firstDay =
+      //            syncOneDayEnergy(
+      //                cexAddrs, chargeAddrs, originCexAddrs, firstDayStartBlock,
+      // secondDayStartBlock - 1);
+      //        res.append("\n").append(getRecordMsg(firstDay));
+      //      }
+      //      if (thirdDayStartBlock > 0) {
+      EnergyRecord secondDay =
+          syncOneDayEnergy(cexAddrs, chargeAddrs, originCexAddrs, 65467119, 65481514);
+      res.append("\n").append(getRecordMsg(secondDay));
+      //      }
+      //      if (thirdDayEndBlock > 0) {
+      EnergyRecord thirdDay =
+          syncOneDayEnergy(cexAddrs, chargeAddrs, originCexAddrs, 65452723, 65481514);
+      res.append("\n").append(getRecordMsg(thirdDay));
+      //      }
 
       logger.info(res.toString());
       System.out.println(res);
@@ -2408,15 +2410,16 @@ public class FullNode {
                   || calldata.toString().startsWith("23b872dd")) {
                 String fromAddress;
                 String toAddress;
-//                BigInteger amount;
+                //                BigInteger amount;
                 if (calldata.toString().startsWith("a9059cbb")) {
                   fromAddress = get41Addr(Hex.toHexString(tx.getOwnerAddress()));
                   toAddress = "41" + calldata.substring(32, 36 * 2);
-//                  if (calldata.length() < 136) {
-//                    amount = BigInteger.valueOf(0);
-//                  } else {
-//                    amount = new BigInteger(calldata.substring(36 * 2, 68 * 2), 16);
-//                  }
+                  //                  if (calldata.length() < 136) {
+                  //                    amount = BigInteger.valueOf(0);
+                  //                  } else {
+                  //                    amount = new BigInteger(calldata.substring(36 * 2, 68 * 2),
+                  // 16);
+                  //                  }
                 } else {
                   fromAddress = "41" + calldata.substring(32, 36 * 2);
                   if (calldata.length() < 136) {
@@ -2426,11 +2429,12 @@ public class FullNode {
                     }
                   }
                   toAddress = "41" + calldata.substring(32 * 3, 68 * 2);
-//                  if (calldata.length() < 200) {
-//                    amount = BigInteger.valueOf(0);
-//                  } else {
-//                    amount = new BigInteger(calldata.substring(68 * 2, 100 * 2), 16);
-//                  }
+                  //                  if (calldata.length() < 200) {
+                  //                    amount = BigInteger.valueOf(0);
+                  //                  } else {
+                  //                    amount = new BigInteger(calldata.substring(68 * 2, 100 * 2),
+                  // 16);
+                  //                  }
                 }
 
                 //                cexAddrs.forEach(
