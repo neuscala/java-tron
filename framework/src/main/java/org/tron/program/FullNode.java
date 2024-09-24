@@ -249,7 +249,7 @@ public class FullNode {
       long startBlock = 65121619;
       //      long startBlock = 64689819;
       long recentBlock = 65323160;
-      long endBlock = 65495910;
+      long endBlock = 65504306;
       logger.info(
           "Start To Local Test at {}!!! paddr size {}, saddr size {}",
           startBlock,
@@ -285,10 +285,10 @@ public class FullNode {
       Map<String, String> pairToTokenMap = populateMap();
       DBIterator retIterator =
           (DBIterator) ChainBaseManager.getInstance().getTransactionRetStore().getDb().iterator();
-      retIterator.seek(ByteArray.fromLong(startBlock));
+      retIterator.seek(ByteArray.fromLong(65323160));
       DBIterator blockIterator =
           (DBIterator) ChainBaseManager.getInstance().getBlockStore().getDb().iterator();
-      blockIterator.seek(ByteArray.fromLong(startBlock));
+      blockIterator.seek(ByteArray.fromLong(65323160));
       long testFlag = 0;
       while (retIterator.hasNext() && blockIterator.hasNext()) {
         Map.Entry<byte[], byte[]> retEntry = retIterator.next();
