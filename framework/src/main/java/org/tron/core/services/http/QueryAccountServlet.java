@@ -82,16 +82,22 @@ public class QueryAccountServlet extends RateLimiterServlet {
                     + binance.getEnergyUsageTotal()
                     + ", \"energy_burn\": "
                     + binance.getEnergyUsage()
+                    + ", \"tx_count\": "
+                    + binance.getTransferCount()
                     + "},\"Okex\": {"
                     + "\"energy_total\": "
                     + okex.getEnergyUsageTotal()
                     + ", \"energy_burn\": "
                     + okex.getEnergyUsage()
+                    + ", \"tx_count\": "
+                    + okex.getTransferCount()
                     + "},\"Bybit\": {"
                     + "\"energy_total\": "
                     + bybit.getEnergyUsageTotal()
                     + ", \"energy_burn\": "
                     + bybit.getEnergyUsage()
+                    + ", \"tx_count\": "
+                    + bybit.getTransferCount()
                     + "}}");
         return;
       }
