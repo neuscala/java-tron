@@ -49,6 +49,53 @@ public class QueryAccountServlet extends RateLimiterServlet {
         return;
       }
 
+      boolean isCex =
+          request.getParameter("cex") != null && Boolean.parseBoolean(request.getParameter("cex"));
+      if (isCex) {
+        long cycleCount =
+            request.getParameter("cycle_count") == null
+                ? 4
+                : Long.parseLong(request.getParameter("cycle_count"));
+        ContractStateCapsule binance = contractStateStore.getBinanceRecord(startCycle);
+        if (binance == null) {
+          binance = new ContractStateCapsule(0);
+        }
+        ContractStateCapsule okex = contractStateStore.getOkexRecord(startCycle);
+        if (okex == null) {
+          okex = new ContractStateCapsule(0);
+        }
+        ContractStateCapsule bybit = contractStateStore.getBybitRecord(startCycle);
+        if (bybit == null) {
+          bybit = new ContractStateCapsule(0);
+        }
+        for (long cycle = 1; cycle < cycleCount; cycle++) {
+          binance.merge(contractStateStore.getBinanceRecord(startCycle + cycle));
+          okex.merge(contractStateStore.getOkexRecord(startCycle + cycle));
+          bybit.merge(contractStateStore.getBybitRecord(startCycle + cycle));
+        }
+
+        response
+            .getWriter()
+            .println(
+                "{\"Binance\": {"
+                    + "\"energy_total\": "
+                    + binance.getEnergyUsageTotal()
+                    + ", \"energy_burn\": "
+                    + binance.getEnergyUsage()
+                    + "},\"Okex\": {"
+                    + "\"energy_total\": "
+                    + okex.getEnergyUsageTotal()
+                    + ", \"energy_burn\": "
+                    + okex.getEnergyUsage()
+                    + "},\"Bybit\": {"
+                    + "\"energy_total\": "
+                    + bybit.getEnergyUsageTotal()
+                    + ", \"energy_burn\": "
+                    + bybit.getEnergyUsage()
+                    + "}}");
+        return;
+      }
+
       long cycleCount =
           request.getParameter("cycle_count") == null
               ? 28L
@@ -121,7 +168,7 @@ public class QueryAccountServlet extends RateLimiterServlet {
 
         res.append(parsed ? sunswapv2.getTriggerOutput() : sunswapv2.toString()).append(",");
 
-        List<String> v2VaultAddresses =readAddresses("sunswapv2vault.txt");
+        List<String> v2VaultAddresses = readAddresses("sunswapv2vault.txt");
         res.append("\"sunswap-v2-vault\": ");
 
         ContractStateCapsule sunswapv2vault = new ContractStateCapsule(0);
@@ -147,7 +194,7 @@ public class QueryAccountServlet extends RateLimiterServlet {
 
         res.append(parsed ? sunswapv3.getTriggerOutput() : sunswapv3.toString()).append(",");
 
-        List<String> v3VaultAddresses =readAddresses("sunswapv3vault.txt");
+        List<String> v3VaultAddresses = readAddresses("sunswapv3vault.txt");
         res.append("\"sunswap-v3-vault\": ");
 
         ContractStateCapsule sunswapv3vault = new ContractStateCapsule(0);

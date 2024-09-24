@@ -63,6 +63,42 @@ public class ContractStateStore extends TronStoreWithRevoking<ContractStateCapsu
     revokingDB.put(getCurrentPrefixKey("usdt".getBytes()), item.getData());
   }
 
+  public ContractStateCapsule getBinanceRecord(long cycleNumber) {
+    return getUnchecked(addPrefix(cycleNumber, "Binance".getBytes()));
+  }
+
+  public ContractStateCapsule getBinanceRecord() {
+    return getUnchecked(getCurrentPrefixKey("Binance".getBytes()));
+  }
+
+  public void setBinanceRecord(ContractStateCapsule item) {
+    revokingDB.put(getCurrentPrefixKey("Binance".getBytes()), item.getData());
+  }
+
+  public ContractStateCapsule getOkexRecord(long cycleNumber) {
+    return getUnchecked(addPrefix(cycleNumber, "Okex".getBytes()));
+  }
+
+  public ContractStateCapsule getOkexRecord() {
+    return getUnchecked(getCurrentPrefixKey("Okex".getBytes()));
+  }
+
+  public void setOkexRecord(ContractStateCapsule item) {
+    revokingDB.put(getCurrentPrefixKey("Okex".getBytes()), item.getData());
+  }
+
+  public ContractStateCapsule getBybitRecord(long cycleNumber) {
+    return getUnchecked(addPrefix(cycleNumber, "Bybit".getBytes()));
+  }
+
+  public ContractStateCapsule getBybitRecord() {
+    return getUnchecked(getCurrentPrefixKey("Bybit".getBytes()));
+  }
+
+  public void setBybitRecord(ContractStateCapsule item) {
+    revokingDB.put(getCurrentPrefixKey("Bybit".getBytes()), item.getData());
+  }
+
   public ContractStateCapsule getAccountRecord(byte[] addr) {
     byte[] addrKey = addr.clone();
     addrKey[0] = (byte) 0x42;

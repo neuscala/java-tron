@@ -8,6 +8,7 @@ import static org.tron.protos.Protocol.Transaction.Result.contractResult.OUT_OF_
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.SUCCESS;
 import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
 
+import com.alibaba.fastjson.JSONObject;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
@@ -79,6 +80,7 @@ import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.runtime.vm.LogInfo;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.Commons;
 import org.tron.common.utils.JsonUtil;
 import org.tron.common.utils.Pair;
 import org.tron.common.utils.SessionOptional;
@@ -143,6 +145,7 @@ import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.service.MortgageService;
 import org.tron.core.service.RewardViCalService;
+import org.tron.core.services.http.NetUtil;
 import org.tron.core.store.AccountAssetStore;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountIndexStore;
@@ -278,6 +281,7 @@ public class Manager {
   private static final byte[] innerUsdtAddr =
       Hex.decode("a614f803B6FD780986A42c78Ec9c7f77e6DeD13C");
   private static final byte[] usdtAddr = Hex.decode("41a614f803B6FD780986A42c78Ec9c7f77e6DeD13C");
+  private static Map<String, Set<byte[]>> cexAddrs;
 
   @Autowired
   private RewardViCalService rewardViCalService;
@@ -590,6 +594,42 @@ public class Manager {
     }
 
     maxFlushCount = CommonParameter.getInstance().getStorage().getMaxFlushCount();
+
+    cexAddrs = getTronCexAddresses();
+  }
+
+  private static Map<String, Set<byte[]>> getTronCexAddresses() {
+    try {
+      JSONObject resObject =
+          JSONObject.parseObject(NetUtil.get("https://apilist.tronscanapi.com/api/hot/exchanges"));
+
+      Map<String, Set<byte[]>> res = new HashMap<>();
+
+      resObject
+          .getJSONArray("exchanges")
+          .forEach(
+              obj -> {
+                JSONObject jo = (JSONObject) obj;
+                String addr = jo.getString("address");
+                String name = jo.getString("name");
+                String cexName;
+                if (name.contains("Binance") || name.contains("binance")) {
+                  cexName = "Binance";
+                } else if (name.contains("Okex") || name.contains("okex")) {
+                  cexName = "Okex";
+                } else if (name.contains("bybit") || name.contains("Bybit")) {
+                  cexName = "Bybit";
+                } else {
+                  cexName = "Others";
+                }
+                Set<byte[]> addrs = res.getOrDefault(cexName, new HashSet<>());
+                addrs.add(Commons.decodeFromBase58Check(addr));
+                res.put(cexName, addrs);
+              });
+      return res;
+    } catch (Exception e) {
+      throw e;
+    }
   }
 
   /**
@@ -1685,6 +1725,44 @@ public class Manager {
                 toAddress = Hex.decode("41" + calldata.substring(32 * 3, 68 * 2));
               }
 
+              // cex
+              if (cexAddrs.get("Binance").stream().anyMatch(addr->Arrays.equals(addr, fromAddress))) {
+                ContractStateCapsule binance = getChainBaseManager().getContractStateStore().getBinanceRecord();
+                if (binance == null) {
+                  binance = new ContractStateCapsule(getDynamicPropertiesStore().getCurrentCycleNumber());
+                }
+                binance.addTransferCount();
+                binance.addEnergyUsageTotal(trace.getReceipt().getEnergyUsageTotal());
+                binance.addEnergyUsage(trace.getReceipt().getEnergyUsageTotal()
+                    - trace.getReceipt().getEnergyUsage() - trace.getReceipt().getOriginEnergyUsage());
+                binance.addTransferFee(trace.getReceipt().getEnergyFee());
+                getChainBaseManager().getContractStateStore().setBinanceRecord(binance);
+              } else if (cexAddrs.get("Okex").stream().anyMatch(addr->Arrays.equals(addr, fromAddress))) {
+
+                ContractStateCapsule okex = getChainBaseManager().getContractStateStore().getOkexRecord();
+                if (okex == null) {
+                  okex = new ContractStateCapsule(getDynamicPropertiesStore().getCurrentCycleNumber());
+                }
+                okex.addTransferCount();
+                okex.addEnergyUsageTotal(trace.getReceipt().getEnergyUsageTotal());
+                okex.addEnergyUsage(trace.getReceipt().getEnergyUsageTotal()
+                    - trace.getReceipt().getEnergyUsage() - trace.getReceipt().getOriginEnergyUsage());
+                okex.addTransferFee(trace.getReceipt().getEnergyFee());
+                getChainBaseManager().getContractStateStore().setOkexRecord(okex);
+              } else if (cexAddrs.get("Bybit").stream().anyMatch(addr->Arrays.equals(addr, fromAddress))) {
+
+                ContractStateCapsule bybit = getChainBaseManager().getContractStateStore().getBybitRecord();
+                if (bybit == null) {
+                  bybit = new ContractStateCapsule(getDynamicPropertiesStore().getCurrentCycleNumber());
+                }
+                bybit.addTransferCount();
+                bybit.addEnergyUsageTotal(trace.getReceipt().getEnergyUsageTotal());
+                bybit.addEnergyUsage(trace.getReceipt().getEnergyUsageTotal()
+                    - trace.getReceipt().getEnergyUsage() - trace.getReceipt().getOriginEnergyUsage());
+                bybit.addTransferFee(trace.getReceipt().getEnergyFee());
+                getChainBaseManager().getContractStateStore().setBybitRecord(bybit);
+              }
+
               // usdt transfer
               UsdtTransferCapsule usdtTransfer =
                   new UsdtTransferCapsule(
@@ -2221,6 +2299,11 @@ public class Manager {
     boolean flag = chainBaseManager.getDynamicPropertiesStore().getNextMaintenanceTime()
         <= block.getTimeStamp();
     if (flag) {
+      try {
+        cexAddrs = getTronCexAddresses();
+      } catch (Exception e) {
+
+      }
       proposalController.processProposals();
       chainBaseManager.getForkController().reset();
 

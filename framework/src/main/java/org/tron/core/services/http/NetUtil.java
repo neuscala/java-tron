@@ -18,33 +18,6 @@ public class NetUtil {
 
   private static final OkHttpClient client = new OkHttpClient.Builder().build();
 
-  @Data
-  private static class Price {
-    int mins;
-    String price;
-  }
-
-  @Data
-  private static class GasPrice {
-    String status;
-    String message;
-    Result result;
-  }
-
-  @Data
-  private static class Result {
-    @JsonAlias("LastBlock")
-    String lastBlock;
-    @JsonAlias("SafeGasPrice")
-    String safeGasPrice;
-    @JsonAlias("ProposeGasPrice")
-    String proposeGasPrice;
-    @JsonAlias("FastGasPrice")
-    String fastGasPrice;
-    String suggestBaseFee;
-    String gasUsedRatio;
-  }
-
   public static String get(String url) {
     Request request = new Request.Builder()
         .url(url)
