@@ -232,33 +232,33 @@ public class FullNode {
     long recentBlock = 65323160;
     long endBlock = 65524702;
     // 0911
-    syncMevStat(65121619, 65150410, 65150410, paddrs, saddrs);
-    // 0912
-    syncMevStat(65150411, 65179202, 65179202, paddrs, saddrs);
-    // 0913
-    syncMevStat(65179203, 65207994, 65207994, paddrs, saddrs);
-    // 0914
-    syncMevStat(65207995, 65236786, 65236786, paddrs, saddrs);
-    // 0915
-    syncMevStat(65236787, 65265578, 65265578, paddrs, saddrs);
-    // 0916
-    syncMevStat(65265579, 65294370, 65294370, paddrs, saddrs);
-    // 0917
-    syncMevStat(65294371, 65323159, 65323159, paddrs, saddrs);
-    // 0918
-    syncMevStat(65323160, 65351950, 65351950, paddrs, saddrs);
-    // 0919
-    syncMevStat(65351951, 65380742, 65380742, paddrs, saddrs);
-    // 0920
-    syncMevStat(65380743, 65409534, 65409534, paddrs, saddrs);
-    // 0921
-    syncMevStat(65409535, 65438326, 65438326, paddrs, saddrs);
-    // 0922
-    syncMevStat(65438327, 65467118, 65467118, paddrs, saddrs);
+//    syncMevStat(65121619, 65150410, 65150410, paddrs, saddrs);
+//    // 0912
+//    syncMevStat(65150411, 65179202, 65179202, paddrs, saddrs);
+//    // 0913
+//    syncMevStat(65179203, 65207994, 65207994, paddrs, saddrs);
+//    // 0914
+//    syncMevStat(65207995, 65236786, 65236786, paddrs, saddrs);
+//    // 0915
+//    syncMevStat(65236787, 65265578, 65265578, paddrs, saddrs);
+//    // 0916
+//    syncMevStat(65265579, 65294370, 65294370, paddrs, saddrs);
+//    // 0917
+//    syncMevStat(65294371, 65323159, 65323159, paddrs, saddrs);
+//    // 0918
+//    syncMevStat(65323160, 65351950, 65351950, paddrs, saddrs);
+//    // 0919
+//    syncMevStat(65351951, 65380742, 65380742, paddrs, saddrs);
+//    // 0920
+//    syncMevStat(65380743, 65409534, 65409534, paddrs, saddrs);
+//    // 0921
+//    syncMevStat(65409535, 65438326, 65438326, paddrs, saddrs);
+//    // 0922
+//    syncMevStat(65438327, 65467118, 65467118, paddrs, saddrs);
     // 0923
-    syncMevStat(65467119, 65150410, 65150410, paddrs, saddrs);
+    syncMevStat(65467119, 65495910, 65495910, paddrs, saddrs);
     // 0924
-    syncMevStat(65495911, 65524702, 65524702, paddrs, saddrs);
+//    syncMevStat(65495911, 65524702, 65524702, paddrs, saddrs);
     logger.info("Total End!!!!");
   }
 
