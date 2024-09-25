@@ -1279,7 +1279,12 @@ public class FullNode {
                       buySellsLastBlocks.records.size());
               if (!buySell.matched) {
                 blockSuccess =
-                    matchBuySell(buySell, buySellsThisBlocks.records, addrAllInfoRecord, token, i);
+                    matchBuySell(
+                        buySell,
+                        buySellsThisBlocks.records,
+                        addrAllInfoRecord,
+                        token,
+                        buySellsThisBlocks.records.size());
               }
               addrBlockSuccess = blockSuccess;
             }
@@ -1485,6 +1490,7 @@ public class FullNode {
           for (SingleBuySellRecord buy : buySellsLastBlocks.records) {
             if (buy.isBuy && !buy.feeAdded) {
               feeToAdd = feeToAdd.add(buy.fee);
+              buy.feeAdded = true;
               buyFeeAddedLastBlock++;
             }
             if (buyFeeAddedLastBlock == attackCountLastBlock) {
@@ -1496,6 +1502,7 @@ public class FullNode {
           for (SingleBuySellRecord sell : buySellsLastBlocks.records) {
             if (!sell.isBuy && !sell.feeAdded) {
               feeToAdd = feeToAdd.add(sell.fee);
+              sell.feeAdded = true;
               sellFeeAddedLastBlock++;
             }
             if (sellFeeAddedLastBlock == attackCountLastBlock) {
@@ -1516,6 +1523,7 @@ public class FullNode {
             for (SingleBuySellRecord buy : buySellsLastBlocks.records) {
               if (buy.isBuy && !buy.feeAdded) {
                 feeToAdd = feeToAdd.add(buy.fee);
+                buy.feeAdded = true;
                 buyFeeAddedLastBlock++;
               }
               if (buyFeeAddedLastBlock == attackCountTwoBlock + attackCountLastBlock) {
@@ -1527,6 +1535,7 @@ public class FullNode {
             for (SingleBuySellRecord sell : buySellsThisBlocks.records) {
               if (!sell.isBuy && !sell.feeAdded) {
                 feeToAdd = feeToAdd.add(sell.fee);
+                sell.feeAdded = true;
                 sellFeeAddedThisBlock++;
               }
               if (sellFeeAddedThisBlock == attackCountTwoBlock) {
@@ -1548,6 +1557,7 @@ public class FullNode {
           for (SingleBuySellRecord buy : buySellsThisBlocks.records) {
             if (buy.isBuy && !buy.feeAdded) {
               feeToAdd = feeToAdd.add(buy.fee);
+              buy.feeAdded = true;
               buyFeeAddedThisBlock++;
             }
             if (buyFeeAddedThisBlock == attackCountTwoBlock + attackCountThisBlock) {
@@ -1559,6 +1569,7 @@ public class FullNode {
           for (SingleBuySellRecord sell : buySellsThisBlocks.records) {
             if (!sell.isBuy && !sell.feeAdded) {
               feeToAdd = feeToAdd.add(sell.fee);
+              sell.feeAdded = true;
               sellFeeAddedThisBlock++;
             }
             if (sellFeeAddedThisBlock == attackCountTwoBlock + attackCountThisBlock) {
@@ -1574,6 +1585,16 @@ public class FullNode {
           tokenAllInfoRecord.addAttackTarget(1);
           buySellsLastBlocks.attackTargetCount++;
           buySellsThisBlocks.attackTargetCount++;
+        }
+
+        if ((buySellsLastBlocks.buyCount + buySellsThisBlocks.buyCount > 0)
+            && (buySellsLastBlocks.sellCount + buySellsThisBlocks.sellCount > 0)) {
+          for (SingleBuySellRecord record : buySellsLastBlocks.records) {
+            if (!record.feeAdded) {
+              feeToAdd = feeToAdd.add(record.fee);
+              record.feeAdded = true;
+            }
+          }
         }
 
         // update
@@ -1688,6 +1709,7 @@ public class FullNode {
             for (SingleBuySellRecord buy : buySellsLastBlocks.records) {
               if (buy.isBuy && !buy.feeAdded) {
                 feeToAdd = feeToAdd.add(buy.fee);
+                buy.feeAdded = true;
                 buyFeeAddedLastBlock++;
               }
               if (buyFeeAddedLastBlock == attackCountLastBlock) {
@@ -1699,10 +1721,20 @@ public class FullNode {
             for (SingleBuySellRecord sell : buySellsLastBlocks.records) {
               if (!sell.isBuy && !sell.feeAdded) {
                 feeToAdd = feeToAdd.add(sell.fee);
+                sell.feeAdded = true;
                 sellFeeAddedLastBlock++;
               }
               if (sellFeeAddedLastBlock == attackCountLastBlock) {
                 break;
+              }
+            }
+          }
+          // todo 整理
+          if (buySellsLastBlocks.isAttacking()) {
+            for (SingleBuySellRecord record : buySellsLastBlocks.records) {
+              if (!record.feeAdded) {
+                feeToAdd = feeToAdd.add(record.fee);
+                record.feeAdded = true;
               }
             }
           }
