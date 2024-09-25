@@ -1259,17 +1259,12 @@ public class FullNode {
         long sellFeeAddedLastBlock = 0;
         long sellFeeAddedThisBlock = 0;
 
-        boolean flag = buySellsLastBlocks.attackTargetCount > 0;
         // 第一遍，match上的
         for (int i = 0; i < buySellsThisBlocks.records.size(); i++) {
           // caller 每个 token 买卖
           SingleBuySellRecord buySell = buySellsThisBlocks.records.get(i);
           if (buySell.isSuccess()) {
             if (buySell.isBuy()) {
-              if (!flag) {
-                buySellsThisBlocks.addAttackTarget();
-                flag = true;
-              }
               buySellsThisBlocks.addBuyCount();
               addrAllInfoRecord.addBuy();
             } else {
@@ -1291,11 +1286,6 @@ public class FullNode {
           } else {
             // 失败的，先记次数
             if (buySell.isBuy()) {
-
-              if (!flag) {
-                buySellsThisBlocks.addAttackTarget();
-                flag = true;
-              }
               buySellsThisBlocks.addBuyCount();
             } else {
               buySellsThisBlocks.addSellCount();
@@ -1578,8 +1568,12 @@ public class FullNode {
         }
 
         tokenAllInfoRecord.addAttack(attackCountToRecord);
-        if (buySellsLastBlocks.attackTargetCount > 0) {
-          tokenAllInfoRecord.addAttackTarget(buySellsLastBlocks.attackTargetCount);
+        if (buySellsLastBlocks.attackTargetCount == 0
+            && ((buySellsLastBlocks.buyCount + buySellsThisBlocks.buyCount > 0)
+                && (buySellsLastBlocks.sellCount + buySellsThisBlocks.sellCount > 0))) {
+          tokenAllInfoRecord.addAttackTarget(1);
+          buySellsLastBlocks.attackTargetCount++;
+          buySellsThisBlocks.attackTargetCount++;
         }
 
         // update
@@ -1684,8 +1678,9 @@ public class FullNode {
                   buySellsLastBlocks.availableAttackBuyCount(),
                   buySellsLastBlocks.availableAttackSellCount());
           tokenAllInfoRecord.addAttack(attackCountLastBlock);
-          if (buySellsLastBlocks.attackTargetCount > 0) {
-            tokenAllInfoRecord.addAttackTarget(buySellsLastBlocks.attackTargetCount);
+          if (buySellsLastBlocks.attackTargetCount == 0 && buySellsLastBlocks.isAttacking()) {
+            tokenAllInfoRecord.addAttackTarget(1);
+            buySellsLastBlocks.attackTargetCount++;
           }
 
           // fee
@@ -1958,6 +1953,10 @@ public class FullNode {
           }
         }
       }
+    }
+
+    private boolean isAttacking() {
+      return buyCount > 0 && sellCount > 0;
     }
   }
 
