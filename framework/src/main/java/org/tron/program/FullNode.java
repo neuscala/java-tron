@@ -251,8 +251,8 @@ public class FullNode {
       // 2024-09-25 08:00:00 65524702
       long startBlock = 65121619;
       //      long startBlock = 64689819;
-      long recentBlock = 65323159;
-      long endBlock = 65323159;
+      long recentBlock = 65323160;
+      long endBlock = 65524702;
       logger.info(
           "Start To Local Test at {}!!! paddr size {}, saddr size {}",
           startBlock,
