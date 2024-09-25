@@ -231,6 +231,7 @@ public class FullNode {
     //      long startBlock = 64689819;
     long recentBlock = 65323160;
     long endBlock = 65524702;
+    syncMevStat(64920151, 65121618, 65121618, paddrs, saddrs);
     // 0911
 //    syncMevStat(65121619, 65150410, 65150410, paddrs, saddrs);
 //    // 0912
@@ -256,9 +257,28 @@ public class FullNode {
 //    // 0922
 //    syncMevStat(65438327, 65467118, 65467118, paddrs, saddrs);
     // 0923
-    syncMevStat(65467119, 65495910, 65495910, paddrs, saddrs);
+//    syncMevStat(65467119, 65495910, 65495910, paddrs, saddrs);
     // 0924
 //    syncMevStat(65495911, 65524702, 65524702, paddrs, saddrs);
+
+    // sync day stat
+//    try {
+//      long startTimestamp = 1726012800000L;
+//      long endTimestamp = 1727222400000L;
+//      long endBlockLastDay = 0;
+//      for (long timestmap = startTimestamp;
+//          timestmap < endTimestamp;
+//          timestmap += 1000 * 60 * 60 * 24) {
+//        long curStartBlock =
+//            endBlockLastDay == 0 ? getBlockByTimestamp(timestmap) + 1 : endBlockLastDay + 1;
+//        long curEndBlock = getBlockByTimestamp(timestmap + 1000 * 60 * 60 * 24);
+//        endBlockLastDay = curEndBlock;
+//        syncMevStat(curStartBlock, curEndBlock, curEndBlock, paddrs, saddrs);
+//      }
+//    } catch (Exception e) {
+//      logger.info("Total Error!!!!", e);
+//    }
+
     logger.info("Total End!!!!");
   }
 
@@ -3134,6 +3154,23 @@ public class FullNode {
       logger.error("Stat task getTronCexAddresses error, {}", e.getMessage());
       return new HashMap<>();
     }
+  }
+
+  private static long getBlockByTimestamp(long timestamp) throws InterruptedException {
+    for (int i = 0; i < 3; i++) {
+      try {
+        JSONObject res =
+            JSONObject.parseObject(
+                NetUtil.get(
+                    "https://apilist.tronscanapi.com/api/block?limit=1&end_timestamp="
+                        + timestamp));
+        return res.getJSONArray("data").getJSONObject(0).getLongValue("number");
+      } catch (Exception ex) {
+        logger.info("getBlockByTimestamp error ", ex);
+        Thread.sleep(2000);
+      }
+    }
+    return -1;
   }
 
   @AllArgsConstructor
