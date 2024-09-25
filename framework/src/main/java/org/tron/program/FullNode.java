@@ -2099,6 +2099,7 @@ public class FullNode {
     for (int i = 0; i < Math.min(endIndex, buySells.size()); i++) {
       SingleBuySellRecord toMatch = buySells.get(i);
       if (toMatch.isSuccess()
+          && !toMatch.isMatched()
           && toMatch.isBuy
           && isMatch(toMatch.tokenAmount, sellRecord.tokenAmount)) {
         // 匹配上，计算获利和损失
