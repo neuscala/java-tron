@@ -1836,6 +1836,7 @@ public class ContractStateCapsule implements ProtoCapsule<ContractState> {
       return;
     }
     
+    addEnergyUsage(other.getEnergyUsage());
     addEnergyUsageTotal(other.getEnergyUsageTotal());
     addEnergyUsageFailed(other.getEnergyUsageFailed());
     addEnergyPenaltyTotal(other.getEnergyPenaltyTotal());
