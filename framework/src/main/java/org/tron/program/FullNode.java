@@ -231,7 +231,7 @@ public class FullNode {
     //      long startBlock = 64689819;
     long recentBlock = 65323160;
     long endBlock = 65524702;
-    syncMevStat(64920151, 65121618, 65121618, paddrs, saddrs);
+//    syncMevStat(64920151, 65121618, 65121618, paddrs, saddrs);
     // 0911
 //    syncMevStat(65121619, 65150410, 65150410, paddrs, saddrs);
 //    // 0912
@@ -262,22 +262,22 @@ public class FullNode {
 //    syncMevStat(65495911, 65524702, 65524702, paddrs, saddrs);
 
     // sync day stat
-//    try {
-//      long startTimestamp = 1726012800000L;
-//      long endTimestamp = 1727222400000L;
-//      long endBlockLastDay = 0;
-//      for (long timestmap = startTimestamp;
-//          timestmap < endTimestamp;
-//          timestmap += 1000 * 60 * 60 * 24) {
-//        long curStartBlock =
-//            endBlockLastDay == 0 ? getBlockByTimestamp(timestmap) + 1 : endBlockLastDay + 1;
-//        long curEndBlock = getBlockByTimestamp(timestmap + 1000 * 60 * 60 * 24);
-//        endBlockLastDay = curEndBlock;
-//        syncMevStat(curStartBlock, curEndBlock, curEndBlock, paddrs, saddrs);
-//      }
-//    } catch (Exception e) {
-//      logger.info("Total Error!!!!", e);
-//    }
+    try {
+      long startTimestamp = 1725408000000L;
+      long endTimestamp = 1726012800000L;
+      long endBlockLastDay = 0;
+      for (long timestmap = startTimestamp;
+          timestmap < endTimestamp;
+          timestmap += 1000 * 60 * 60 * 24) {
+        long curStartBlock =
+            endBlockLastDay == 0 ? getBlockByTimestamp(timestmap) + 1 : endBlockLastDay + 1;
+        long curEndBlock = getBlockByTimestamp(timestmap + 1000 * 60 * 60 * 24);
+        endBlockLastDay = curEndBlock;
+        syncMevStat(curStartBlock, curEndBlock, curEndBlock, paddrs, saddrs);
+      }
+    } catch (Exception e) {
+      logger.info("Total Error!!!!", e);
+    }
 
     logger.info("Total End!!!!");
   }
@@ -1025,147 +1025,147 @@ public class FullNode {
       //      }
 
       // 输出结果
-      PrintWriter pwriter = new PrintWriter("finalresult-" + startBlock + "-" + endBlock + ".txt");
-      pwriter.println("SWAP");
-      swapAddrInfoRecordMap.forEach(
-          (k, v) ->
-              pwriter.println(
-                  StringUtil.encode58Check(Hex.decode(k))
-                      + " "
-                      + v.getSuccessCount()
-                      + " "
-                      + v.getAllProfit()
-                      + " "
-                      + v.getLackCount()
-                      + " "
-                      + v.getAllLack()
-                      + " "
-                      + v.getAllAttack()
-                      + " "
-                      + v.getAllAttackTarget()
-                      + " "
-                      + v.getTrxOutAmount()
-                      + " "
-                      + v.getMzSucCount()
-                      + " "
-                      + v.getMzLackCount()
-                      + " "
-                      + v.getFee()
-                      + " "
-                      + v.getAllfee()
-                      + " "
-                      + v.getSuccessBuy()
-                      + " "
-                      + v.getSuccessSell()
-                      + " "
-                      + v.getFailBuy()
-                      + " "
-                      + v.getFailSell()));
-      pwriter.println("RECENTSWAP");
-      recentswapAddrInfoRecordMap.forEach(
-          (k, v) ->
-              pwriter.println(
-                  StringUtil.encode58Check(Hex.decode(k))
-                      + " "
-                      + v.getSuccessCount()
-                      + " "
-                      + v.getAllProfit()
-                      + " "
-                      + v.getLackCount()
-                      + " "
-                      + v.getAllLack()
-                      + " "
-                      + v.getAllAttack()
-                      + " "
-                      + v.getAllAttackTarget()
-                      + " "
-                      + v.getTrxOutAmount()
-                      + " "
-                      + v.getMzSucCount()
-                      + " "
-                      + v.getMzLackCount()
-                      + " "
-                      + v.getFee()
-                      + " "
-                      + v.getAllfee()
-                      + " "
-                      + v.getSuccessBuy()
-                      + " "
-                      + v.getSuccessSell()
-                      + " "
-                      + v.getFailBuy()
-                      + " "
-                      + v.getFailSell()));
-      pwriter.println("PUMP");
-      pumpAddrInfoRecordMap.forEach(
-          (k, v) ->
-              pwriter.println(
-                  StringUtil.encode58Check(Hex.decode(k))
-                      + " "
-                      + v.getSuccessCount()
-                      + " "
-                      + v.getAllProfit()
-                      + " "
-                      + v.getLackCount()
-                      + " "
-                      + v.getAllLack()
-                      + " "
-                      + v.getAllAttack()
-                      + " "
-                      + v.getAllAttackTarget()
-                      + " "
-                      + v.getTrxOutAmount()
-                      + " "
-                      + v.getMzSucCount()
-                      + " "
-                      + v.getMzLackCount()
-                      + " "
-                      + v.getFee()
-                      + " "
-                      + v.getAllfee()
-                      + " "
-                      + v.getSuccessBuy()
-                      + " "
-                      + v.getSuccessSell()
-                      + " "
-                      + v.getFailBuy()
-                      + " "
-                      + v.getFailSell()));
-      pwriter.println("RECENTPUMP");
-      recentpumpAddrInfoRecordMap.forEach(
-          (k, v) ->
-              pwriter.println(
-                  StringUtil.encode58Check(Hex.decode(k))
-                      + " "
-                      + v.getSuccessCount()
-                      + " "
-                      + v.getAllProfit()
-                      + " "
-                      + v.getLackCount()
-                      + " "
-                      + v.getAllLack()
-                      + " "
-                      + v.getAllAttack()
-                      + " "
-                      + v.getAllAttackTarget()
-                      + " "
-                      + v.getTrxOutAmount()
-                      + " "
-                      + v.getMzSucCount()
-                      + " "
-                      + v.getMzLackCount()
-                      + " "
-                      + v.getFee()
-                      + " "
-                      + v.getAllfee()
-                      + " "
-                      + v.getSuccessBuy()
-                      + " "
-                      + v.getSuccessSell()
-                      + " "
-                      + v.getFailBuy()
-                      + " "
-                      + v.getFailSell()));
+//      PrintWriter pwriter = new PrintWriter("finalresult-" + startBlock + "-" + endBlock + ".txt");
+//      pwriter.println("SWAP");
+//      swapAddrInfoRecordMap.forEach(
+//          (k, v) ->
+//              pwriter.println(
+//                  StringUtil.encode58Check(Hex.decode(k))
+//                      + " "
+//                      + v.getSuccessCount()
+//                      + " "
+//                      + v.getAllProfit()
+//                      + " "
+//                      + v.getLackCount()
+//                      + " "
+//                      + v.getAllLack()
+//                      + " "
+//                      + v.getAllAttack()
+//                      + " "
+//                      + v.getAllAttackTarget()
+//                      + " "
+//                      + v.getTrxOutAmount()
+//                      + " "
+//                      + v.getMzSucCount()
+//                      + " "
+//                      + v.getMzLackCount()
+//                      + " "
+//                      + v.getFee()
+//                      + " "
+//                      + v.getAllfee()
+//                      + " "
+//                      + v.getSuccessBuy()
+//                      + " "
+//                      + v.getSuccessSell()
+//                      + " "
+//                      + v.getFailBuy()
+//                      + " "
+//                      + v.getFailSell()));
+//      pwriter.println("RECENTSWAP");
+//      recentswapAddrInfoRecordMap.forEach(
+//          (k, v) ->
+//              pwriter.println(
+//                  StringUtil.encode58Check(Hex.decode(k))
+//                      + " "
+//                      + v.getSuccessCount()
+//                      + " "
+//                      + v.getAllProfit()
+//                      + " "
+//                      + v.getLackCount()
+//                      + " "
+//                      + v.getAllLack()
+//                      + " "
+//                      + v.getAllAttack()
+//                      + " "
+//                      + v.getAllAttackTarget()
+//                      + " "
+//                      + v.getTrxOutAmount()
+//                      + " "
+//                      + v.getMzSucCount()
+//                      + " "
+//                      + v.getMzLackCount()
+//                      + " "
+//                      + v.getFee()
+//                      + " "
+//                      + v.getAllfee()
+//                      + " "
+//                      + v.getSuccessBuy()
+//                      + " "
+//                      + v.getSuccessSell()
+//                      + " "
+//                      + v.getFailBuy()
+//                      + " "
+//                      + v.getFailSell()));
+//      pwriter.println("PUMP");
+//      pumpAddrInfoRecordMap.forEach(
+//          (k, v) ->
+//              pwriter.println(
+//                  StringUtil.encode58Check(Hex.decode(k))
+//                      + " "
+//                      + v.getSuccessCount()
+//                      + " "
+//                      + v.getAllProfit()
+//                      + " "
+//                      + v.getLackCount()
+//                      + " "
+//                      + v.getAllLack()
+//                      + " "
+//                      + v.getAllAttack()
+//                      + " "
+//                      + v.getAllAttackTarget()
+//                      + " "
+//                      + v.getTrxOutAmount()
+//                      + " "
+//                      + v.getMzSucCount()
+//                      + " "
+//                      + v.getMzLackCount()
+//                      + " "
+//                      + v.getFee()
+//                      + " "
+//                      + v.getAllfee()
+//                      + " "
+//                      + v.getSuccessBuy()
+//                      + " "
+//                      + v.getSuccessSell()
+//                      + " "
+//                      + v.getFailBuy()
+//                      + " "
+//                      + v.getFailSell()));
+//      pwriter.println("RECENTPUMP");
+//      recentpumpAddrInfoRecordMap.forEach(
+//          (k, v) ->
+//              pwriter.println(
+//                  StringUtil.encode58Check(Hex.decode(k))
+//                      + " "
+//                      + v.getSuccessCount()
+//                      + " "
+//                      + v.getAllProfit()
+//                      + " "
+//                      + v.getLackCount()
+//                      + " "
+//                      + v.getAllLack()
+//                      + " "
+//                      + v.getAllAttack()
+//                      + " "
+//                      + v.getAllAttackTarget()
+//                      + " "
+//                      + v.getTrxOutAmount()
+//                      + " "
+//                      + v.getMzSucCount()
+//                      + " "
+//                      + v.getMzLackCount()
+//                      + " "
+//                      + v.getFee()
+//                      + " "
+//                      + v.getAllfee()
+//                      + " "
+//                      + v.getSuccessBuy()
+//                      + " "
+//                      + v.getSuccessSell()
+//                      + " "
+//                      + v.getFailBuy()
+//                      + " "
+//                      + v.getFailSell()));
       //
       //      pwriter.println("TOKEN_REMAINING");
       //      pwriter.println("SWAPTOKEN");
@@ -1237,7 +1237,7 @@ public class FullNode {
       //                });
       //          });
 
-      pwriter.close();
+//      pwriter.close();
       //
       //      PrintWriter srwriter = new PrintWriter("finalsr.txt");
       //      srwriter.println("SWAP");
