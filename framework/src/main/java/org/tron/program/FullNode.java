@@ -185,10 +185,10 @@ public class FullNode {
     //                appT.startup();
     //                appT.blockUntilShutdown();
 
-//    if (true) {
-//      syncEnergy();
-//      return;
-//    }
+    //    if (true) {
+    //      syncEnergy();
+    //      return;
+    //    }
 
     // 发射前
     byte[] TOKEN_PURCHASE_TOPIC =
@@ -225,19 +225,18 @@ public class FullNode {
 
     try {
 
-//      BufferedReader reader = new BufferedReader(new FileReader("paddrs.txt"));
+      //      BufferedReader reader = new BufferedReader(new FileReader("paddrs.txt"));
       Set<String> paddrs = new HashSet<>();
-//      String line;
-//      while ((line = reader.readLine()) != null) {
-//        paddrs.add(Hex.toHexString(Commons.decodeFromBase58Check(line)));
-//      }
-//      BufferedReader sreader = new BufferedReader(new FileReader("saddrs.txt"));
+      //      String line;
+      //      while ((line = reader.readLine()) != null) {
+      //        paddrs.add(Hex.toHexString(Commons.decodeFromBase58Check(line)));
+      //      }
+      //      BufferedReader sreader = new BufferedReader(new FileReader("saddrs.txt"));
       Set<String> saddrs = new HashSet<>();
       saddrs.add(targetAddress);
-//      while ((line = sreader.readLine()) != null) {
-//        saddrs.add(Hex.toHexString(Commons.decodeFromBase58Check(line)));
-//      }
-
+      //      while ((line = sreader.readLine()) != null) {
+      //        saddrs.add(Hex.toHexString(Commons.decodeFromBase58Check(line)));
+      //      }
 
       //      long latestBlock = ChainBaseManager.getInstance().getHeadBlockNum();
       //      long startBlock =
@@ -246,6 +245,10 @@ public class FullNode {
       //      long endBlock = latestBlock - 1;
       //      long recentBlock = latestBlock - 3000;
       // todo
+      // 2024-09-04 08:00:09 64920151
+      // 2024-09-11 08:00:09 65121619
+      // 2024-09-18 08:00:09 65323160
+      // 2024-09-25 08:00:00 65524702
       long startBlock = 64920151;
       //      long startBlock = 64689819;
       long recentBlock = 65121618;
@@ -971,6 +974,8 @@ public class FullNode {
                       + " "
                       + v.getAllAttack()
                       + " "
+                      + v.getAllAttackTarget()
+                      + " "
                       + v.getTrxOutAmount()
                       + " "
                       + v.getMzSucCount()
@@ -1003,6 +1008,8 @@ public class FullNode {
                       + v.getAllLack()
                       + " "
                       + v.getAllAttack()
+                      + " "
+                      + v.getAllAttackTarget()
                       + " "
                       + v.getTrxOutAmount()
                       + " "
@@ -1037,6 +1044,8 @@ public class FullNode {
                       + " "
                       + v.getAllAttack()
                       + " "
+                      + v.getAllAttackTarget()
+                      + " "
                       + v.getTrxOutAmount()
                       + " "
                       + v.getMzSucCount()
@@ -1069,6 +1078,8 @@ public class FullNode {
                       + v.getAllLack()
                       + " "
                       + v.getAllAttack()
+                      + " "
+                      + v.getAllAttackTarget()
                       + " "
                       + v.getTrxOutAmount()
                       + " "
@@ -1248,12 +1259,17 @@ public class FullNode {
         long sellFeeAddedLastBlock = 0;
         long sellFeeAddedThisBlock = 0;
 
+        boolean flag = buySellsLastBlocks.attackTargetCount > 0;
         // 第一遍，match上的
         for (int i = 0; i < buySellsThisBlocks.records.size(); i++) {
           // caller 每个 token 买卖
           SingleBuySellRecord buySell = buySellsThisBlocks.records.get(i);
           if (buySell.isSuccess()) {
             if (buySell.isBuy()) {
+              if (!flag) {
+                buySellsThisBlocks.addAttackTarget();
+                flag = true;
+              }
               buySellsThisBlocks.addBuyCount();
               addrAllInfoRecord.addBuy();
             } else {
@@ -1275,6 +1291,11 @@ public class FullNode {
           } else {
             // 失败的，先记次数
             if (buySell.isBuy()) {
+
+              if (!flag) {
+                buySellsThisBlocks.addAttackTarget();
+                flag = true;
+              }
               buySellsThisBlocks.addBuyCount();
             } else {
               buySellsThisBlocks.addSellCount();
@@ -1557,6 +1578,9 @@ public class FullNode {
         }
 
         tokenAllInfoRecord.addAttack(attackCountToRecord);
+        if (buySellsLastBlocks.attackTargetCount > 0) {
+          tokenAllInfoRecord.addAttackTarget(buySellsLastBlocks.attackTargetCount);
+        }
 
         // update
         thisBlockRecords.put(token, buySellsThisBlocks);
@@ -1660,6 +1684,9 @@ public class FullNode {
                   buySellsLastBlocks.availableAttackBuyCount(),
                   buySellsLastBlocks.availableAttackSellCount());
           tokenAllInfoRecord.addAttack(attackCountLastBlock);
+          if (buySellsLastBlocks.attackTargetCount > 0) {
+            tokenAllInfoRecord.addAttackTarget(buySellsLastBlocks.attackTargetCount);
+          }
 
           // fee
           if (buyFeeAddedLastBlock < attackCountLastBlock) {
@@ -1827,6 +1854,7 @@ public class FullNode {
     boolean remainingBuyAvailable;
     BigDecimal sellFeeRemaining;
     BigDecimal buyFeeRemaining;
+    long attackTargetCount;
 
     private ContinusBlockRecord() {
       records = new ArrayList<>();
@@ -1838,6 +1866,7 @@ public class FullNode {
       remainingBuyAvailable = false;
       sellFeeRemaining = BigDecimal.ZERO;
       buyFeeRemaining = BigDecimal.ZERO;
+      attackTargetCount = 0;
     }
 
     private void addRecord(SingleBuySellRecord singleBuySellRecord) {
@@ -1881,6 +1910,10 @@ public class FullNode {
 
     private void addSellCount() {
       sellCount++;
+    }
+
+    private void addAttackTarget() {
+      attackTargetCount++;
     }
 
     private void addSellCount(long count) {
@@ -1985,6 +2018,7 @@ public class FullNode {
     BigDecimal remainingTokenAmount;
     BigDecimal trxOutAmount;
     long attackCount;
+    long attackTargetCount;
     long mzsuccessCount;
     long mzlackCount;
 
@@ -1997,6 +2031,7 @@ public class FullNode {
       remainingTokenAmount = BigDecimal.ZERO;
       trxOutAmount = BigDecimal.ZERO;
       attackCount = 0;
+      attackTargetCount = 0;
     }
 
     private void addTrxDiff(BigDecimal trxDiff, boolean mzzz) {
@@ -2022,6 +2057,10 @@ public class FullNode {
 
     private void addAttack(long count) {
       attackCount += count;
+    }
+
+    private void addAttackTarget(long count) {
+      attackTargetCount += count;
     }
 
     private void removeRemaining(BigDecimal tokenSellAmount, BigDecimal trxGetAmount) {
@@ -2103,6 +2142,12 @@ public class FullNode {
 
     private long getAllAttack() {
       return tokenRecords.values().stream().mapToLong(TokenAllInfoRecord::getAttackCount).sum();
+    }
+
+    private long getAllAttackTarget() {
+      return tokenRecords.values().stream()
+          .mapToLong(TokenAllInfoRecord::getAttackTargetCount)
+          .sum();
     }
 
     private long getSuccessCount() {
