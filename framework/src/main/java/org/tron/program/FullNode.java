@@ -316,6 +316,7 @@ public class FullNode {
       "791ac947"; // swapExactTokensForETHSupportingFeeOnTransferTokens
   private static String SWAP_METHOD = "38ed1739";
   private static byte[] SWAP_ROUTER = Hex.decode("41fF7155b5df8008fbF3834922B2D52430b27874f5");
+  private static byte[] SUNSWAP_ROUTER = Hex.decode("41e95812D8D5B5412D2b9F3A4D5a87CA15C5c51F33");
   private static byte[] TRANSFER_TOPIC =
       Hex.decode("ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef");
   private static byte[] SWAP_TOPIC =
@@ -336,7 +337,7 @@ public class FullNode {
       throws FileNotFoundException {
 
     mevWriter = new PrintWriter("attacktxes.txt");
-    mevWriter.println("id buy_tx sell_tx");
+    mevWriter.println("id buy_tx sell_tx user_tx user_addr block timestamp sr");
     userWriter = new PrintWriter("usertxes.txt");
     userWriter.println("id tx");
 
@@ -436,6 +437,13 @@ public class FullNode {
             if (blockNum >= recentBlock) {
               recentaddrAllInfoRecord.allfee = recentaddrAllInfoRecord.allfee.add(fee);
             }
+            SmartContractOuterClass.TriggerSmartContract triggerSmartContract =
+                tx.getInstance()
+                    .getRawData()
+                    .getContract(0)
+                    .getParameter()
+                    .unpack(SmartContractOuterClass.TriggerSmartContract.class);
+            String callData = Hex.toHexString(triggerSmartContract.getData().toByteArray());
 
             if (!transactionInfo.getResult().equals(SUCESS)) {
               if (!tx.getInstance()
@@ -446,13 +454,6 @@ public class FullNode {
                 continue;
               }
               try {
-                SmartContractOuterClass.TriggerSmartContract triggerSmartContract =
-                    tx.getInstance()
-                        .getRawData()
-                        .getContract(0)
-                        .getParameter()
-                        .unpack(SmartContractOuterClass.TriggerSmartContract.class);
-                String callData = Hex.toHexString(triggerSmartContract.getData().toByteArray());
                 BigDecimal tokenAmount = BigDecimal.ZERO;
                 boolean isBuy = false;
                 sSumTxCount++;
@@ -534,8 +535,11 @@ public class FullNode {
                     swapContinusRecordMap.getOrDefault(caller, new AddrContinusRecord(caller));
                 addrContinusRecord.addRecord(
                     txHash,
+                    callData,
                     index,
                     blockNum,
+                    timestamp,
+                    witness,
                     token,
                     isBuy,
                     tokenAmount,
@@ -549,8 +553,11 @@ public class FullNode {
                           caller, new AddrContinusRecord(caller));
                   recentaddrContinusRecord.addRecord(
                       txHash,
+                      callData,
                       index,
                       blockNum,
+                      timestamp,
+                      witness,
                       token,
                       isBuy,
                       tokenAmount,
@@ -655,12 +662,16 @@ public class FullNode {
                   buysThisBlock.add(
                       new SingleBuySellRecord(
                           txHash,
+                          caller,
+                          callData,
                           index,
                           token,
                           isBuy,
                           tokenAmount,
                           trxAmount,
                           blockNum,
+                          timestamp,
+                          witness,
                           false,
                           true,
                           fee,
@@ -672,14 +683,36 @@ public class FullNode {
               AddrContinusRecord addrContinusRecord =
                   swapContinusRecordMap.getOrDefault(caller, new AddrContinusRecord(caller));
               addrContinusRecord.addRecord(
-                  txHash, index, blockNum, token, isBuy, tokenAmount, trxAmount, true, fee);
+                  txHash,
+                  callData,
+                  index,
+                  blockNum,
+                  timestamp,
+                  witness,
+                  token,
+                  isBuy,
+                  tokenAmount,
+                  trxAmount,
+                  true,
+                  fee);
               swapContinusRecordMap.put(caller, addrContinusRecord);
               if (blockNum >= recentBlock) {
                 AddrContinusRecord recentaddrContinusRecord =
                     recentswapContinusRecordMap.getOrDefault(
                         caller, new AddrContinusRecord(caller));
                 recentaddrContinusRecord.addRecord(
-                    txHash, index, blockNum, token, isBuy, tokenAmount, trxAmount, true, fee);
+                    txHash,
+                    callData,
+                    index,
+                    blockNum,
+                    timestamp,
+                    witness,
+                    token,
+                    isBuy,
+                    tokenAmount,
+                    trxAmount,
+                    true,
+                    fee);
                 recentswapContinusRecordMap.put(caller, recentaddrContinusRecord);
               }
               if (isBuy) {
@@ -700,6 +733,81 @@ public class FullNode {
               // 找到目标log就跳出
               break;
             }
+          } else if (Arrays.equals(contractAddress, SUNSWAP_ROUTER)) {
+            if (!tx.getInstance()
+                .getRawData()
+                .getContract(0)
+                .getParameter()
+                .is(SmartContractOuterClass.TriggerSmartContract.class)) {
+              continue;
+            }
+            SmartContractOuterClass.TriggerSmartContract triggerSmartContract =
+                tx.getInstance()
+                    .getRawData()
+                    .getContract(0)
+                    .getParameter()
+                    .unpack(SmartContractOuterClass.TriggerSmartContract.class);
+            if (transactionInfo.getResult().equals(SUCESS)) {
+              try {
+                String callData = Hex.toHexString(triggerSmartContract.getData().toByteArray());
+                BigDecimal tokenAmount = BigDecimal.ZERO;
+                boolean isBuy = false;
+                String token;
+                if (callData.startsWith(SWAP_METHOD)) {
+                  //                String data1 = callData.substring(8, 8 + 64); // trx amount
+                  String token1 = callData.substring(392, 392 + 64).substring(24); // out token
+                  String token2 = callData.substring(456, 456 + 64).substring(24); // in token
+                  if (token1.equalsIgnoreCase(WTRX) || token1.equalsIgnoreCase(USDT)) {
+                    token = get41Addr(token2);
+                    isBuy = true;
+                  } else {
+                    token = get41Addr(token1);
+                    isBuy = false;
+                  }
+                } else if (callData.startsWith(SWAP_BUY_METHOD_1)) {
+                  isBuy = true;
+                  tokenAmount =
+                      new BigDecimal(new BigInteger(callData.substring(8, 8 + 64), 16))
+                          .divide(TOKEN_DIVISOR, 18, RoundingMode.HALF_EVEN); // token 个数
+                  String token1 = callData.substring(392, 392 + 64).substring(24); // token1
+                  String token2 = callData.substring(328, 328 + 64).substring(24); // token2 wtrx
+                  token = token1.equalsIgnoreCase(WTRX) ? get41Addr(token2) : get41Addr(token1);
+                } else if (callData.startsWith(SWAP_BUY_METHOD_2)) {
+                  isBuy = true;
+                  String token1 = callData.substring(392, 392 + 64).substring(24); // token1
+                  String token2 = callData.substring(328, 328 + 64).substring(24); // token2 wtrx
+                  token = token1.equalsIgnoreCase(WTRX) ? get41Addr(token2) : get41Addr(token1);
+                } else if (callData.startsWith(SWAP_BUY_METHOD_3)) {
+                  isBuy = true;
+                  token = get41Addr(callData.substring(392, 392 + 64)); // token
+                } else {
+                  // 其他方法
+                  continue;
+                }
+                if (isBuy) {
+                  buysThisBlock.add(
+                      new SingleBuySellRecord(
+                          txHash,
+                          caller,
+                          callData,
+                          index,
+                          token,
+                          isBuy,
+                          tokenAmount,
+                          BigDecimal.ZERO,
+                          blockNum,
+                          timestamp,
+                          witness,
+                          false,
+                          true,
+                          fee,
+                          false));
+                }
+
+              } catch (Exception e) {
+              }
+            }
+
           } else if (Arrays.equals(contractAddress, SUNPUMP_LAUNCH)) {
             if (true) {
               continue;
@@ -775,8 +883,11 @@ public class FullNode {
                     pumpContinusRecordMap.getOrDefault(caller, new AddrContinusRecord(caller));
                 addrContinusRecord.addRecord(
                     txHash,
+                    callData,
                     index,
                     blockNum,
+                    timestamp,
+                    witness,
                     token,
                     isBuy,
                     tokenAmount,
@@ -790,8 +901,11 @@ public class FullNode {
                           caller, new AddrContinusRecord(caller));
                   recentaddrContinusRecord.addRecord(
                       txHash,
+                      callData,
                       index,
                       blockNum,
+                      timestamp,
+                      witness,
                       token,
                       isBuy,
                       tokenAmount,
@@ -903,14 +1017,36 @@ public class FullNode {
               AddrContinusRecord addrContinusRecord =
                   pumpContinusRecordMap.getOrDefault(caller, new AddrContinusRecord(caller));
               addrContinusRecord.addRecord(
-                  txHash, index, blockNum, token, isBuy, tokenAmount, trxAmount, true, fee);
+                  txHash,
+                  null,
+                  index,
+                  blockNum,
+                  timestamp,
+                  witness,
+                  token,
+                  isBuy,
+                  tokenAmount,
+                  trxAmount,
+                  true,
+                  fee);
               pumpContinusRecordMap.put(caller, addrContinusRecord);
               if (blockNum >= recentBlock) {
                 AddrContinusRecord recentaddrContinusRecord =
                     recentpumpContinusRecordMap.getOrDefault(
                         caller, new AddrContinusRecord(caller));
                 recentaddrContinusRecord.addRecord(
-                    txHash, index, blockNum, token, isBuy, tokenAmount, trxAmount, true, fee);
+                    txHash,
+                    null,
+                    index,
+                    blockNum,
+                    timestamp,
+                    witness,
+                    token,
+                    isBuy,
+                    tokenAmount,
+                    trxAmount,
+                    true,
+                    fee);
                 recentpumpContinusRecordMap.put(caller, recentaddrContinusRecord);
               }
 
@@ -1971,33 +2107,39 @@ public class FullNode {
         toMatch.match();
         sellRecord.match();
         if (getTrx.compareTo(BigDecimal.ZERO) > 0) {
-          List<SingleBuySellRecord> users = new ArrayList<>();
+          SingleBuySellRecord user = null;
+          boolean flag = false;
           // 夹成功
           if (isLastBlock) {
             for (SingleBuySellRecord buy : buysLastBlock) {
               if (!buy.isMatched()
-                  //                  && buy.index >= toMatch.index
+                  && buy.index >= toMatch.index
                   //                  && buy.index < sellRecord.index
                   && buy.isSuccess()
                   && buy.isBuy
                   && buy.token.equalsIgnoreCase(token)) {
                 buy.match();
-                users.add(buy);
+                user = buy;
+                flag = true;
+                break;
               }
             }
           }
-          for (SingleBuySellRecord buy : buysThisBlock) {
-            if (!buy.isMatched()
-                //                && buy.index > toMatch.index
-                //                && buy.index < sellRecord.index
-                && buy.isSuccess()
-                && buy.isBuy
-                && buy.token.equalsIgnoreCase(token)) {
-              buy.match();
-              users.add(buy);
+          if (!flag) {
+            for (SingleBuySellRecord buy : buysThisBlock) {
+              if (!buy.isMatched()
+                  //                && buy.index > toMatch.index
+                  && buy.index < sellRecord.index
+                  && buy.isSuccess()
+                  && buy.isBuy
+                  && buy.token.equalsIgnoreCase(token)) {
+                buy.match();
+                user = buy;
+                break;
+              }
             }
           }
-          writeToFile(toMatch, sellRecord, users);
+          writeToFile(toMatch, sellRecord, user);
         }
         return getTrx.compareTo(BigDecimal.ZERO) > 0;
       }
@@ -2006,12 +2148,38 @@ public class FullNode {
   }
 
   private static void writeToFile(
-      SingleBuySellRecord buy, SingleBuySellRecord sell, List<SingleBuySellRecord> users) {
-    if (users.isEmpty()) {
-      logger.info("Empty use tx, buy {} sell {}", buy.txId, sell.txId);
+      SingleBuySellRecord buy, SingleBuySellRecord sell, SingleBuySellRecord user) {
+    if (user == null) {
+      logger.info("Empty use tx, buy {} sell {}, token {}", buy.txId, sell.txId, buy.token);
     } else {
-      mevWriter.println(writeId + " " + buy.txId + " " + sell.txId);
-      users.forEach(user -> userWriter.println(writeId + " " + user.txId));
+      mevWriter.println(
+          writeId
+              + " "
+              + buy.txId
+              + " "
+              + sell.txId
+              + " "
+              + user.txId
+              + " "
+              + user.caller
+              + " "
+              + sell.blockNum
+              + " "
+              + sell.timestamp
+              + " "
+              + sell.witness);
+      userWriter.println(
+          writeId
+              + " "
+              + user.txId
+              + " "
+              + user.caller
+              + " "
+              + user.blockNum
+              + " "
+              + user.timestamp
+              + " "
+              + user.witness);
       writeId++;
     }
   }
@@ -2052,12 +2220,16 @@ public class FullNode {
   @Getter
   private static class SingleBuySellRecord {
     String txId;
+    String caller;
+    String calldata;
     int index;
     String token;
     boolean isBuy;
     BigDecimal tokenAmount;
     BigDecimal trxAmount;
     long blockNum;
+    long timestamp;
+    String witness;
     boolean matched;
     boolean success;
     BigDecimal fee;
@@ -2238,8 +2410,11 @@ public class FullNode {
 
     private void addRecord(
         String txId,
+        String calldata,
         int index,
         long blockNum,
+        long timestamp,
+        String witness,
         String token,
         boolean isBuy,
         BigDecimal tokenAmount,
@@ -2255,12 +2430,16 @@ public class FullNode {
       SingleBuySellRecord singleBuySellRecord =
           new SingleBuySellRecord(
               txId,
+              caller,
+              calldata,
               index,
               null,
               isBuy,
               tokenAmount,
               trxAmount,
               blockNum,
+              timestamp,
+              witness,
               false,
               success,
               fee,
