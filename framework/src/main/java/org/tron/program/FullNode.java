@@ -196,26 +196,27 @@ public class FullNode {
     //    }
 
     try {
-      String targetAddress = "41987c0191a1A098Ffc9addC9C65d2c3d028B10CA3".toLowerCase();
+      //      String targetAddress = "41987c0191a1A098Ffc9addC9C65d2c3d028B10CA3".toLowerCase();
+      String targetAddress = "4135EF67a96a4f28900fe58D3c2e6703A542d119A1".toLowerCase();
 
-      BufferedReader reader = new BufferedReader(new FileReader("paddrs.txt"));
+      //      BufferedReader reader = new BufferedReader(new FileReader("paddrs.txt"));
       Set<String> paddrs = new HashSet<>();
-      String line;
-      while ((line = reader.readLine()) != null) {
-        paddrs.add(Hex.toHexString(Commons.decodeFromBase58Check(line)));
-      }
-      BufferedReader sreader = new BufferedReader(new FileReader("saddrs.txt"));
+      //      String line;
+      //      while ((line = reader.readLine()) != null) {
+      //        paddrs.add(Hex.toHexString(Commons.decodeFromBase58Check(line)));
+      //      }
+      //      BufferedReader sreader = new BufferedReader(new FileReader("saddrs.txt"));
       Set<String> saddrs = new HashSet<>();
-//      saddrs.add(targetAddress);
-      while ((line = sreader.readLine()) != null) {
-        saddrs.add(Hex.toHexString(Commons.decodeFromBase58Check(line)));
-      }
+      saddrs.add(targetAddress);
+      //      while ((line = sreader.readLine()) != null) {
+      //        saddrs.add(Hex.toHexString(Commons.decodeFromBase58Check(line)));
+      //      }
       long startBlock = 65121619;
       //      long startBlock = 64689819;
       long recentBlock = 65323160;
       long endBlock = 65524702;
       // 2024-09-19 11:00:00 ~ 2024-09-25 21:00:00
-      syncMevStat(64184959, 65150411, 65553494, paddrs, saddrs, targetAddress, "null");
+      //      syncMevStat(64184959, 65150411, 65553494, paddrs, saddrs, targetAddress, "null");
       //      syncMevStat(
       //          ChainBaseManager.getInstance().getHeadBlockNum() - 10000,
       //          65540296,
@@ -223,29 +224,29 @@ public class FullNode {
       //          paddrs,
       //          saddrs);
 
-      //      SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-      //      dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
-      //      // sync day stat
-      //      long startTimestamp = 1724284800000L;
-      //      long endTimestamp = 1727308800000L;
-      //      long endBlockLastDay = 0;
-      //      for (long timestmap = startTimestamp;
-      //          timestmap < endTimestamp;
-      //          timestmap += 1000 * 60 * 60 * 24) {
-      //        long curStartBlock =
-      //            endBlockLastDay == 0 ? getBlockByTimestamp(timestmap) + 1 : endBlockLastDay + 1;
-      //        long curEndBlock = getBlockByTimestamp(timestmap + 1000 * 60 * 60 * 24);
-      //        endBlockLastDay = curEndBlock;
-      //
-      //        syncMevStat(
-      //            curStartBlock,
-      //            curEndBlock,
-      //            curEndBlock,
-      //            paddrs,
-      //            saddrs,
-      //            targetAddress,
-      //            dateFormat.format(timestmap));
-      //      }
+      SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+      dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+      // sync day stat
+      long startTimestamp = 1726012800000L;
+      long endTimestamp = 1727308800000L;
+      long endBlockLastDay = 0;
+      for (long timestmap = startTimestamp;
+          timestmap < endTimestamp;
+          timestmap += 1000 * 60 * 60 * 24) {
+        long curStartBlock =
+            endBlockLastDay == 0 ? getBlockByTimestamp(timestmap) + 1 : endBlockLastDay + 1;
+        long curEndBlock = getBlockByTimestamp(timestmap + 1000 * 60 * 60 * 24);
+        endBlockLastDay = curEndBlock;
+
+        syncMevStat(
+            curStartBlock,
+            curEndBlock,
+            curEndBlock,
+            paddrs,
+            saddrs,
+            targetAddress,
+            dateFormat.format(timestmap));
+      }
     } catch (Exception e) {
       logger.info("Total Error!!!!", e);
     }
@@ -1094,6 +1095,50 @@ public class FullNode {
       //        return;
       //      }
 
+      if (true) {
+
+        AddrAllInfoRecord record = swapAddrInfoRecordMap.get(targetAddr);
+        if (record == null) {
+          record = new AddrAllInfoRecord(targetAddr);
+        }
+        String msg =
+            date
+                + " "
+                + StringUtil.encode58Check(Hex.decode(targetAddr))
+                + " "
+                + record.getSuccessCount()
+                + " "
+                + record.getAllProfit()
+                + " "
+                + record.getLackCount()
+                + " "
+                + record.getAllLack()
+                + " "
+                + record.getAllAttack()
+                + " "
+                + record.getAllAttackTarget()
+                + " "
+                + record.getTrxOutAmount()
+                + " "
+                + record.getMzSucCount()
+                + " "
+                + record.getMzLackCount()
+                + " "
+                + record.getFee()
+                + " "
+                + record.getAllfee()
+                + " "
+                + record.getSuccessBuy()
+                + " "
+                + record.getSuccessSell()
+                + " "
+                + record.getFailBuy()
+                + " "
+                + record.getFailSell();
+        logger.info("End syncing from {} to {}, \n {}", startBlock, endBlock, msg);
+        return;
+      }
+
       // 输出结果
       PrintWriter pwriter = new PrintWriter("finalresult.txt");
       pwriter.println("SWAP");
@@ -1356,46 +1401,6 @@ public class FullNode {
           pSumBuyCountrecent,
           sSumTxCountrecent,
           sSumBuyCountrecent);
-      //
-      //      AddrAllInfoRecord record = swapAddrInfoRecordMap.get(targetAddr);
-      //      if (record == null) {
-      //        record = new AddrAllInfoRecord(targetAddr);
-      //      }
-      //      String msg =
-      //          date
-      //              + " "
-      //              + StringUtil.encode58Check(Hex.decode(targetAddr))
-      //              + " "
-      //              + record.getSuccessCount()
-      //              + " "
-      //              + record.getAllProfit()
-      //              + " "
-      //              + record.getLackCount()
-      //              + " "
-      //              + record.getAllLack()
-      //              + " "
-      //              + record.getAllAttack()
-      //              + " "
-      //              + record.getAllAttackTarget()
-      //              + " "
-      //              + record.getTrxOutAmount()
-      //              + " "
-      //              + record.getMzSucCount()
-      //              + " "
-      //              + record.getMzLackCount()
-      //              + " "
-      //              + record.getFee()
-      //              + " "
-      //              + record.getAllfee()
-      //              + " "
-      //              + record.getSuccessBuy()
-      //              + " "
-      //              + record.getSuccessSell()
-      //              + " "
-      //              + record.getFailBuy()
-      //              + " "
-      //              + record.getFailSell();
-      //      logger.info("End syncing from {} to {}, \n {}", startBlock, endBlock, msg);
 
     } catch (Exception e) {
       logger.info("ERROR!!!", e);
