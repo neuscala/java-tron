@@ -2050,21 +2050,33 @@ public class FullNode {
       logger.info("Empty use tx, buy {} sell {}, token {}", buy.txId, sell.txId, buy.token);
     }
     mevWriter.println(
-        writeId + " " + buy.txId + " " + sell.txId + " " + user == null
-            ? "null"
-            : user.txId + " " + user == null
-                ? "null"
-                : user.caller + " " + buy.blockNum + " " + buy.timestamp + " " + buy.witness);
+        writeId
+            + " "
+            + buy.txId
+            + " "
+            + sell.txId
+            + " "
+            + (user == null ? "null" : user.txId)
+            + " "
+            + (user == null ? "null" : user.caller)
+            + " "
+            + buy.blockNum
+            + " "
+            + buy.timestamp
+            + " "
+            + buy.witness);
     userWriter.println(
-        writeId + " " + user == null
-            ? "null"
-            : user.txId + " " + user == null
-                ? "null"
-                : user.caller + " " + user == null
-                    ? "null"
-                    : user.blockNum + " " + user == null
-                        ? "null"
-                        : user.timestamp + " " + user == null ? "null" : user.witness);
+        writeId
+            + " "
+            + (user == null ? "null" : user.txId)
+            + " "
+            + (user == null ? "null" : user.caller)
+            + " "
+            + (user == null ? "null" : user.blockNum)
+            + " "
+            + (user == null ? "null" : user.timestamp)
+            + " "
+            + (user == null ? "null" : user.witness));
     writeId++;
   }
 
