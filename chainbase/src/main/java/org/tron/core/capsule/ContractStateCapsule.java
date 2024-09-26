@@ -1835,7 +1835,7 @@ public class ContractStateCapsule implements ProtoCapsule<ContractState> {
     if (other == null) {
       return;
     }
-    
+
     addEnergyUsage(other.getEnergyUsage());
     addEnergyUsageTotal(other.getEnergyUsageTotal());
     addEnergyUsageFailed(other.getEnergyUsageFailed());
@@ -2078,6 +2078,162 @@ public class ContractStateCapsule implements ProtoCapsule<ContractState> {
         + ((double) (getTsTotalFromFee() + getTsTotalToFee())
         / (getTsTotalFromCount() + getTsTotalToCount()))
         + "}";
+  }
+
+  public long getSuccessAttackCount() {
+    return this.getInstance().getEnergyUsage();
+  }
+
+  public void addSuccessAttackCount(long toAdd) {
+    this.contractState = this.contractState.toBuilder()
+        .setEnergyUsage(this.contractState.getEnergyUsage() + toAdd)
+        .build();
+  }
+
+  public long getFailAttackCount() {
+    return this.getInstance().getTransferEnergyPenalty();
+  }
+
+  public void addFailAttackCount(long toAdd) {
+    this.contractState = this.contractState.toBuilder()
+        .setTransferEnergyPenalty(this.contractState.getTransferEnergyPenalty() + toAdd)
+        .build();
+  }
+
+  public long getFuzzySuccessAttackCount() {
+    return this.getInstance().getEnergyUsageTotal();
+  }
+
+  public void addFuzzySuccessAttackCount(long toAdd) {
+    this.contractState = this.contractState.toBuilder()
+        .setEnergyUsageTotal(this.contractState.getEnergyUsageTotal() + toAdd)
+        .build();
+  }
+
+  public long getFuzzyFailAttackCount() {
+    return this.getInstance().getEnergyUsageFailed();
+  }
+
+  public void addFuzzyFailAttackCount(long toAdd) {
+    this.contractState = this.contractState.toBuilder()
+        .setEnergyUsageFailed(this.contractState.getEnergyUsageFailed() + toAdd)
+        .build();
+  }
+
+  public long getAttemptAttackCount() {
+    return this.getInstance().getEnergyPenaltyTotal();
+  }
+
+  public void addAttemptAttackCount(long toAdd) {
+    this.contractState = this.contractState.toBuilder()
+        .setEnergyPenaltyTotal(this.contractState.getEnergyPenaltyTotal() + toAdd)
+        .build();
+  }
+
+  public long getPairAttackCount() {
+    return this.getInstance().getEnergyPenaltyFailed();
+  }
+
+  public void addPairAttackCount(long toAdd) {
+    this.contractState = this.contractState.toBuilder()
+        .setEnergyPenaltyFailed(this.contractState.getEnergyPenaltyFailed() + toAdd)
+        .build();
+  }
+
+  public long getProfit() {
+    return this.getInstance().getTrxBurn();
+  }
+
+  public void addProfit(long toAdd) {
+    this.contractState = this.contractState.toBuilder()
+        .setTrxBurn(this.contractState.getTrxBurn() + toAdd)
+        .build();
+  }
+
+  public long getLoss() {
+    return this.getInstance().getTrxPenalty();
+  }
+
+  public void addLoss(long toAdd) {
+    this.contractState = this.contractState.toBuilder()
+        .setTrxPenalty(this.contractState.getTrxPenalty() + toAdd)
+        .build();
+  }
+
+  public long getAttackFee() {
+    return this.getInstance().getTxTotalCount();
+  }
+
+  public void addAttackFee(long toAdd) {
+    this.contractState = this.contractState.toBuilder()
+        .setTxTotalCount(this.contractState.getTxTotalCount() + toAdd)
+        .build();
+  }
+
+  public long getAllFee() {
+    return this.getInstance().getTxFailedCount();
+  }
+
+  public void addAllFee(long toAdd) {
+    this.contractState = this.contractState.toBuilder()
+        .setTxFailedCount(this.contractState.getTxFailedCount() + toAdd)
+        .build();
+  }
+
+  public long getSuccessBuyCount() {
+    return this.getInstance().getTransferCount();
+  }
+
+  public void addSuccessBuyCount(long toAdd) {
+    this.contractState = this.contractState.toBuilder()
+        .setTransferCount(this.contractState.getTransferCount() + toAdd)
+        .build();
+  }
+
+  public long getSuccessSellCount() {
+    return this.getInstance().getTransferFromCount();
+  }
+
+  public void addSuccessSellCount(long toAdd) {
+    this.contractState = this.contractState.toBuilder()
+        .setTransferFromCount(this.contractState.getTransferFromCount() + toAdd)
+        .build();
+  }
+
+  public long getFailBuyCount() {
+    return this.getInstance().getTransferFee();
+  }
+
+  public void addFailBuyCount(long toAdd) {
+    this.contractState = this.contractState.toBuilder()
+        .setTransferFee(this.contractState.getTransferFee() + toAdd)
+        .build();
+  }
+
+  public long getFailSellCount() {
+    return this.getInstance().getTransferFromFee();
+  }
+
+  public void addFailSellCount(long toAdd) {
+    this.contractState = this.contractState.toBuilder()
+        .setTransferFromFee(this.contractState.getTransferFromFee() + toAdd)
+        .build();
+  }
+
+  public long getRemainingTokenValue() {
+    return this.getInstance().getTransferEnergyUsage();
+  }
+
+  public void addRemainingTokenValue(long toAdd) {
+    this.contractState = this.contractState.toBuilder()
+        .setTransferEnergyUsage(this.contractState.getTransferEnergyUsage() + toAdd)
+        .build();
+  }
+
+  public void setRemainingTokenValue(long value) {
+    this.contractState = this.contractState.toBuilder()
+        .setTransferEnergyUsage(value)
+        .build();
   }
 
   public void reset(long latestCycle) {

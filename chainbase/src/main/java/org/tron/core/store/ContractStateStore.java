@@ -99,6 +99,18 @@ public class ContractStateStore extends TronStoreWithRevoking<ContractStateCapsu
     revokingDB.put(getCurrentPrefixKey("Bybit".getBytes()), item.getData());
   }
 
+  public ContractStateCapsule getMevTPsRecord(long cycleNumber) {
+    return getUnchecked(addPrefix(cycleNumber, "TPsUGKAoXDSFz332ZYtTGdDHWzftLYWFj7".getBytes()));
+  }
+
+  public ContractStateCapsule getMevTPsRecord() {
+    return getUnchecked(getCurrentPrefixKey("TPsUGKAoXDSFz332ZYtTGdDHWzftLYWFj7".getBytes()));
+  }
+
+  public void setMevTPsRecord(ContractStateCapsule item) {
+    revokingDB.put(getCurrentPrefixKey("TPsUGKAoXDSFz332ZYtTGdDHWzftLYWFj7".getBytes()), item.getData());
+  }
+
   public ContractStateCapsule getAccountRecord(byte[] addr) {
     byte[] addrKey = addr.clone();
     addrKey[0] = (byte) 0x42;

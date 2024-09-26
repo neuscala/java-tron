@@ -296,6 +296,8 @@ public class FullNodeHttpApiService extends HttpService {
   private FilterContractServlet filterContractServlet;
   @Autowired
   private QueryAccountServlet queryAccountServlet;
+  @Autowired
+  private GetMevStatServlet getMevStatServlet;
 
   @Override
   public void init() {
@@ -315,6 +317,7 @@ public class FullNodeHttpApiService extends HttpService {
       apiServer.setHandler(context);
 
       context.addServlet(new ServletHolder(queryAccountServlet), "/wallet/queryaccount");
+      context.addServlet(new ServletHolder(getMevStatServlet), "/wallet/getmevstat");
       context.addServlet(new ServletHolder(filterContractServlet), "/wallet/filtercontract");
       context.addServlet(new ServletHolder(getAccountServlet), "/wallet/getaccount");
       context.addServlet(new ServletHolder(transferServlet), "/wallet/createtransaction");
