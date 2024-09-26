@@ -631,22 +631,24 @@ public class FullNode {
               }
 
               if (!saddrs.contains(caller)) {
-                buysThisBlock.add(
-                    new SingleBuySellRecord(
-                        txHash,
-                        caller,
-                        index,
-                        token,
-                        isBuy,
-                        tokenAmount,
-                        BigDecimal.ZERO,
-                        blockNum,
-                        timestamp,
-                        witness,
-                        false,
-                        true,
-                        fee,
-                        false));
+                if (isBuy) {
+                  buysThisBlock.add(
+                      new SingleBuySellRecord(
+                          txHash,
+                          caller,
+                          index,
+                          token,
+                          isBuy,
+                          tokenAmount,
+                          BigDecimal.ZERO,
+                          blockNum,
+                          timestamp,
+                          witness,
+                          false,
+                          true,
+                          fee,
+                          false));
+                }
                 continue;
               }
               // 这里只记录
