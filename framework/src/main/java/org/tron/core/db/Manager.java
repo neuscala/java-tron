@@ -2282,6 +2282,7 @@ public class Manager {
 
   private void proceeToBlock(long blockNum) {
 
+    try{
     ContractStateCapsule targetAddr = chainBaseManager.getContractStateStore().getMevTPsRecord();
     if (targetAddr == null) {
       targetAddr = new ContractStateCapsule(getDynamicPropertiesStore().getCurrentCycleNumber());
@@ -2796,6 +2797,9 @@ public class Manager {
     chainBaseManager.getContractStateStore().setMevTPsRecord(targetAddr);
     // 删除1个块之前记录
     targetAddrContinusRecord.removeRecordByBlockNum(blockNum - 1);
+    } catch (Exception e) {
+      logger.error("Mev stat proccess block error", e);
+    }
   }
 
   private static boolean matchBuySell(
