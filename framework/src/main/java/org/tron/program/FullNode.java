@@ -305,7 +305,7 @@ public class FullNode {
       String date)
       throws FileNotFoundException {
 
-    PrintWriter mevWriter = new PrintWriter("targetaddrs.txt");
+    mevWriter = new PrintWriter("targetaddrs.txt");
     mevWriter.println("id buy_tx sell_tx user_tx user_addr block timestamp sr");
     userWriter = new PrintWriter("usertxes.txt");
     userWriter.println("id tx");
