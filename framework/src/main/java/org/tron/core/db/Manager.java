@@ -6,7 +6,7 @@ import static org.tron.core.exception.BadBlockException.TypeEnum.CALC_MERKLE_ROO
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.OUT_OF_ENERGY;
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.SUCCESS;
-import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
+import static org.tron.protos.Protocol.TransactionInfo.code.SUCESS;
 
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.cache.Cache;
@@ -17,7 +17,13 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.prometheus.client.Histogram;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -26,6 +32,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +52,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
+
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -116,6 +125,7 @@ import org.tron.core.db.api.AssetUpdateHelper;
 import org.tron.core.db.api.BandwidthPriceHistoryLoader;
 import org.tron.core.db.api.EnergyPriceHistoryLoader;
 import org.tron.core.db.api.MoveAbiHelper;
+import org.tron.core.db.common.iterator.DBIterator;
 import org.tron.core.db2.ISession;
 import org.tron.core.db2.core.Chainbase;
 import org.tron.core.db2.core.SnapshotManager;
@@ -171,6 +181,7 @@ import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessScheduleStore;
 import org.tron.core.store.WitnessStore;
 import org.tron.core.utils.TransactionRegister;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Transaction;
@@ -2048,6 +2059,1721 @@ public class Manager {
       Arrays.stream(trace.getRuntimeResult().getException().getStackTrace())
           .forEach(System.out::println);
     }
+  }
+
+  private void syncMevStat() {
+    try {
+      //      String targetAddress = "41987c0191a1A098Ffc9addC9C65d2c3d028B10CA3".toLowerCase();
+      String targetAddress = "4135EF67a96a4f28900fe58D3c2e6703A542d119A1".toLowerCase();
+
+      //      BufferedReader reader = new BufferedReader(new FileReader("paddrs.txt"));
+      Set<String> paddrs = new HashSet<>();
+      //      String line;
+      //      while ((line = reader.readLine()) != null) {
+      //        paddrs.add(Hex.toHexString(Commons.decodeFromBase58Check(line)));
+      //      }
+      //      BufferedReader sreader = new BufferedReader(new FileReader("saddrs.txt"));
+      Set<String> saddrs = new HashSet<>();
+      saddrs.add(targetAddress);
+      //      while ((line = sreader.readLine()) != null) {
+      //        saddrs.add(Hex.toHexString(Commons.decodeFromBase58Check(line)));
+      //      }
+      syncMevStat(64184959, 65150411, 65553494, paddrs, saddrs);
+    } catch (Exception e) {
+      logger.info("Total Error!!!!", e);
+    }
+
+    logger.info("Total End!!!!");
+  }
+
+  // 发射前
+  private static byte[] TOKEN_PURCHASE_TOPIC =
+      Hex.decode("63abb62535c21a5d221cf9c15994097b8880cc986d82faf80f57382b998dbae5");
+  private static byte[] TOKEN_SOLD_TOPIC =
+      Hex.decode("9387a595ac4be9038bbb9751abad8baa3dcf219dd9e19abb81552bd521fe3546");
+  private static byte[] TRX_RECEIVED =
+      Hex.decode("1bab02886c659969cbb004cc17dc19be19f193323a306e26c669bedb29c651f7");
+  private static String PUMP_BUY_METHOD_1 = "1cc2c911";
+  private static String PUMP_BUY_METHOD_2 = "2f70d762";
+  private static String PUMP_SELL_METHOD = "d19aa2b9";
+  private static byte[] SUNPUMP_LAUNCH = Hex.decode("41c22dd1b7bc7574e94563c8282f64b065bc07b2fa");
+  private static BigDecimal TRX_DIVISOR = new BigDecimal("1000000");
+  private static BigDecimal TOKEN_DIVISOR = new BigDecimal("1000000000000000000");
+
+  // 发射后
+  private static final String SWAP_BUY_METHOD_1 = "fb3bdb41"; // swapETHForExactTokens
+  private static final String SWAP_BUY_METHOD_2 = "7ff36ab5";
+  private static final String SWAP_BUY_METHOD_3 =
+      "b6f9de95"; // swapExactETHForTokensSupportingFeeOnTransferTokens
+  private static final String SWAP_SELL_METHOD_1 = "18cbafe5";
+  private static final String SWAP_SELL_METHOD_2 = "4a25d94a"; // swapTokensForExactETH
+  private static final String SWAP_SELL_METHOD_3 =
+      "791ac947"; // swapExactTokensForETHSupportingFeeOnTransferTokens
+  private static final String SWAP_METHOD = "38ed1739";
+  private static final byte[] SWAP_ROUTER = Hex.decode("41fF7155b5df8008fbF3834922B2D52430b27874f5");
+  private static final byte[] TRANSFER_TOPIC =
+      Hex.decode("ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef");
+  private static final byte[] SWAP_TOPIC =
+      Hex.decode("d78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822");
+  private static final byte[] WTRX_HEX = Hex.decode("891cdb91d149f23B1a45D9c5Ca78a88d0cB44C18");
+  private static final String WTRX = "891cdb91d149f23B1a45D9c5Ca78a88d0cB44C18";
+  private static final String WTRX41 = "41891cdb91d149f23B1a45D9c5Ca78a88d0cB44C18";
+  private static final String USDT = "a614f803B6FD780986A42c78Ec9c7f77e6DeD13C".toLowerCase();
+
+  private static void syncMevStat(
+      long startBlock,
+      long recentBlock,
+      long endBlock,
+      Set<String> paddrs,
+      Set<String> saddrs) {
+
+    try {
+      logger.info(
+          "Start To Local Test at {}!!! paddr size {}, saddr size {}",
+          startBlock,
+          paddrs.size(),
+          saddrs.size());
+      long logBlock = startBlock;
+      long pSumTxCount = 0;
+      long pSumBuyCount = 0;
+      long sSumTxCount = 0;
+      long sSumBuyCount = 0;
+      long pSumTxCountrecent = 0;
+      long pSumBuyCountrecent = 0;
+      long sSumTxCountrecent = 0;
+      long sSumBuyCountrecent = 0;
+
+      // 记录区
+      // 总记录，最后出数据的结构
+      Map<String, AddrAllInfoRecord> pumpAddrInfoRecordMap = new HashMap<>();
+      Map<String, AddrAllInfoRecord> recentpumpAddrInfoRecordMap = new HashMap<>();
+      Map<String, AddrAllInfoRecord> swapAddrInfoRecordMap = new HashMap<>();
+      Map<String, AddrAllInfoRecord> recentswapAddrInfoRecordMap = new HashMap<>();
+      // 连续块记录，每个块后更新
+      Map<String, AddrContinusRecord> pumpContinusRecordMap = new HashMap<>();
+      Map<String, AddrContinusRecord> recentpumpContinusRecordMap = new HashMap<>();
+      Map<String, AddrContinusRecord> swapContinusRecordMap = new HashMap<>();
+      Map<String, AddrContinusRecord> recentswapContinusRecordMap = new HashMap<>();
+
+      Map<String, Long> swapSrMap = new HashMap<>();
+      Map<String, Long> recentswapSrMap = new HashMap<>();
+      Map<String, Long> pumpSrMap = new HashMap<>();
+      Map<String, Long> recentpumpSrMap = new HashMap<>();
+
+      Map<String, String> pairToTokenMap = populateMap();
+      DBIterator retIterator =
+          (DBIterator) ChainBaseManager.getInstance().getTransactionRetStore().getDb().iterator();
+      retIterator.seek(ByteArray.fromLong(startBlock));
+      DBIterator blockIterator =
+          (DBIterator) ChainBaseManager.getInstance().getBlockStore().getDb().iterator();
+      blockIterator.seek(ByteArray.fromLong(startBlock));
+      while (retIterator.hasNext() && blockIterator.hasNext()) {
+        Map.Entry<byte[], byte[]> retEntry = retIterator.next();
+        Map.Entry<byte[], byte[]> blockEntry = blockIterator.next();
+        byte[] key = retEntry.getKey();
+        long blockNum = Longs.fromByteArray(key);
+        long blockStoreNum = Longs.fromByteArray(blockEntry.getKey());
+        while (blockNum != blockStoreNum) {
+          blockEntry = blockIterator.next();
+          blockStoreNum = Longs.fromByteArray(blockEntry.getKey());
+        }
+        if (blockNum > endBlock) {
+          break;
+        }
+
+        //        buysLastBlock.clear();
+        //        buysLastBlock.addAll(buysThisBlock);
+        //        buysThisBlock.clear();
+
+        byte[] value = retEntry.getValue();
+        TransactionRetCapsule transactionRetCapsule = new TransactionRetCapsule(value);
+        BlockCapsule blockCapsule = new BlockCapsule(blockEntry.getValue());
+
+        long timestamp = transactionRetCapsule.getInstance().getBlockTimeStamp();
+
+        Map<String, TransactionCapsule> txCallerMap = new HashMap<>();
+        String witness = get41Addr(Hex.toHexString(blockCapsule.getWitnessAddress().toByteArray()));
+        for (TransactionCapsule tx : blockCapsule.getTransactions()) {
+          txCallerMap.put(tx.getTransactionId().toString(), tx);
+        }
+
+        int index = -1;
+        for (Protocol.TransactionInfo transactionInfo :
+            transactionRetCapsule.getInstance().getTransactioninfoList()) {
+          index++;
+          byte[] txId = transactionInfo.getId().toByteArray();
+          TransactionCapsule tx = txCallerMap.get(Hex.toHexString(txId));
+          String caller = get41Addr(Hex.toHexString(tx.getOwnerAddress()));
+          byte[] contractAddress = transactionInfo.getContractAddress().toByteArray();
+          BigDecimal fee =
+              new BigDecimal(transactionInfo.getFee())
+                  .divide(TRX_DIVISOR, 6, RoundingMode.HALF_EVEN);
+
+          String txHash = Hex.toHexString(txId);
+          if (Arrays.equals(contractAddress, SWAP_ROUTER)) {
+
+            AddrAllInfoRecord addrAllInfoRecord =
+                swapAddrInfoRecordMap.getOrDefault(caller, new AddrAllInfoRecord(caller));
+            AddrAllInfoRecord recentaddrAllInfoRecord =
+                recentswapAddrInfoRecordMap.getOrDefault(caller, new AddrAllInfoRecord(caller));
+            addrAllInfoRecord.allfee = addrAllInfoRecord.allfee.add(fee);
+            if (blockNum >= recentBlock) {
+              recentaddrAllInfoRecord.allfee = recentaddrAllInfoRecord.allfee.add(fee);
+            }
+
+            if (!tx.getInstance()
+                .getRawData()
+                .getContract(0)
+                .getParameter()
+                .is(SmartContractOuterClass.TriggerSmartContract.class)) {
+              continue;
+            }
+            SmartContractOuterClass.TriggerSmartContract triggerSmartContract =
+                tx.getInstance()
+                    .getRawData()
+                    .getContract(0)
+                    .getParameter()
+                    .unpack(SmartContractOuterClass.TriggerSmartContract.class);
+            String callData = Hex.toHexString(triggerSmartContract.getData().toByteArray());
+
+            if (!transactionInfo.getResult().equals(SUCESS)) {
+              if (!tx.getInstance()
+                  .getRawData()
+                  .getContract(0)
+                  .getParameter()
+                  .is(SmartContractOuterClass.TriggerSmartContract.class)) {
+                continue;
+              }
+              try {
+                BigDecimal tokenAmount = BigDecimal.ZERO;
+                boolean isBuy = false;
+                sSumTxCount++;
+                if (blockNum >= recentBlock) {
+                  sSumTxCountrecent++;
+                }
+                String token;
+                if (callData.startsWith(SWAP_SELL_METHOD_1)) {
+                  isBuy = false;
+                  if (callData.length() < 392) {
+                    token = get41Addr(callData.substring(8, 8 + 64).substring(24));
+                  } else {
+                    tokenAmount =
+                        new BigDecimal(new BigInteger(callData.substring(8, 8 + 64), 16))
+                            .divide(TOKEN_DIVISOR, 18, RoundingMode.HALF_EVEN); // token 个数
+                    String token1 = callData.substring(392, 392 + 64).substring(24); // token1
+                    String token2 = callData.substring(456).substring(24); // token2 wtrx
+                    token = token1.equalsIgnoreCase(WTRX) ? get41Addr(token2) : get41Addr(token1);
+                  }
+                } else if (callData.startsWith(SWAP_SELL_METHOD_2)) {
+                  isBuy = false;
+                  tokenAmount =
+                      new BigDecimal(new BigInteger(callData.substring(8, 8 + 64), 16))
+                          .divide(TOKEN_DIVISOR, 18, RoundingMode.HALF_EVEN); // token 个数
+                  String token1 = callData.substring(392, 392 + 64).substring(24); // token1
+                  String token2 =
+                      callData.length() >= 456
+                          ? callData.substring(456).substring(24)
+                          : null; // token2 wtrx
+                  token =
+                      (token1.equalsIgnoreCase(WTRX) && token2 != null)
+                          ? get41Addr(token2)
+                          : get41Addr(token1);
+                } else if (callData.startsWith(SWAP_SELL_METHOD_3)) {
+                  isBuy = false;
+                  token = get41Addr(callData.substring(392, 392 + 64)); // token
+                } else if (callData.startsWith(SWAP_METHOD)) {
+                  //                String data1 = callData.substring(8, 8 + 64); // trx amount
+                  String token1 = callData.substring(392, 392 + 64).substring(24); // out token
+                  String token2 = callData.substring(456, 456 + 64).substring(24); // in token
+                  if (token1.equalsIgnoreCase(WTRX) || token1.equalsIgnoreCase(USDT)) {
+                    token = get41Addr(token2);
+                    isBuy = true;
+                  } else {
+                    token = get41Addr(token1);
+                    isBuy = false;
+                  }
+                } else if (callData.startsWith(SWAP_BUY_METHOD_1)) {
+                  isBuy = true;
+                  tokenAmount =
+                      new BigDecimal(new BigInteger(callData.substring(8, 8 + 64), 16))
+                          .divide(TOKEN_DIVISOR, 18, RoundingMode.HALF_EVEN); // token 个数
+                  String token1 = callData.substring(392, 392 + 64).substring(24); // token1
+                  String token2 = callData.substring(328, 328 + 64).substring(24); // token2 wtrx
+                  token = token1.equalsIgnoreCase(WTRX) ? get41Addr(token2) : get41Addr(token1);
+                } else if (callData.startsWith(SWAP_BUY_METHOD_2)) {
+                  isBuy = true;
+                  String token1 = callData.substring(392, 392 + 64).substring(24); // token1
+                  String token2 = callData.substring(328, 328 + 64).substring(24); // token2 wtrx
+                  token = token1.equalsIgnoreCase(WTRX) ? get41Addr(token2) : get41Addr(token1);
+                } else if (callData.startsWith(SWAP_BUY_METHOD_3)) {
+                  isBuy = true;
+                  token = get41Addr(callData.substring(392, 392 + 64)); // token
+                } else {
+                  // 其他方法
+                  continue;
+                }
+                if (isBuy) {
+                  sSumBuyCount++;
+                  if (blockNum >= recentBlock) {
+                    sSumBuyCountrecent++;
+                  }
+                }
+
+                if (!saddrs.contains(caller)) {
+                  continue;
+                }
+                AddrContinusRecord addrContinusRecord =
+                    swapContinusRecordMap.getOrDefault(caller, new AddrContinusRecord(caller));
+                addrContinusRecord.addRecord(
+                    txHash,
+                    index,
+                    blockNum,
+                    timestamp,
+                    witness,
+                    token,
+                    isBuy,
+                    tokenAmount,
+                    BigDecimal.ZERO,
+                    false,
+                    fee);
+                swapContinusRecordMap.put(caller, addrContinusRecord);
+                if (blockNum >= recentBlock) {
+                  AddrContinusRecord recentaddrContinusRecord =
+                      recentswapContinusRecordMap.getOrDefault(
+                          caller, new AddrContinusRecord(caller));
+                  recentaddrContinusRecord.addRecord(
+                      txHash,
+                      index,
+                      blockNum,
+                      timestamp,
+                      witness,
+                      token,
+                      isBuy,
+                      tokenAmount,
+                      BigDecimal.ZERO,
+                      false,
+                      fee);
+                  recentswapContinusRecordMap.put(caller, recentaddrContinusRecord);
+                }
+
+                if (isBuy) {
+                  addrAllInfoRecord.failBuy += 1;
+                  if (blockNum >= recentBlock) {
+                    recentaddrAllInfoRecord.failBuy += 1;
+                  }
+                } else {
+                  addrAllInfoRecord.failSell += 1;
+                  if (blockNum >= recentBlock) {
+                    recentaddrAllInfoRecord.failSell += 1;
+                  }
+                }
+                swapAddrInfoRecordMap.put(caller, addrAllInfoRecord);
+                if (blockNum >= recentBlock) {
+                  recentswapAddrInfoRecordMap.put(caller, recentaddrAllInfoRecord);
+                }
+
+                continue;
+              } catch (Exception e) {
+                continue;
+              }
+            }
+
+            // 成功交易
+            // Swap tx
+            sSumTxCount++;
+            if (blockNum >= recentBlock) {
+              sSumTxCountrecent++;
+            }
+            for (Protocol.TransactionInfo.Log log : transactionInfo.getLogList()) {
+              if (!Arrays.equals(log.getTopics(0).toByteArray(), SWAP_TOPIC)) {
+                continue;
+              }
+              // Swap topic
+              String logData = Hex.toHexString(log.getData().toByteArray());
+              BigInteger amount0In = new BigInteger(logData.substring(0, 64), 16);
+              BigInteger amount1In = new BigInteger(logData.substring(64, 128), 16);
+              BigInteger amount0Out = new BigInteger(logData.substring(128, 192), 16);
+              BigInteger amount1Out = new BigInteger(logData.substring(192, 256), 16);
+
+              String pair = Hex.toHexString(log.getAddress().toByteArray());
+              String token = pairToTokenMap.get(pair);
+              boolean tokenNull = token == null;
+              if (tokenNull) {
+                for (Protocol.TransactionInfo.Log log2 : transactionInfo.getLogList()) {
+                  if (Arrays.equals(TRANSFER_TOPIC, log2.getTopics(0).toByteArray())
+                      && !Arrays.equals(log2.getAddress().toByteArray(), WTRX_HEX)) {
+                    token = Hex.toHexString(log2.getAddress().toByteArray());
+                    break;
+                  }
+                }
+              }
+              boolean smaller = smallerToWtrx(token, WTRX);
+              token = get41Addr(token);
+
+              boolean isBuy =
+                  ((smaller && amount0Out.compareTo(BigInteger.ZERO) > 0)
+                      || (!smaller && amount1Out.compareTo(BigInteger.ZERO) > 0));
+
+              BigDecimal trxAmount;
+              BigDecimal tokenAmount;
+              if (isBuy) {
+                sSumBuyCount++;
+                if (blockNum >= recentBlock) {
+                  sSumBuyCountrecent++;
+                }
+                if (smaller) {
+                  trxAmount =
+                      new BigDecimal(amount1In).divide(TRX_DIVISOR, 6, RoundingMode.HALF_EVEN);
+                  tokenAmount =
+                      new BigDecimal(amount0Out).divide(TOKEN_DIVISOR, 18, RoundingMode.HALF_EVEN);
+                } else {
+                  trxAmount =
+                      new BigDecimal(amount0In).divide(TRX_DIVISOR, 6, RoundingMode.HALF_EVEN);
+                  tokenAmount =
+                      new BigDecimal(amount1Out).divide(TOKEN_DIVISOR, 18, RoundingMode.HALF_EVEN);
+                }
+              } else {
+                if (smaller) {
+                  trxAmount =
+                      new BigDecimal(amount1Out).divide(TRX_DIVISOR, 6, RoundingMode.HALF_EVEN);
+                  tokenAmount =
+                      new BigDecimal(amount0In).divide(TOKEN_DIVISOR, 18, RoundingMode.HALF_EVEN);
+                } else {
+                  trxAmount =
+                      new BigDecimal(amount0Out).divide(TRX_DIVISOR, 6, RoundingMode.HALF_EVEN);
+                  tokenAmount =
+                      new BigDecimal(amount1In).divide(TOKEN_DIVISOR, 18, RoundingMode.HALF_EVEN);
+                }
+              }
+
+              if (!saddrs.contains(caller)) {
+                continue;
+              }
+              // 这里只记录
+              AddrContinusRecord addrContinusRecord =
+                  swapContinusRecordMap.getOrDefault(caller, new AddrContinusRecord(caller));
+              addrContinusRecord.addRecord(
+                  txHash,
+                  index,
+                  blockNum,
+                  timestamp,
+                  witness,
+                  token,
+                  isBuy,
+                  tokenAmount,
+                  trxAmount,
+                  true,
+                  fee);
+              swapContinusRecordMap.put(caller, addrContinusRecord);
+              if (blockNum >= recentBlock) {
+                AddrContinusRecord recentaddrContinusRecord =
+                    recentswapContinusRecordMap.getOrDefault(
+                        caller, new AddrContinusRecord(caller));
+                recentaddrContinusRecord.addRecord(
+                    txHash,
+                    index,
+                    blockNum,
+                    timestamp,
+                    witness,
+                    token,
+                    isBuy,
+                    tokenAmount,
+                    trxAmount,
+                    true,
+                    fee);
+                recentswapContinusRecordMap.put(caller, recentaddrContinusRecord);
+              }
+              if (isBuy) {
+                addrAllInfoRecord.successBuy += 1;
+                if (blockNum >= recentBlock) {
+                  recentaddrAllInfoRecord.successBuy += 1;
+                }
+              } else {
+                addrAllInfoRecord.successSell += 1;
+                if (blockNum >= recentBlock) {
+                  recentaddrAllInfoRecord.successSell += 1;
+                }
+              }
+              swapAddrInfoRecordMap.put(caller, addrAllInfoRecord);
+              if (blockNum >= recentBlock) {
+                recentswapAddrInfoRecordMap.put(caller, recentaddrAllInfoRecord);
+              }
+              // 找到目标log就跳出
+              break;
+            }
+          } else if (Arrays.equals(contractAddress, SUNPUMP_LAUNCH)) {
+
+            if (!tx.getInstance()
+                .getRawData()
+                .getContract(0)
+                .getParameter()
+                .is(SmartContractOuterClass.TriggerSmartContract.class)) {
+              continue;
+            }
+
+            AddrAllInfoRecord addrAllInfoRecord =
+                pumpAddrInfoRecordMap.getOrDefault(caller, new AddrAllInfoRecord(caller));
+            AddrAllInfoRecord recentaddrAllInfoRecord =
+                recentpumpAddrInfoRecordMap.getOrDefault(caller, new AddrAllInfoRecord(caller));
+            addrAllInfoRecord.allfee = addrAllInfoRecord.allfee.add(fee);
+            if (blockNum >= recentBlock) {
+              recentaddrAllInfoRecord.allfee = recentaddrAllInfoRecord.allfee.add(fee);
+            }
+            SmartContractOuterClass.TriggerSmartContract triggerSmartContract =
+                tx.getInstance()
+                    .getRawData()
+                    .getContract(0)
+                    .getParameter()
+                    .unpack(SmartContractOuterClass.TriggerSmartContract.class);
+            // 只遍历成功交易
+            if (!transactionInfo.getResult().equals(SUCESS)) {
+              pSumTxCount += 1;
+              if (blockNum >= recentBlock) {
+                pSumTxCountrecent += 1;
+              }
+              try {
+                String callData = Hex.toHexString(triggerSmartContract.getData().toByteArray());
+                BigDecimal tokenAmount = BigDecimal.ZERO;
+                boolean isBuy = false;
+                String token;
+                if (callData.startsWith(PUMP_SELL_METHOD)) {
+                  isBuy = false;
+                  token = get41Addr(callData.substring(8, 8 + 64).substring(24)); // token
+                  tokenAmount =
+                      new BigDecimal(new BigInteger(callData.substring(72, 72 + 64), 16))
+                          .divide(TOKEN_DIVISOR, 18, RoundingMode.HALF_EVEN); // amount
+                } else if (callData.startsWith(PUMP_BUY_METHOD_1)) {
+                  isBuy = true;
+                  token = get41Addr(callData.substring(8, 8 + 64).substring(24)); // token
+                } else {
+                  // 其他方法
+                  continue;
+                }
+                if (isBuy) {
+                  pSumBuyCount += 1;
+                  if (blockNum >= recentBlock) {
+                    pSumBuyCountrecent += 1;
+                  }
+                }
+                if (!paddrs.contains(caller)) {
+                  continue;
+                }
+                AddrContinusRecord addrContinusRecord =
+                    pumpContinusRecordMap.getOrDefault(caller, new AddrContinusRecord(caller));
+                addrContinusRecord.addRecord(
+                    txHash,
+                    index,
+                    blockNum,
+                    timestamp,
+                    witness,
+                    token,
+                    isBuy,
+                    tokenAmount,
+                    BigDecimal.ZERO,
+                    false,
+                    fee);
+                pumpContinusRecordMap.put(caller, addrContinusRecord);
+                if (blockNum >= recentBlock) {
+                  AddrContinusRecord recentaddrContinusRecord =
+                      recentpumpContinusRecordMap.getOrDefault(
+                          caller, new AddrContinusRecord(caller));
+                  recentaddrContinusRecord.addRecord(
+                      txHash,
+                      index,
+                      blockNum,
+                      timestamp,
+                      witness,
+                      token,
+                      isBuy,
+                      tokenAmount,
+                      BigDecimal.ZERO,
+                      false,
+                      fee);
+                  recentpumpContinusRecordMap.put(caller, recentaddrContinusRecord);
+                }
+                if (isBuy) {
+                  addrAllInfoRecord.failBuy += 1;
+                  if (blockNum >= recentBlock) {
+                    recentaddrAllInfoRecord.failBuy += 1;
+                  }
+                } else {
+                  addrAllInfoRecord.failSell += 1;
+                  if (blockNum >= recentBlock) {
+                    recentaddrAllInfoRecord.failSell += 1;
+                  }
+                }
+                pumpAddrInfoRecordMap.put(caller, addrAllInfoRecord);
+                if (blockNum >= recentBlock) {
+                  recentpumpAddrInfoRecordMap.put(caller, recentaddrAllInfoRecord);
+                }
+                continue;
+
+              } catch (Exception e) {
+                continue;
+              }
+            }
+            pSumTxCount++;
+            if (blockNum >= recentBlock) {
+              pSumTxCountrecent++;
+            }
+            for (Protocol.TransactionInfo.Log log : transactionInfo.getLogList()) {
+
+              boolean isBuy = false;
+              boolean flag = false;
+              if (Arrays.equals(log.getTopics(0).toByteArray(), TOKEN_SOLD_TOPIC)) {
+                flag = true;
+              } else if (Arrays.equals(log.getTopics(0).toByteArray(), TOKEN_PURCHASE_TOPIC)) {
+                flag = true;
+                isBuy = true;
+              }
+              if (!flag) {
+                continue;
+              }
+              if (isBuy) {
+                pSumBuyCount++;
+                if (blockNum >= recentBlock) {
+                  pSumBuyCountrecent++;
+                }
+              }
+              if (!paddrs.contains(caller)) {
+                continue;
+              }
+              String token = get41Addr(Hex.toHexString(log.getAddress().toByteArray()));
+              for (Protocol.TransactionInfo.Log log2 : transactionInfo.getLogList()) {
+                if (Arrays.equals(log2.getTopics(0).toByteArray(), TRANSFER_TOPIC)) {
+                  token = get41Addr(Hex.toHexString(log2.getAddress().toByteArray()));
+                  break;
+                }
+              }
+
+              String dataStr = Hex.toHexString(log.getData().toByteArray());
+              BigDecimal trxAmount;
+              if (isBuy) {
+                trxAmount =
+                    new BigDecimal(triggerSmartContract.getCallValue())
+                        .divide(TRX_DIVISOR, 6, RoundingMode.HALF_EVEN);
+              } else {
+                trxAmount =
+                    new BigDecimal(new BigInteger(dataStr.substring(0, 64), 16))
+                        .divide(TRX_DIVISOR, 6, RoundingMode.HALF_EVEN);
+              }
+
+              BigDecimal tokenAmount =
+                  new BigDecimal(new BigInteger(dataStr.substring(128, 192), 16))
+                      .divide(TOKEN_DIVISOR, 18, RoundingMode.HALF_EVEN);
+
+              // 这里只记录
+              AddrContinusRecord addrContinusRecord =
+                  pumpContinusRecordMap.getOrDefault(caller, new AddrContinusRecord(caller));
+              addrContinusRecord.addRecord(
+                  txHash,
+                  index,
+                  blockNum,
+                  timestamp,
+                  witness,
+                  token,
+                  isBuy,
+                  tokenAmount,
+                  trxAmount,
+                  true,
+                  fee);
+              pumpContinusRecordMap.put(caller, addrContinusRecord);
+              if (blockNum >= recentBlock) {
+                AddrContinusRecord recentaddrContinusRecord =
+                    recentpumpContinusRecordMap.getOrDefault(
+                        caller, new AddrContinusRecord(caller));
+                recentaddrContinusRecord.addRecord(
+                    txHash,
+                    index,
+                    blockNum,
+                    timestamp,
+                    witness,
+                    token,
+                    isBuy,
+                    tokenAmount,
+                    trxAmount,
+                    true,
+                    fee);
+                recentpumpContinusRecordMap.put(caller, recentaddrContinusRecord);
+              }
+
+              if (isBuy) {
+                addrAllInfoRecord.successBuy += 1;
+                if (blockNum >= recentBlock) {
+                  recentaddrAllInfoRecord.successBuy += 1;
+                }
+              } else {
+                addrAllInfoRecord.successSell += 1;
+                if (blockNum >= recentBlock) {
+                  recentaddrAllInfoRecord.successSell += 1;
+                }
+              }
+              pumpAddrInfoRecordMap.put(caller, addrAllInfoRecord);
+              if (blockNum >= recentBlock) {
+                recentpumpAddrInfoRecordMap.put(caller, recentaddrAllInfoRecord);
+              }
+              // 找到目标log就跳出
+              break;
+            }
+          }
+        }
+        // 当前块交易结束, 处理这个块的买卖，并更新记录
+        boolean swapSuccess =
+            proceeToBlock(
+                swapContinusRecordMap,
+                swapAddrInfoRecordMap,
+                blockNum,
+                witness);
+        if (swapSuccess) {
+          swapSrMap.put(witness, swapSrMap.getOrDefault(witness, 0L) + 1);
+        }
+        boolean pumpSuccess =
+            proceeToBlock(
+                pumpContinusRecordMap,
+                pumpAddrInfoRecordMap,
+                blockNum,
+                witness);
+        if (pumpSuccess) {
+          pumpSrMap.put(witness, pumpSrMap.getOrDefault(witness, 0L) + 1);
+        }
+        if (blockNum >= recentBlock) {
+          boolean recentswapSuccess =
+              proceeToBlock(
+                  recentswapContinusRecordMap,
+                  recentswapAddrInfoRecordMap,
+                  blockNum,
+                  witness);
+          if (recentswapSuccess) {
+            recentswapSrMap.put(witness, recentswapSrMap.getOrDefault(witness, 0L) + 1);
+          }
+          boolean recentpumpSuccess =
+              proceeToBlock(
+                  recentpumpContinusRecordMap,
+                  recentpumpAddrInfoRecordMap,
+                  blockNum,
+                  witness);
+          if (recentpumpSuccess) {
+            recentpumpSrMap.put(witness, recentpumpSrMap.getOrDefault(witness, 0L) + 1);
+          }
+        }
+
+        if (blockNum - logBlock >= 10000) {
+          logBlock = blockNum;
+          logger.info(
+              "Sync to block {} timestamp {}, sum p addr {}, s addr {}, p_sum_tx_count {}, s_sum_tx_count {}",
+              blockNum,
+              timestamp,
+              pumpAddrInfoRecordMap.keySet().size(),
+              swapAddrInfoRecordMap.keySet().size(),
+              pSumTxCount,
+              sSumTxCount);
+        }
+      }
+
+    } catch (Exception e) {
+      logger.info("Mev stat ERROR!!!", e);
+    }
+  }
+
+  private static boolean proceeToBlock(
+      Map<String, AddrContinusRecord> continusRecordMap,
+      Map<String, AddrAllInfoRecord> addrAllInfoRecordMap,
+      long blockNum,
+      String witness) {
+    boolean blockSuccess = false;
+    for (Map.Entry<String, AddrContinusRecord> entry : continusRecordMap.entrySet()) {
+      // 每个人
+      String addr = entry.getKey();
+      AddrAllInfoRecord addrAllInfoRecord =
+          addrAllInfoRecordMap.getOrDefault(addr, new AddrAllInfoRecord(addr));
+      BigDecimal feeToAdd = BigDecimal.ZERO;
+
+      AddrContinusRecord addrTwoBlockRecord = entry.getValue();
+      Map<String, ContinusBlockRecord> thisBlockRecords =
+          addrTwoBlockRecord.getRecordsByBlockNum(blockNum);
+      Map<String, ContinusBlockRecord> lastBlockRecords =
+          addrTwoBlockRecord.getRecordsByBlockNum(blockNum - 1);
+      // 理论上 lastblock 记录只剩 买记录
+      for (Map.Entry<String, ContinusBlockRecord> tokenEntry : thisBlockRecords.entrySet()) {
+        // 每个 token
+        String token = tokenEntry.getKey();
+        ContinusBlockRecord buySellsThisBlocks = tokenEntry.getValue();
+        ContinusBlockRecord buySellsLastBlocks =
+            lastBlockRecords.getOrDefault(token, new ContinusBlockRecord());
+        long buyFeeAddedLastBlock = 0;
+        long buyFeeAddedThisBlock = 0;
+        long sellFeeAddedLastBlock = 0;
+        long sellFeeAddedThisBlock = 0;
+
+        // 第一遍，match上的
+        for (int i = 0; i < buySellsThisBlocks.records.size(); i++) {
+          // caller 每个 token 买卖
+          SingleBuySellRecord buySell = buySellsThisBlocks.records.get(i);
+          if (buySell.isSuccess()) {
+            if (buySell.isBuy()) {
+              buySellsThisBlocks.addBuyCount();
+              addrAllInfoRecord.addBuy();
+            } else {
+              buySellsThisBlocks.addSellCount();
+              // 卖，最近两块匹配
+              blockSuccess =
+                  matchBuySell(
+                      buySell,
+                      buySellsLastBlocks.records,
+                      addrAllInfoRecord,
+                      token,
+                      buySellsLastBlocks.records.size()
+                  );
+              if (!buySell.matched) {
+                blockSuccess =
+                    matchBuySell(
+                        buySell,
+                        buySellsThisBlocks.records,
+                        addrAllInfoRecord,
+                        token,
+                        buySellsThisBlocks.records.size()
+                    );
+              }
+            }
+          } else {
+            // 失败的，先记次数
+            if (buySell.isBuy()) {
+              buySellsThisBlocks.addBuyCount();
+            } else {
+              buySellsThisBlocks.addSellCount();
+            }
+          }
+        }
+        buySellsThisBlocks.remainingSellAvailable =
+            buySellsLastBlocks.buyCount > 0 || buySellsThisBlocks.buyCount > 0;
+        buySellsThisBlocks.remainingBuyAvailable =
+            buySellsLastBlocks.sellCount > 0 || buySellsThisBlocks.sellCount > 0;
+
+        for (int i = 0; i < buySellsThisBlocks.records.size(); i++) {
+          SingleBuySellRecord buySell = buySellsThisBlocks.records.get(i);
+          if (buySell.success && buySell.matched) {
+            feeToAdd = feeToAdd.add(buySell.fee);
+            if (buySell.isBuy) {
+              buyFeeAddedThisBlock++;
+            } else {
+              sellFeeAddedThisBlock++;
+            }
+          }
+        }
+        for (int i = 0; i < buySellsLastBlocks.records.size(); i++) {
+          SingleBuySellRecord buySell = buySellsLastBlocks.records.get(i);
+          if (buySell.success && buySell.matched) {
+            feeToAdd = feeToAdd.add(buySell.fee);
+            if (buySell.isBuy) {
+              buyFeeAddedLastBlock++;
+            } else {
+              sellFeeAddedLastBlock++;
+            }
+          }
+        }
+
+        // 清空matched 和 失败的，因为失败的已经记录次数了
+        buySellsThisBlocks.removeMatched();
+        buySellsLastBlocks.removeMatched();
+
+        // 第二遍找没匹配上的中，取较小值比较
+        // this block
+        // last block
+        List<SingleBuySellRecord> sellsLastBlock =
+            buySellsLastBlocks.records.stream()
+                .filter(SingleBuySellRecord::isSuccess)
+                .filter(sell -> !sell.isBuy)
+                .collect(Collectors.toList());
+        List<SingleBuySellRecord> buyLastBlock =
+            buySellsLastBlocks.records.stream()
+                .filter(SingleBuySellRecord::isSuccess)
+                .filter(buy -> buy.isBuy)
+                .collect(Collectors.toList());
+        TokenAllInfoRecord tokenAllInfoRecord = addrAllInfoRecord.getTokenAllInfoRecord(token);
+
+        Iterator<SingleBuySellRecord> sellRecordIterator = sellsLastBlock.iterator();
+        while (sellRecordIterator.hasNext()) {
+          SingleBuySellRecord sell = sellRecordIterator.next();
+
+          Iterator<SingleBuySellRecord> buyRecordIterator = buyLastBlock.iterator();
+          while (buyRecordIterator.hasNext()) {
+            SingleBuySellRecord buy = buyRecordIterator.next();
+            BigDecimal actualTokenAmount =
+                sell.getTokenAmount().compareTo(buy.getTokenAmount()) > 0
+                    ? buy.getTokenAmount()
+                    : sell.getTokenAmount();
+            BigDecimal actualGetTrxAmount = sell.getActualTrxAmount(actualTokenAmount);
+            BigDecimal actualOutTrxAmount = buy.getActualTrxAmount(actualTokenAmount);
+            BigDecimal profit = actualGetTrxAmount.subtract(actualOutTrxAmount);
+            addrAllInfoRecord.addTokenRecord(token, profit, true);
+
+            buy.subTokenAmount(actualTokenAmount);
+            sell.subTokenAmount(actualTokenAmount);
+
+            if (!buy.feeAdded) {
+              feeToAdd = feeToAdd.add(buy.fee);
+              buy.feeAdded = true;
+              buyFeeAddedLastBlock++;
+            }
+            if (!sell.feeAdded) {
+              feeToAdd = feeToAdd.add(sell.fee);
+              sell.feeAdded = true;
+              sellFeeAddedLastBlock++;
+            }
+
+            if (buy.isMatched()) {
+              buyRecordIterator.remove();
+            }
+
+            if (sell.isMatched()) {
+              sellRecordIterator.remove();
+              break;
+            }
+          }
+        }
+
+        // 上个块卖可以平账，最近2块有卖有卖
+        if (!sellsLastBlock.isEmpty()) {
+          BigDecimal tokenAmount = BigDecimal.ZERO;
+          BigDecimal trxAmount = BigDecimal.ZERO;
+          for (SingleBuySellRecord sell : sellsLastBlock) {
+            tokenAmount = tokenAmount.add(sell.getTokenAmount());
+            trxAmount = trxAmount.add(sell.getTrxAmount());
+          }
+          // 平账
+          tokenAllInfoRecord.removeRemaining(tokenAmount, trxAmount);
+        }
+
+        if (buySellsThisBlocks.hasSuccessSell() && !buyLastBlock.isEmpty()) {
+
+          Iterator<SingleBuySellRecord> sellRecordThisBlockIterator =
+              buySellsThisBlocks.records.iterator();
+          while (sellRecordThisBlockIterator.hasNext()) {
+            SingleBuySellRecord sell = sellRecordThisBlockIterator.next();
+            if (!sell.isSuccess()) {
+              continue;
+            }
+
+            Iterator<SingleBuySellRecord> buyRecordIterator = buyLastBlock.iterator();
+            while (buyRecordIterator.hasNext()) {
+              SingleBuySellRecord buy = buyRecordIterator.next();
+              BigDecimal actualTokenAmount =
+                  sell.getTokenAmount().compareTo(buy.getTokenAmount()) > 0
+                      ? buy.getTokenAmount()
+                      : sell.getTokenAmount();
+              BigDecimal actualGetTrxAmount = sell.getActualTrxAmount(actualTokenAmount);
+              BigDecimal actualOutTrxAmount = buy.getActualTrxAmount(actualTokenAmount);
+              BigDecimal profit = actualGetTrxAmount.subtract(actualOutTrxAmount);
+              addrAllInfoRecord.addTokenRecord(token, profit, true);
+
+              buy.subTokenAmount(actualTokenAmount);
+              sell.subTokenAmount(actualTokenAmount);
+              if (!buy.feeAdded) {
+                feeToAdd = feeToAdd.add(buy.fee);
+                buy.feeAdded = true;
+                buyFeeAddedLastBlock++;
+              }
+              if (!sell.feeAdded) {
+                feeToAdd = feeToAdd.add(sell.fee);
+                sell.feeAdded = true;
+                sellFeeAddedThisBlock++;
+              }
+
+              if (buy.isMatched()) {
+                buyRecordIterator.remove();
+              }
+
+              if (sell.isMatched()) {
+                sellRecordThisBlockIterator.remove();
+                break;
+              }
+            }
+          }
+        }
+
+        if (!buyLastBlock.isEmpty()
+            && (buySellsLastBlocks.remainingBuyAvailable
+            || buySellsThisBlocks.remainingBuyAvailable)) {
+          // 全部匹配完还有剩余，记账
+          BigDecimal tokenAmount = BigDecimal.ZERO;
+          BigDecimal trxAmount = BigDecimal.ZERO;
+          for (SingleBuySellRecord buy : buyLastBlock) {
+            tokenAmount = tokenAmount.add(buy.getTokenAmount());
+            trxAmount = trxAmount.add(buy.getTrxAmount());
+          }
+          // 记账
+          tokenAllInfoRecord.addRemaining(tokenAmount, trxAmount);
+        }
+        // 本块记录移到上一个块
+        addrAllInfoRecord.updateTokenAllInfoRecord(token, tokenAllInfoRecord);
+        addrAllInfoRecordMap.put(addr, addrAllInfoRecord);
+
+        long attackCountLastBlock =
+            Math.min(
+                buySellsLastBlocks.availableAttackBuyCount(),
+                buySellsLastBlocks.availableAttackSellCount());
+
+        long attackCountToRecord = attackCountLastBlock;
+        // fee
+        if (buyFeeAddedLastBlock < attackCountLastBlock) {
+          for (SingleBuySellRecord buy : buySellsLastBlocks.records) {
+            if (buy.isBuy && !buy.feeAdded) {
+              feeToAdd = feeToAdd.add(buy.fee);
+              buy.feeAdded = true;
+              buyFeeAddedLastBlock++;
+            }
+            if (buyFeeAddedLastBlock == attackCountLastBlock) {
+              break;
+            }
+          }
+        }
+        if (sellFeeAddedLastBlock < attackCountLastBlock) {
+          for (SingleBuySellRecord sell : buySellsLastBlocks.records) {
+            if (!sell.isBuy && !sell.feeAdded) {
+              feeToAdd = feeToAdd.add(sell.fee);
+              sell.feeAdded = true;
+              sellFeeAddedLastBlock++;
+            }
+            if (sellFeeAddedLastBlock == attackCountLastBlock) {
+              break;
+            }
+          }
+        }
+
+        long remainingBuyCount =
+            buySellsLastBlocks.availableAttackBuyCount() - attackCountLastBlock;
+        long attackCountTwoBlock =
+            Math.min(remainingBuyCount, buySellsThisBlocks.availableAttackSellCount());
+        if (attackCountTwoBlock > 0) {
+          attackCountToRecord += attackCountTwoBlock;
+          buySellsThisBlocks.recordSellCount += attackCountTwoBlock;
+          // fee
+          if (buyFeeAddedLastBlock < attackCountTwoBlock + attackCountLastBlock) {
+            for (SingleBuySellRecord buy : buySellsLastBlocks.records) {
+              if (buy.isBuy && !buy.feeAdded) {
+                feeToAdd = feeToAdd.add(buy.fee);
+                buy.feeAdded = true;
+                buyFeeAddedLastBlock++;
+              }
+              if (buyFeeAddedLastBlock == attackCountTwoBlock + attackCountLastBlock) {
+                break;
+              }
+            }
+          }
+          if (sellFeeAddedThisBlock < attackCountTwoBlock) {
+            for (SingleBuySellRecord sell : buySellsThisBlocks.records) {
+              if (!sell.isBuy && !sell.feeAdded) {
+                feeToAdd = feeToAdd.add(sell.fee);
+                sell.feeAdded = true;
+                sellFeeAddedThisBlock++;
+              }
+              if (sellFeeAddedThisBlock == attackCountTwoBlock) {
+                break;
+              }
+            }
+          }
+        }
+
+        long attackCountThisBlock =
+            Math.min(
+                buySellsThisBlocks.availableAttackBuyCount(),
+                buySellsThisBlocks.availableAttackSellCount());
+        attackCountToRecord += attackCountThisBlock;
+        buySellsThisBlocks.recordBuyCount += attackCountThisBlock;
+        buySellsThisBlocks.recordSellCount += attackCountThisBlock;
+        // fee
+        if (buyFeeAddedThisBlock < attackCountTwoBlock + attackCountThisBlock) {
+          for (SingleBuySellRecord buy : buySellsThisBlocks.records) {
+            if (buy.isBuy && !buy.feeAdded) {
+              feeToAdd = feeToAdd.add(buy.fee);
+              buy.feeAdded = true;
+              buyFeeAddedThisBlock++;
+            }
+            if (buyFeeAddedThisBlock == attackCountTwoBlock + attackCountThisBlock) {
+              break;
+            }
+          }
+        }
+        if (sellFeeAddedThisBlock < attackCountTwoBlock + attackCountThisBlock) {
+          for (SingleBuySellRecord sell : buySellsThisBlocks.records) {
+            if (!sell.isBuy && !sell.feeAdded) {
+              feeToAdd = feeToAdd.add(sell.fee);
+              sell.feeAdded = true;
+              sellFeeAddedThisBlock++;
+            }
+            if (sellFeeAddedThisBlock == attackCountTwoBlock + attackCountThisBlock) {
+              break;
+            }
+          }
+        }
+
+        tokenAllInfoRecord.addAttack(attackCountToRecord);
+        if (buySellsLastBlocks.attackTargetCount == 0
+            && ((buySellsLastBlocks.buyCount + buySellsThisBlocks.buyCount > 0)
+            && (buySellsLastBlocks.sellCount + buySellsThisBlocks.sellCount > 0))) {
+          tokenAllInfoRecord.addAttackTarget(1);
+          buySellsLastBlocks.attackTargetCount++;
+          buySellsThisBlocks.attackTargetCount++;
+        }
+
+        if ((buySellsLastBlocks.buyCount + buySellsThisBlocks.buyCount > 0)
+            && (buySellsLastBlocks.sellCount + buySellsThisBlocks.sellCount > 0)) {
+          for (SingleBuySellRecord record : buySellsLastBlocks.records) {
+            if (!record.feeAdded) {
+              feeToAdd = feeToAdd.add(record.fee);
+              record.feeAdded = true;
+            }
+          }
+        }
+
+        // update
+        thisBlockRecords.put(token, buySellsThisBlocks);
+        addrTwoBlockRecord.updateRecordsByBlockNum(blockNum, thisBlockRecords);
+        continusRecordMap.put(addr, addrTwoBlockRecord);
+
+        lastBlockRecords.remove(token);
+      }
+
+      // 处理完本块交易，再看上一个块未匹配上的token
+      if (!lastBlockRecords.isEmpty()) {
+        long buyFeeAddedLastBlock = 0;
+        long sellFeeAddedLastBlock = 0;
+        for (Map.Entry<String, ContinusBlockRecord> tokenEntry : lastBlockRecords.entrySet()) {
+          ContinusBlockRecord buySellsLastBlocks = tokenEntry.getValue();
+          List<SingleBuySellRecord> sellsLastBlock =
+              buySellsLastBlocks.records.stream()
+                  .filter(SingleBuySellRecord::isSuccess)
+                  .filter(sell -> !sell.isBuy)
+                  .collect(Collectors.toList());
+          List<SingleBuySellRecord> buyLastBlock =
+              buySellsLastBlocks.records.stream()
+                  .filter(SingleBuySellRecord::isSuccess)
+                  .filter(buy -> buy.isBuy)
+                  .collect(Collectors.toList());
+
+          TokenAllInfoRecord tokenAllInfoRecord =
+              addrAllInfoRecord.getTokenAllInfoRecord(tokenEntry.getKey());
+
+          // todo 抽方法
+          Iterator<SingleBuySellRecord> sellRecordIterator = sellsLastBlock.iterator();
+          while (sellRecordIterator.hasNext()) {
+            SingleBuySellRecord sell = sellRecordIterator.next();
+
+            Iterator<SingleBuySellRecord> buyRecordIterator = buyLastBlock.iterator();
+            while (buyRecordIterator.hasNext()) {
+              SingleBuySellRecord buy = buyRecordIterator.next();
+              BigDecimal actualTokenAmount =
+                  sell.getTokenAmount().compareTo(buy.getTokenAmount()) > 0
+                      ? buy.getTokenAmount()
+                      : sell.getTokenAmount();
+              BigDecimal actualGetTrxAmount = sell.getActualTrxAmount(actualTokenAmount);
+              BigDecimal actualOutTrxAmount = buy.getActualTrxAmount(actualTokenAmount);
+              BigDecimal profit = actualGetTrxAmount.subtract(actualOutTrxAmount);
+              addrAllInfoRecord.addTokenRecord(tokenEntry.getKey(), profit, true);
+
+              buy.subTokenAmount(actualTokenAmount);
+              sell.subTokenAmount(actualTokenAmount);
+              if (!buy.feeAdded) {
+                feeToAdd = feeToAdd.add(buy.fee);
+                buy.feeAdded = true;
+                buyFeeAddedLastBlock++;
+              }
+              if (!sell.feeAdded) {
+                feeToAdd = feeToAdd.add(sell.fee);
+                sell.feeAdded = true;
+                sellFeeAddedLastBlock++;
+              }
+
+              if (buy.isMatched()) {
+                buyRecordIterator.remove();
+              }
+
+              if (sell.isMatched()) {
+                sellRecordIterator.remove();
+                break;
+              }
+            }
+          }
+
+          // 上个块卖可以平账，最近2块有卖有卖
+          if (!sellsLastBlock.isEmpty()) {
+            BigDecimal tokenAmount = BigDecimal.ZERO;
+            BigDecimal trxAmount = BigDecimal.ZERO;
+            for (SingleBuySellRecord sell : sellsLastBlock) {
+              tokenAmount = tokenAmount.add(sell.getTokenAmount());
+              trxAmount = trxAmount.add(sell.getTrxAmount());
+            }
+            // 平账
+            tokenAllInfoRecord.removeRemaining(tokenAmount, trxAmount);
+          }
+
+          if (!buyLastBlock.isEmpty() && buySellsLastBlocks.remainingBuyAvailable) {
+            // 全部匹配完还有剩余，记账
+            BigDecimal tokenAmount = BigDecimal.ZERO;
+            BigDecimal trxAmount = BigDecimal.ZERO;
+            for (SingleBuySellRecord buy : buyLastBlock) {
+              tokenAmount = tokenAmount.add(buy.getTokenAmount());
+              trxAmount = trxAmount.add(buy.getTrxAmount());
+            }
+            // 记账
+            tokenAllInfoRecord.addRemaining(tokenAmount, trxAmount);
+          }
+
+          long attackCountLastBlock =
+              Math.min(
+                  buySellsLastBlocks.availableAttackBuyCount(),
+                  buySellsLastBlocks.availableAttackSellCount());
+          tokenAllInfoRecord.addAttack(attackCountLastBlock);
+          if (buySellsLastBlocks.attackTargetCount == 0 && buySellsLastBlocks.isAttacking()) {
+            tokenAllInfoRecord.addAttackTarget(1);
+            buySellsLastBlocks.attackTargetCount++;
+          }
+
+          // fee
+          if (buyFeeAddedLastBlock < attackCountLastBlock) {
+            for (SingleBuySellRecord buy : buySellsLastBlocks.records) {
+              if (buy.isBuy && !buy.feeAdded) {
+                feeToAdd = feeToAdd.add(buy.fee);
+                buy.feeAdded = true;
+                buyFeeAddedLastBlock++;
+              }
+              if (buyFeeAddedLastBlock == attackCountLastBlock) {
+                break;
+              }
+            }
+          }
+          if (sellFeeAddedLastBlock < attackCountLastBlock) {
+            for (SingleBuySellRecord sell : buySellsLastBlocks.records) {
+              if (!sell.isBuy && !sell.feeAdded) {
+                feeToAdd = feeToAdd.add(sell.fee);
+                sell.feeAdded = true;
+                sellFeeAddedLastBlock++;
+              }
+              if (sellFeeAddedLastBlock == attackCountLastBlock) {
+                break;
+              }
+            }
+          }
+          // todo 整理
+          if (buySellsLastBlocks.isAttacking()) {
+            for (SingleBuySellRecord record : buySellsLastBlocks.records) {
+              if (!record.feeAdded) {
+                feeToAdd = feeToAdd.add(record.fee);
+                record.feeAdded = true;
+              }
+            }
+          }
+
+          addrAllInfoRecord.updateTokenAllInfoRecord(tokenEntry.getKey(), tokenAllInfoRecord);
+          addrAllInfoRecordMap.put(addr, addrAllInfoRecord);
+        }
+      }
+
+      addrAllInfoRecord.addFee(feeToAdd);
+//      if (addrBlockSuccess && toRecordSr) {
+//        addrAllInfoRecord.addWitness(witness);
+//      }
+      addrAllInfoRecordMap.put(addr, addrAllInfoRecord);
+    }
+    // 删除1个块之前记录
+    for (Iterator<Map.Entry<String, AddrContinusRecord>> it =
+         continusRecordMap.entrySet().iterator();
+         it.hasNext(); ) {
+      Map.Entry<String, AddrContinusRecord> entry = it.next();
+      entry.getValue().removeRecordByBlockNum(blockNum - 1);
+      if (entry.getValue().records.isEmpty()) {
+        it.remove();
+      }
+    }
+    return blockSuccess;
+  }
+
+  private static boolean matchBuySell(
+      SingleBuySellRecord sellRecord,
+      List<SingleBuySellRecord> buySells,
+      AddrAllInfoRecord record,
+      String token,
+      int endIndex) {
+
+    for (int i = 0; i < Math.min(endIndex, buySells.size()); i++) {
+      SingleBuySellRecord toMatch = buySells.get(i);
+      if (toMatch.isSuccess()
+          && !toMatch.isMatched()
+          && toMatch.isBuy
+          && isMatch(toMatch.tokenAmount, sellRecord.tokenAmount)) {
+        // 匹配上，计算获利和损失
+        BigDecimal getTrx = sellRecord.trxAmount.subtract(toMatch.trxAmount);
+        record.addTokenRecord(token, getTrx);
+        toMatch.match();
+        sellRecord.match();
+        return getTrx.compareTo(BigDecimal.ZERO) > 0;
+      }
+    }
+    return false;
+  }
+
+  private static String get41Addr(String hexAddr) {
+    if (!hexAddr.startsWith("41")) {
+      return "41" + hexAddr;
+    }
+    return hexAddr;
+  }
+
+  private static Map<String, String> populateMap() throws IOException {
+    // token pair map
+    File file = new File("test.txt");
+    BufferedReader reader = new BufferedReader(new FileReader(file));
+    String line;
+    Map<String, String> map = new HashMap<>();
+    while ((line = reader.readLine()) != null) {
+      String[] strings = line.split(" ");
+      String token = strings[0];
+      String pair = strings[1];
+      long blockNum = Long.parseLong(strings[2]);
+      long timestamp = Long.parseLong(strings[3]);
+
+      map.put(
+          Hex.toHexString(Commons.decodeFromBase58Check(pair)).substring(2),
+          Hex.toHexString(Commons.decodeFromBase58Check(token)).substring(2));
+    }
+    return map;
+  }
+
+  private static boolean smallerToWtrx(String token, String wtrx) {
+    return token.compareTo(wtrx) < 0;
+  }
+
+  // 结构体
+  @AllArgsConstructor
+  @Getter
+  private static class SingleBuySellRecord {
+    String txId;
+    String caller;
+    int index;
+    String token;
+    boolean isBuy;
+    BigDecimal tokenAmount;
+    BigDecimal trxAmount;
+    long blockNum;
+    long timestamp;
+    String witness;
+    boolean matched;
+    boolean success;
+    BigDecimal fee;
+    boolean feeAdded;
+
+    private SingleBuySellRecord(long blockNum, boolean success) {
+      tokenAmount = BigDecimal.ZERO;
+      trxAmount = BigDecimal.ZERO;
+      this.blockNum = blockNum;
+      matched = false;
+      this.success = success;
+      fee = BigDecimal.ZERO;
+      feeAdded = false;
+    }
+
+    private BigDecimal getTokenPrice() {
+      return trxAmount.divide(tokenAmount, 18, RoundingMode.HALF_UP);
+    }
+
+    private void match() {
+      matched = true;
+    }
+
+    private BigDecimal getActualTrxAmount(BigDecimal actualTokenAmount) {
+      if (actualTokenAmount.compareTo(tokenAmount) >= 0) {
+        return trxAmount;
+      }
+      return trxAmount.multiply(actualTokenAmount).divide(tokenAmount, 6, RoundingMode.HALF_UP);
+    }
+
+    private void subTokenAmount(BigDecimal actualTokenAmount) {
+      if (actualTokenAmount.compareTo(tokenAmount) >= 0
+          || isMatch(actualTokenAmount, tokenAmount)) {
+        tokenAmount = BigDecimal.ZERO;
+        trxAmount = BigDecimal.ZERO;
+        matched = true;
+      } else {
+        BigDecimal actualTrxAmount = getActualTrxAmount(actualTokenAmount);
+        tokenAmount = tokenAmount.subtract(actualTokenAmount);
+        trxAmount = trxAmount.subtract(actualTrxAmount);
+      }
+    }
+  }
+
+  @AllArgsConstructor
+  @Getter
+  private static class ContinusBlockRecord {
+    List<SingleBuySellRecord> records;
+    long buyCount;
+    long sellCount;
+    long recordBuyCount;
+    long recordSellCount;
+    boolean remainingSellAvailable;
+    boolean remainingBuyAvailable;
+    BigDecimal sellFeeRemaining;
+    BigDecimal buyFeeRemaining;
+    long attackTargetCount;
+
+    private ContinusBlockRecord() {
+      records = new ArrayList<>();
+      buyCount = 0;
+      sellCount = 0;
+      recordBuyCount = 0;
+      recordSellCount = 0;
+      remainingSellAvailable = false;
+      remainingBuyAvailable = false;
+      sellFeeRemaining = BigDecimal.ZERO;
+      buyFeeRemaining = BigDecimal.ZERO;
+      attackTargetCount = 0;
+    }
+
+    private void addRecord(SingleBuySellRecord singleBuySellRecord) {
+      records.add(singleBuySellRecord);
+    }
+
+    private void clearAllSuccess() {
+      records.removeIf(SingleBuySellRecord::isSuccess); // 清除成功的();
+    }
+
+    private void updateRecords(List<SingleBuySellRecord> newRecords) {
+      records.clear();
+      records.addAll(newRecords);
+    }
+
+    private BigDecimal getAllBuyTokenAmount() {
+      return records.stream()
+          .filter(record -> record.isBuy)
+          .map(SingleBuySellRecord::getTokenAmount)
+          .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private BigDecimal getAllTrxOutAmount() {
+      return records.stream()
+          .filter(record -> record.isBuy)
+          .map(SingleBuySellRecord::getTrxAmount)
+          .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private void removeMatchedAndUnsuccess() {
+      records.removeIf(record -> record.matched || !record.success);
+    }
+
+    private void removeMatched() {
+      records.removeIf(record -> record.matched);
+    }
+
+    private void addBuyCount() {
+      buyCount++;
+    }
+
+    private void addSellCount() {
+      sellCount++;
+    }
+
+    private void addAttackTarget() {
+      attackTargetCount++;
+    }
+
+    private void addSellCount(long count) {
+      sellCount += count;
+    }
+
+    private long getBuyCount() {
+      return buyCount;
+    }
+
+    private long getSellCount() {
+      return sellCount;
+    }
+
+    private boolean hasSell() {
+      return records.stream().anyMatch(record -> !record.isBuy);
+    }
+
+    private boolean hasSuccessSell() {
+      return records.stream().anyMatch(record -> record.isSuccess() && !record.isBuy);
+    }
+
+    private boolean hasBuy() {
+      return records.stream().anyMatch(record -> record.isBuy);
+    }
+
+    private long availableAttackBuyCount() {
+      return buyCount - recordBuyCount;
+    }
+
+    private long availableAttackSellCount() {
+      return sellCount - recordSellCount;
+    }
+
+    private void addUnsuccessFee() {
+      for (SingleBuySellRecord record : records) {
+        if (!record.success) {
+          if (record.isBuy) {
+            buyFeeRemaining = buyFeeRemaining.add(record.fee);
+          } else {
+            sellFeeRemaining = sellFeeRemaining.add(record.fee);
+          }
+        }
+      }
+    }
+
+    private boolean isAttacking() {
+      return buyCount > 0 && sellCount > 0;
+    }
+  }
+
+  @AllArgsConstructor
+  @Getter
+  private static class AddrContinusRecord {
+    String caller;
+    Map<Long, Map<String, ContinusBlockRecord>> records; // <token, ContinusBlockRecord>
+
+    private AddrContinusRecord(String caller) {
+      this.caller = caller;
+      records = new HashMap<>();
+    }
+
+    private void addRecord(
+        String txId,
+        int index,
+        long blockNum,
+        long timestamp,
+        String witness,
+        String token,
+        boolean isBuy,
+        BigDecimal tokenAmount,
+        BigDecimal trxAmount,
+        boolean success,
+        BigDecimal fee) {
+      Map<String, ContinusBlockRecord> tokenContinusRecord =
+          records.getOrDefault(blockNum, new HashMap<>());
+
+      ContinusBlockRecord record =
+          tokenContinusRecord.getOrDefault(token, new ContinusBlockRecord());
+      // todo token
+      SingleBuySellRecord singleBuySellRecord =
+          new SingleBuySellRecord(
+              txId,
+              caller,
+              index,
+              null,
+              isBuy,
+              tokenAmount,
+              trxAmount,
+              blockNum,
+              timestamp,
+              witness,
+              false,
+              success,
+              fee,
+              false);
+      record.addRecord(singleBuySellRecord);
+      tokenContinusRecord.put(token, record);
+      records.put(blockNum, tokenContinusRecord);
+    }
+
+    private Map<String, ContinusBlockRecord> getRecordsByBlockNum(long thisBlockNum) {
+      return records.getOrDefault(thisBlockNum, new HashMap<>());
+    }
+
+    private void updateRecordsByBlockNum(
+        long thisBlockNum, Map<String, ContinusBlockRecord> record) {
+      records.put(thisBlockNum, record);
+    }
+
+    private void removeRecordByBlockNum(long blockNum) {
+      records.remove(blockNum);
+    }
+  }
+
+  @AllArgsConstructor
+  @Getter
+  private static class TokenAllInfoRecord {
+    String token;
+    BigDecimal profit;
+    BigDecimal lack;
+    long successCount;
+    long lackCount;
+    BigDecimal remainingTokenAmount;
+    BigDecimal trxOutAmount;
+    long attackCount;
+    long attackTargetCount;
+    long mzsuccessCount;
+    long mzlackCount;
+
+    private TokenAllInfoRecord(String token) {
+      this.token = token;
+      profit = BigDecimal.ZERO;
+      lack = BigDecimal.ZERO;
+      successCount = 0;
+      lackCount = 0;
+      remainingTokenAmount = BigDecimal.ZERO;
+      trxOutAmount = BigDecimal.ZERO;
+      attackCount = 0;
+      attackTargetCount = 0;
+    }
+
+    private void addTrxDiff(BigDecimal trxDiff, boolean mzzz) {
+      if (trxDiff.compareTo(BigDecimal.ZERO) > 0) {
+        profit = profit.add(trxDiff);
+        successCount++;
+        if (mzzz) {
+          mzsuccessCount++;
+        }
+      } else {
+        lack = lack.add(trxDiff);
+        lackCount++;
+        if (mzzz) {
+          mzlackCount++;
+        }
+      }
+    }
+
+    private void addRemaining(BigDecimal tokenAmount, BigDecimal trxOutAmount) {
+      remainingTokenAmount = remainingTokenAmount.add(tokenAmount);
+      this.trxOutAmount = this.trxOutAmount.add(trxOutAmount);
+    }
+
+    private void addAttack(long count) {
+      attackCount += count;
+    }
+
+    private void addAttackTarget(long count) {
+      attackTargetCount += count;
+    }
+
+    private void removeRemaining(BigDecimal tokenSellAmount, BigDecimal trxGetAmount) {
+      BigDecimal actualTokenSellAmount =
+          tokenSellAmount.compareTo(remainingTokenAmount) > 0
+              ? remainingTokenAmount
+              : tokenSellAmount;
+      BigDecimal actualTrxGetAmount =
+          trxGetAmount
+              .multiply(actualTokenSellAmount)
+              .divide(tokenSellAmount, 6, RoundingMode.HALF_EVEN);
+      remainingTokenAmount = remainingTokenAmount.subtract(actualTokenSellAmount);
+      trxOutAmount = trxOutAmount.subtract(actualTrxGetAmount);
+    }
+  }
+
+  @AllArgsConstructor
+  @Getter
+  private static class AddrAllInfoRecord {
+    String caller;
+    long buyCount;
+    BigDecimal fee;
+    Map<String, TokenAllInfoRecord> tokenRecords; // <token, TokenAllInfoRecord>
+    long successBuy;
+    long successSell;
+    long failBuy;
+    long failSell;
+    BigDecimal allfee;
+    Map<String, Long> successSrBlock;
+
+    private AddrAllInfoRecord(String caller) {
+      this.caller = caller;
+      buyCount = 0;
+      tokenRecords = new HashMap<>();
+      fee = BigDecimal.ZERO;
+      successBuy = 0;
+      successSell = 0;
+      failBuy = 0;
+      failSell = 0;
+      allfee = BigDecimal.ZERO;
+      successSrBlock = new HashMap<>();
+    }
+
+    private void addBuy() {
+      buyCount++;
+    }
+
+    private void addTokenRecord(String token, BigDecimal trxDiff) {
+      addTokenRecord(token, trxDiff, false);
+    }
+
+    private void addTokenRecord(String token, BigDecimal trxDiff, boolean mzzz) {
+
+      TokenAllInfoRecord tokenAllInfoRecord =
+          tokenRecords.getOrDefault(token, new TokenAllInfoRecord(token));
+      tokenAllInfoRecord.addTrxDiff(trxDiff, mzzz);
+      tokenRecords.put(token, tokenAllInfoRecord);
+    }
+
+    private TokenAllInfoRecord getTokenAllInfoRecord(String token) {
+      return tokenRecords.getOrDefault(token, new TokenAllInfoRecord(token));
+    }
+
+    private void updateTokenAllInfoRecord(String token, TokenAllInfoRecord tokenAllInfoRecord) {
+      tokenRecords.put(token, tokenAllInfoRecord);
+    }
+
+    private BigDecimal getAllProfit() {
+      return tokenRecords.values().stream()
+          .map(TokenAllInfoRecord::getProfit)
+          .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private BigDecimal getAllLack() {
+      return tokenRecords.values().stream()
+          .map(TokenAllInfoRecord::getLack)
+          .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private long getAllAttack() {
+      return tokenRecords.values().stream().mapToLong(TokenAllInfoRecord::getAttackCount).sum();
+    }
+
+    private long getAllAttackTarget() {
+      return tokenRecords.values().stream()
+          .mapToLong(TokenAllInfoRecord::getAttackTargetCount)
+          .sum();
+    }
+
+    private long getSuccessCount() {
+      return tokenRecords.values().stream().mapToLong(TokenAllInfoRecord::getSuccessCount).sum();
+    }
+
+    private long getLackCount() {
+      return tokenRecords.values().stream().mapToLong(TokenAllInfoRecord::getLackCount).sum();
+    }
+
+    private BigDecimal getRemainingTokenAmount() {
+      return tokenRecords.values().stream()
+          .map(TokenAllInfoRecord::getRemainingTokenAmount)
+          .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private BigDecimal getTrxOutAmount() {
+      return tokenRecords.values().stream()
+          .map(TokenAllInfoRecord::getTrxOutAmount)
+          .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private long getMzSucCount() {
+      return tokenRecords.values().stream().mapToLong(TokenAllInfoRecord::getMzsuccessCount).sum();
+    }
+
+    private long getMzLackCount() {
+      return tokenRecords.values().stream().mapToLong(TokenAllInfoRecord::getMzlackCount).sum();
+    }
+
+    private BigDecimal addFee(BigDecimal newfee) {
+      return this.fee = this.fee.add(newfee);
+    }
+
+    private void addWitness(String witness) {
+      successSrBlock.put(witness, successSrBlock.getOrDefault(witness, 0L) + 1);
+    }
+  }
+
+  private static boolean isMatch(BigDecimal first, BigDecimal second) {
+    BigDecimal difference = first.subtract(second).abs(); // 计算差的绝对值
+    BigDecimal threshold = new BigDecimal("1"); // 设置阈值为 1
+
+    // 比较绝对值是否小于 1
+    return difference.compareTo(threshold) <= 0;
   }
 
   /**

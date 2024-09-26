@@ -38,10 +38,10 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
     super(dbName);
   }
 
-  @Override
-  public void put(byte[] key, BlockCapsule item) {
-    super.put(key, new BlockCapsule(item.getInstance().toBuilder().clearTransactions().build()));
-  }
+//  @Override
+//  public void put(byte[] key, BlockCapsule item) {
+//    super.put(key, new BlockCapsule(item.getInstance().toBuilder().clearTransactions().build()));
+//  }
 
   public List<BlockCapsule> getLimitNumber(long startNumber, long limit) {
     BlockId startBlockId = new BlockId(Sha256Hash.ZERO_HASH, startNumber);
