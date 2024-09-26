@@ -216,7 +216,7 @@ public class FullNode {
       long recentBlock = 65323160;
       long endBlock = 65524702;
       //       2024-09-19 11:00:00 ~ 2024-09-25 21:00:00
-      syncMevStat(64184959, 65553494, 65553494, paddrs, saddrs, targetAddress, "null");
+      syncMevStat(65355548, 65553494, 65553494, paddrs, saddrs, targetAddress, "null");
       //      syncMevStat(
       //          ChainBaseManager.getInstance().getHeadBlockNum() - 10000,
       //          65540296,
