@@ -2404,11 +2404,11 @@ public class Manager {
             long getTrx = actualGetTrxAmount.subtract(actualOutTrxAmount).multiply(TRX_DIVISOR).longValueExact();
             if (getTrx > 0) {
               targetAddr.addProfit(getTrx);
-              targetAddr.addSuccessAttackCount(1);
+//              targetAddr.addSuccessAttackCount(1);
               targetAddr.addFuzzySuccessAttackCount(1);
             } else {
               targetAddr.addLoss(getTrx);
-              targetAddr.addFailAttackCount(1);
+//              targetAddr.addFailAttackCount(1);
               targetAddr.addFuzzyFailAttackCount(1);
             }
 
@@ -2471,11 +2471,11 @@ public class Manager {
               long getTrx = actualGetTrxAmount.subtract(actualOutTrxAmount).multiply(TRX_DIVISOR).longValueExact();
               if (getTrx > 0) {
                 targetAddr.addProfit(getTrx);
-                targetAddr.addSuccessAttackCount(1);
+//                targetAddr.addSuccessAttackCount(1);
                 targetAddr.addFuzzySuccessAttackCount(1);
               } else {
                 targetAddr.addLoss(getTrx);
-                targetAddr.addFailAttackCount(1);
+//                targetAddr.addFailAttackCount(1);
                 targetAddr.addFuzzyFailAttackCount(1);
               }
 
@@ -2682,11 +2682,11 @@ public class Manager {
               long getTrx = actualGetTrxAmount.subtract(actualOutTrxAmount).multiply(TRX_DIVISOR).longValueExact();
               if (getTrx > 0) {
                 targetAddr.addProfit(getTrx);
-                targetAddr.addSuccessAttackCount(1);
+//                targetAddr.addSuccessAttackCount(1);
                 targetAddr.addFuzzySuccessAttackCount(1);
               } else {
                 targetAddr.addLoss(getTrx);
-                targetAddr.addFailAttackCount(1);
+//                targetAddr.addFailAttackCount(1);
                 targetAddr.addFuzzyFailAttackCount(1);
               }
 
