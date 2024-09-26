@@ -215,30 +215,13 @@ public class FullNode {
     // 50000);
     //      long endBlock = latestBlock - 1;
     //      long recentBlock = latestBlock - 3000;
-    // todo
-    // 2024-09-04 08:00:09 64920151
-    // 2024-09-11 08:00:09 65121619
-    // 2024-09-12 08:00:09 65150411
-    // 2024-09-13 08:00:09 65179203
-    // 2024-09-14 08:00:09 65207995
-    // 2024-09-15 08:00:09 65236787
-    // 2024-09-16 08:00:09 65265579
-    // 2024-09-17 08:00:09 65294371
-    // 2024-09-18 08:00:09 65323160
-    // 2024-09-19 08:00:09 65351951
-    // 2024-09-20 08:00:09 65380743
-    // 2024-09-21 08:00:09 65409535
-    // 2024-09-22 08:00:09 65438327
-    // 2024-09-23 08:00:09 65467119
-    // 2024-09-24 08:00:09 65495911
-    // 2024-09-25 08:00:00 65524702
     try {
       long startBlock = 65121619;
       //      long startBlock = 64689819;
       long recentBlock = 65323160;
       long endBlock = 65524702;
       // 2024-09-19 11:00:00 ~ 2024-09-25 21:00:00
-      //      syncMevStat(65355548, 65540296, 65540296, paddrs, saddrs, targetAddress, "T");
+      syncMevStat(65351950, 65553494, 65553494, paddrs, saddrs, targetAddress, "T");
       //      syncMevStat(
       //          ChainBaseManager.getInstance().getHeadBlockNum() - 10000,
       //          65540296,
@@ -246,29 +229,29 @@ public class FullNode {
       //          paddrs,
       //          saddrs);
 
-      SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-      dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
-      // sync day stat
-      long startTimestamp = 1724284800000L;
-      long endTimestamp = 1727308800000L;
-      long endBlockLastDay = 0;
-      for (long timestmap = startTimestamp;
-          timestmap < endTimestamp;
-          timestmap += 1000 * 60 * 60 * 24) {
-        long curStartBlock =
-            endBlockLastDay == 0 ? getBlockByTimestamp(timestmap) + 1 : endBlockLastDay + 1;
-        long curEndBlock = getBlockByTimestamp(timestmap + 1000 * 60 * 60 * 24);
-        endBlockLastDay = curEndBlock;
-
-        syncMevStat(
-            curStartBlock,
-            curEndBlock,
-            curEndBlock,
-            paddrs,
-            saddrs,
-            targetAddress,
-            dateFormat.format(timestmap));
-      }
+      //      SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+      //      dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+      //      // sync day stat
+      //      long startTimestamp = 1724284800000L;
+      //      long endTimestamp = 1727308800000L;
+      //      long endBlockLastDay = 0;
+      //      for (long timestmap = startTimestamp;
+      //          timestmap < endTimestamp;
+      //          timestmap += 1000 * 60 * 60 * 24) {
+      //        long curStartBlock =
+      //            endBlockLastDay == 0 ? getBlockByTimestamp(timestmap) + 1 : endBlockLastDay + 1;
+      //        long curEndBlock = getBlockByTimestamp(timestmap + 1000 * 60 * 60 * 24);
+      //        endBlockLastDay = curEndBlock;
+      //
+      //        syncMevStat(
+      //            curStartBlock,
+      //            curEndBlock,
+      //            curEndBlock,
+      //            paddrs,
+      //            saddrs,
+      //            targetAddress,
+      //            dateFormat.format(timestmap));
+      //      }
     } catch (Exception e) {
       logger.info("Total Error!!!!", e);
     }
@@ -519,9 +502,9 @@ public class FullNode {
                   }
                 }
 
-                if (!saddrs.contains(caller)) {
-                  continue;
-                }
+                //                if (!saddrs.contains(caller)) {
+                //                  continue;
+                //                }
                 AddrContinusRecord addrContinusRecord =
                     swapContinusRecordMap.getOrDefault(caller, new AddrContinusRecord(caller));
                 addrContinusRecord.addRecord(
@@ -646,27 +629,9 @@ public class FullNode {
                 }
               }
 
-              if (!saddrs.contains(caller)) {
-                //                if (isBuy) {
-                //                  buysThisBlock.add(
-                //                      new SingleBuySellRecord(
-                //                          txHash,
-                //                          caller,
-                //                          index,
-                //                          token,
-                //                          isBuy,
-                //                          tokenAmount,
-                //                          trxAmount,
-                //                          blockNum,
-                //                          timestamp,
-                //                          witness,
-                //                          false,
-                //                          true,
-                //                          fee,
-                //                          false));
-                //                }
-                continue;
-              }
+              //              if (!saddrs.contains(caller)) {
+              //                continue;
+              //              }
               // 这里只记录
               AddrContinusRecord addrContinusRecord =
                   swapContinusRecordMap.getOrDefault(caller, new AddrContinusRecord(caller));
@@ -808,9 +773,6 @@ public class FullNode {
             //            }
 
           } else if (Arrays.equals(contractAddress, SUNPUMP_LAUNCH)) {
-            if (true) {
-              continue;
-            }
 
             if (!tx.getInstance()
                 .getRawData()
@@ -875,9 +837,9 @@ public class FullNode {
                     pSumBuyCountrecent += 1;
                   }
                 }
-                if (!paddrs.contains(caller)) {
-                  continue;
-                }
+                //                if (!paddrs.contains(caller)) {
+                //                  continue;
+                //                }
                 AddrContinusRecord addrContinusRecord =
                     pumpContinusRecordMap.getOrDefault(caller, new AddrContinusRecord(caller));
                 addrContinusRecord.addRecord(
@@ -955,9 +917,9 @@ public class FullNode {
                   pSumBuyCountrecent++;
                 }
               }
-              if (!paddrs.contains(caller)) {
-                continue;
-              }
+              //              if (!paddrs.contains(caller)) {
+              //                continue;
+              //              }
               String token = get41Addr(Hex.toHexString(log.getAddress().toByteArray()));
               for (Protocol.TransactionInfo.Log log2 : transactionInfo.getLogList()) {
                 if (Arrays.equals(log2.getTopics(0).toByteArray(), TRANSFER_TOPIC)) {
@@ -1210,26 +1172,26 @@ public class FullNode {
               sSumTxCount);
         }
       }
-      //      if (true) {
-      //        PrintWriter pwriter = new PrintWriter("finalresult.txt");
-      //        pwriter.println("SWAP");
-      //        swapAddrInfoRecordMap.forEach(
-      //            (k, v) -> {
-      //              if (v.getAllAttack() > 0) {
-      //                pwriter.println(StringUtil.encode58Check(Hex.decode(k)));
-      //              }
-      //            });
-      //        pwriter.println("PUMP");
-      //        pumpAddrInfoRecordMap.forEach(
-      //            (k, v) -> {
-      //              if (v.getAllAttack() > 0) {
-      //                pwriter.println(StringUtil.encode58Check(Hex.decode(k)));
-      //              }
-      //            });
-      //        pwriter.close();
-      //        logger.info("Tmp end!");
-      //        return;
-      //      }
+      if (true) {
+        PrintWriter pwriter = new PrintWriter("finalresult.txt");
+        pwriter.println("SWAP");
+        swapAddrInfoRecordMap.forEach(
+            (k, v) -> {
+              if (v.getAllAttack() > 0) {
+                pwriter.println(StringUtil.encode58Check(Hex.decode(k)));
+              }
+            });
+        pwriter.println("PUMP");
+        pumpAddrInfoRecordMap.forEach(
+            (k, v) -> {
+              if (v.getAllAttack() > 0) {
+                pwriter.println(StringUtil.encode58Check(Hex.decode(k)));
+              }
+            });
+        pwriter.close();
+        logger.info("Tmp end!");
+        return;
+      }
 
       // 输出结果
       //      PrintWriter pwriter = new PrintWriter("finalresult-" + startBlock + "-" + endBlock +
