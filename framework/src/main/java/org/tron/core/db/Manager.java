@@ -2102,9 +2102,12 @@ public class Manager {
       String witness)
       throws InvalidProtocolBufferException {
     ContractStateCapsule targetAddr = chainBaseManager.getContractStateStore().getMevTPsRecord();
-      BigDecimal fee =
-          new BigDecimal(transactionInfo.getFee())
-              .divide(TRX_DIVISOR, 6, RoundingMode.HALF_EVEN);
+    if (targetAddr == null) {
+      targetAddr = new ContractStateCapsule(getDynamicPropertiesStore().getCurrentCycleNumber());
+    }
+    BigDecimal fee =
+        new BigDecimal(transactionInfo.getFee())
+            .divide(TRX_DIVISOR, 6, RoundingMode.HALF_EVEN);
     targetAddr.addAllFee(transactionInfo.getFee());
 
     if (!transactionInfo.getResult().equals(SUCESS)) {
@@ -2280,6 +2283,9 @@ public class Manager {
   private void proceeToBlock(long blockNum) {
 
     ContractStateCapsule targetAddr = chainBaseManager.getContractStateStore().getMevTPsRecord();
+    if (targetAddr == null) {
+      targetAddr = new ContractStateCapsule(getDynamicPropertiesStore().getCurrentCycleNumber());
+    }
     // todo remove
     BigDecimal feeToAdd = BigDecimal.ZERO;
     Map<String, ContinusBlockRecord> thisBlockRecords =
