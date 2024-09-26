@@ -403,6 +403,14 @@ public class FullNode {
             if (blockNum >= recentBlock) {
               recentaddrAllInfoRecord.allfee = recentaddrAllInfoRecord.allfee.add(fee);
             }
+
+            if (!tx.getInstance()
+                .getRawData()
+                .getContract(0)
+                .getParameter()
+                .is(SmartContractOuterClass.TriggerSmartContract.class)) {
+              continue;
+            }
             SmartContractOuterClass.TriggerSmartContract triggerSmartContract =
                 tx.getInstance()
                     .getRawData()
