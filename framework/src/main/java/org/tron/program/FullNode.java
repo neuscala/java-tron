@@ -216,7 +216,7 @@ public class FullNode {
       long recentBlock = 65323160;
       long endBlock = 65524702;
       //       2024-09-19 11:00:00 ~ 2024-09-25 21:00:00
-//      syncMevStat(65355548, 65553494, 65553494, paddrs, saddrs, targetAddress, "null");
+      //      syncMevStat(65355548, 65553494, 65553494, paddrs, saddrs, targetAddress, "null");
       // 2024-09-19 8:00:00 ~ 2024-09-27 8:00:00
       syncMevStat(65351950, 65582286, 65582286, paddrs, saddrs, targetAddress, "null");
       //      syncMevStat(
@@ -1649,16 +1649,33 @@ public class FullNode {
                 if (!tokenBlockSuccess) {
                   // 夹成功
                   SingleBuySellRecord user = null;
+                  boolean flag = false;
+                  // 夹成功
                   for (SingleBuySellRecord otherBuy : buysLastBlock) {
                     if (!otherBuy.isMatched()
                         && otherBuy.index > buy.index
-                        && otherBuy.index < sell.index
+                        //                  && buy.index < sellRecord.index
                         && otherBuy.isSuccess()
                         && otherBuy.isBuy
                         && otherBuy.token.equalsIgnoreCase(token)) {
                       otherBuy.match();
                       user = otherBuy;
+                      flag = true;
                       break;
+                    }
+                  }
+                  if (!flag) {
+                    for (SingleBuySellRecord otherBuy : buysThisBlock) {
+                      if (!otherBuy.isMatched()
+                          //                && buy.index > toMatch.index
+                          && otherBuy.index < sell.index
+                          && otherBuy.isSuccess()
+                          && otherBuy.isBuy
+                          && otherBuy.token.equalsIgnoreCase(token)) {
+                        otherBuy.match();
+                        user = otherBuy;
+                        break;
+                      }
                     }
                   }
                   writeToFile(buy, sell, user);
