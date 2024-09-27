@@ -218,7 +218,7 @@ public class FullNode {
       //       2024-09-19 11:00:00 ~ 2024-09-25 21:00:00
       //      syncMevStat(65355548, 65553494, 65553494, paddrs, saddrs, targetAddress, "null");
       // 2024-09-19 8:00:00 ~ 2024-09-27 8:00:00
-      syncMevStat(65351950, 65582286, 65582286, paddrs, saddrs, targetAddress, "null");
+      //      syncMevStat(65351950, 65582286, 65582286, paddrs, saddrs, targetAddress, "null");
       //      syncMevStat(
       //          ChainBaseManager.getInstance().getHeadBlockNum() - 10000,
       //          65540296,
@@ -226,29 +226,30 @@ public class FullNode {
       //          paddrs,
       //          saddrs);
       //
-      //      SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-      //      dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
-      //      // sync day stat
-      //      long startTimestamp = 1726012800000L;
-      //      long endTimestamp = 1727308800000L;
-      //      long endBlockLastDay = 0;
-      //      for (long timestmap = startTimestamp;
-      //          timestmap < endTimestamp;
-      //          timestmap += 1000 * 60 * 60 * 24) {
-      //        long curStartBlock =
-      //            endBlockLastDay == 0 ? getBlockByTimestamp(timestmap) + 1 : endBlockLastDay + 1;
-      //        long curEndBlock = getBlockByTimestamp(timestmap + 1000 * 60 * 60 * 24);
-      //        endBlockLastDay = curEndBlock;
-      //
-      //        syncMevStat(
-      //            curStartBlock,
-      //            curEndBlock,
-      //            curEndBlock,
-      //            paddrs,
-      //            saddrs,
-      //            targetAddress,
-      //            dateFormat.format(timestmap));
-      //      }
+      SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+      dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+      // sync day stat
+      long startTimestamp = 1724284800000L;
+      long endTimestamp = 1727395200000L;
+      long endBlockLastDay = 0;
+      dayStatWriter = new PrintWriter("daystat.txt");
+      for (long timestmap = startTimestamp;
+          timestmap < endTimestamp;
+          timestmap += 1000 * 60 * 60 * 24) {
+        long curStartBlock =
+            endBlockLastDay == 0 ? getBlockByTimestamp(timestmap) + 1 : endBlockLastDay + 1;
+        long curEndBlock = getBlockByTimestamp(timestmap + 1000 * 60 * 60 * 24);
+        endBlockLastDay = curEndBlock;
+
+        syncMevStat(
+            curStartBlock,
+            curEndBlock,
+            curEndBlock,
+            paddrs,
+            saddrs,
+            targetAddress,
+            dateFormat.format(timestmap));
+      }
     } catch (Exception e) {
       logger.info("Total Error!!!!", e);
     }
@@ -296,6 +297,7 @@ public class FullNode {
 
   private static PrintWriter mevWriter;
   private static PrintWriter userWriter;
+  private static PrintWriter dayStatWriter;
 
   private static void syncMevStat(
       long startBlock,
@@ -1152,6 +1154,7 @@ public class FullNode {
               + record.getFailSell();
       logger.info("End syncing from {} to {}, \n {}", startBlock, endBlock, msg);
       System.out.println(msg);
+      dayStatWriter.println(msg);
       //        return;
       //      }
 
@@ -1426,6 +1429,7 @@ public class FullNode {
 
     mevWriter.close();
     userWriter.close();
+    dayStatWriter.close();
 
     logger.info("END");
   }
@@ -1799,8 +1803,7 @@ public class FullNode {
         }
 
         if (tokenBlockSuccess) {
-          if (!buySellsLastBlocks.blockSuccess
-              && !buySellsThisBlocks.blockSuccess) {
+          if (!buySellsLastBlocks.blockSuccess && !buySellsThisBlocks.blockSuccess) {
             tokenAllInfoRecord.addSuccessCount();
           }
           buySellsLastBlocks.blockSuccess = true;
@@ -2053,6 +2056,9 @@ public class FullNode {
 
   private static void writeToFile(
       SingleBuySellRecord buy, SingleBuySellRecord sell, SingleBuySellRecord user) {
+    if (true) {
+      return;
+    }
     if (user == null) {
       logger.info("Empty use tx, buy {} sell {}, token {}", buy.txId, sell.txId, buy.token);
     }
