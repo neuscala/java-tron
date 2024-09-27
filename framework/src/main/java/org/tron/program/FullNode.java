@@ -1475,10 +1475,6 @@ public class FullNode {
               addrAllInfoRecord.addBuy();
             } else {
               buySellsThisBlocks.addSellCount();
-              boolean canRecord =
-                  buySellsLastBlocks.attackTargetCount == 0
-                      && ((buySellsLastBlocks.buyCount + buySellsThisBlocks.buyCount > 0)
-                          && (buySellsLastBlocks.sellCount + buySellsThisBlocks.sellCount > 0));
               // 卖，最近两块匹配
               boolean curTokenBlockSuccess =
                   matchBuySell(
@@ -1488,8 +1484,7 @@ public class FullNode {
                       token,
                       buySellsLastBlocks.records.size(),
                       true,
-                      tokenBlockSuccess,
-                      canRecord);
+                      tokenBlockSuccess);
               tokenBlockSuccess = tokenBlockSuccess || curTokenBlockSuccess;
               if (!buySell.matched) {
                 curTokenBlockSuccess =
@@ -1500,8 +1495,7 @@ public class FullNode {
                         token,
                         buySellsThisBlocks.records.size(),
                         false,
-                        tokenBlockSuccess,
-                        canRecord);
+                        tokenBlockSuccess);
                 tokenBlockSuccess = tokenBlockSuccess || curTokenBlockSuccess;
               }
             }
@@ -1802,15 +1796,15 @@ public class FullNode {
           tokenAllInfoRecord.addAttackTarget(1);
           buySellsLastBlocks.attackTargetCount++;
           buySellsThisBlocks.attackTargetCount++;
-          if (!buySellsLastBlocks.blockSuccess
-              && !buySellsThisBlocks.blockSuccess
-              && tokenBlockSuccess) {
-            tokenAllInfoRecord.addSuccessCount();
-            buySellsLastBlocks.blockSuccess = true;
-            buySellsThisBlocks.blockSuccess = true;
-          }
         }
 
+        if (!buySellsLastBlocks.blockSuccess
+            && !buySellsThisBlocks.blockSuccess
+            && tokenBlockSuccess) {
+          tokenAllInfoRecord.addSuccessCount();
+          buySellsLastBlocks.blockSuccess = true;
+          buySellsThisBlocks.blockSuccess = true;
+        }
         if (tokenBlockSuccess) {
           buySellsLastBlocks.blockSuccess = true;
           buySellsThisBlocks.blockSuccess = true;
@@ -2006,8 +2000,7 @@ public class FullNode {
       String token,
       int endIndex,
       boolean isLastBlock,
-      boolean blockSuccess,
-      boolean canRecord) {
+      boolean blockSuccess) {
 
     for (int i = 0; i < Math.min(endIndex, buySells.size()); i++) {
       SingleBuySellRecord toMatch = buySells.get(i);
@@ -2020,7 +2013,7 @@ public class FullNode {
         record.addTokenRecord(token, getTrx);
         toMatch.match();
         sellRecord.match();
-        if (getTrx.compareTo(BigDecimal.ZERO) > 0 && !blockSuccess && canRecord) {
+        if (getTrx.compareTo(BigDecimal.ZERO) > 0 && !blockSuccess) {
           SingleBuySellRecord user = null;
           boolean flag = false;
           // 夹成功
