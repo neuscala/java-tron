@@ -729,7 +729,16 @@ public class FullNode {
                   //                String data1 = callData.substring(8, 8 + 64); //trx amount
                   String token1 = callData.substring(392, 392 + 64).substring(24); // out token
                   String token2 = callData.substring(456, 456 + 64).substring(24); // in token
-                  if (token1.equalsIgnoreCase(WTRX) || token1.equalsIgnoreCase(USDT)) {
+                  String token3 =
+                      callData.length() > 520
+                          ? callData.substring(520, 520 + 64).substring(24)
+                          : null;
+                  if (token3 != null
+                      && !token3.equalsIgnoreCase(WTRX)
+                      && !token3.equalsIgnoreCase(USDT)) {
+                    token = get41Addr(token3);
+                    isBuy = true;
+                  } else if (token1.equalsIgnoreCase(WTRX) || token1.equalsIgnoreCase(USDT)) {
                     token = get41Addr(token2);
                     isBuy = true;
                   } else {
@@ -2041,9 +2050,8 @@ public class FullNode {
             }
           }
           writeToFile(toMatch, sellRecord, user);
-          blockSuccess = true;
         }
-        return blockSuccess;
+        return getTrx.compareTo(BigDecimal.ZERO) > 0;
       }
     }
     return false;
