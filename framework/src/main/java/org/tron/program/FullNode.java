@@ -1847,6 +1847,11 @@ public class FullNode {
           }
         }
 
+        if (buySellsLastBlocks.blockSuccess || buySellsThisBlocks.blockSuccess) {
+          buySellsLastBlocks.blockSuccess = true;
+          buySellsThisBlocks.blockSuccess = true;
+        }
+
         if ((buySellsLastBlocks.buyCount + buySellsThisBlocks.buyCount > 0)
             && (buySellsLastBlocks.sellCount + buySellsThisBlocks.sellCount > 0)) {
           for (SingleBuySellRecord record : buySellsLastBlocks.records) {
