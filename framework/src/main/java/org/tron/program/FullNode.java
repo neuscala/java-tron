@@ -1798,14 +1798,11 @@ public class FullNode {
           buySellsThisBlocks.attackTargetCount++;
         }
 
-        if (!buySellsLastBlocks.blockSuccess
-            && !buySellsThisBlocks.blockSuccess
-            && tokenBlockSuccess) {
-          tokenAllInfoRecord.addSuccessCount();
-          buySellsLastBlocks.blockSuccess = true;
-          buySellsThisBlocks.blockSuccess = true;
-        }
         if (tokenBlockSuccess) {
+          if (!buySellsLastBlocks.blockSuccess
+              && !buySellsThisBlocks.blockSuccess) {
+            tokenAllInfoRecord.addSuccessCount();
+          }
           buySellsLastBlocks.blockSuccess = true;
           buySellsThisBlocks.blockSuccess = true;
           addrBlockSuccess = tokenBlockSuccess;
