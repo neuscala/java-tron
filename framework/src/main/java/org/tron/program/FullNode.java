@@ -1805,7 +1805,7 @@ public class FullNode {
           }
         }
 
-        if (buySellsLastBlocks.blockSuccess || buySellsThisBlocks.blockSuccess) {
+        if (tokenBlockSuccess) {
           buySellsLastBlocks.blockSuccess = true;
           buySellsThisBlocks.blockSuccess = true;
         }
