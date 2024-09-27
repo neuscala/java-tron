@@ -199,24 +199,24 @@ public class FullNode {
       String targetAddress = "41987c0191a1A098Ffc9addC9C65d2c3d028B10CA3".toLowerCase();
       //      String targetAddress = "4135EF67a96a4f28900fe58D3c2e6703A542d119A1".toLowerCase();
 
-      BufferedReader reader = new BufferedReader(new FileReader("paddrs.txt"));
+      //      BufferedReader reader = new BufferedReader(new FileReader("paddrs.txt"));
       Set<String> paddrs = new HashSet<>();
-      String line;
-      while ((line = reader.readLine()) != null) {
-        paddrs.add(Hex.toHexString(Commons.decodeFromBase58Check(line)));
-      }
-      BufferedReader sreader = new BufferedReader(new FileReader("saddrs.txt"));
+      //      String line;
+      //      while ((line = reader.readLine()) != null) {
+      //        paddrs.add(Hex.toHexString(Commons.decodeFromBase58Check(line)));
+      //      }
+      //      BufferedReader sreader = new BufferedReader(new FileReader("saddrs.txt"));
       Set<String> saddrs = new HashSet<>();
-      //      saddrs.add(targetAddress);
-      while ((line = sreader.readLine()) != null) {
-        saddrs.add(Hex.toHexString(Commons.decodeFromBase58Check(line)));
-      }
+      saddrs.add(targetAddress);
+      //      while ((line = sreader.readLine()) != null) {
+      //        saddrs.add(Hex.toHexString(Commons.decodeFromBase58Check(line)));
+      //      }
       long startBlock = 65121619;
       //      long startBlock = 64689819;
       long recentBlock = 65323160;
       long endBlock = 65524702;
       //       2024-09-19 11:00:00 ~ 2024-09-25 21:00:00
-      syncMevStat(64184959, 65179203, 65582286, paddrs, saddrs, targetAddress, "null");
+      //      syncMevStat(64184959, 65179203, 65582286, paddrs, saddrs, targetAddress, "null");
       // 2024-09-19 8:00:00 ~ 2024-09-27 8:00:00
       //      syncMevStat(65351950, 65582286, 65582286, paddrs, saddrs, targetAddress, "null");
       //      syncMevStat(
@@ -226,30 +226,30 @@ public class FullNode {
       //          paddrs,
       //          saddrs);
       //
-      //      SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-      //      dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
-      //      // sync day stat
-      //      long startTimestamp = 1724284800000L;
-      //      long endTimestamp = 1727395200000L;
-      //      long endBlockLastDay = 0;
-      ////      dayStatWriter = new PrintWriter("daystat.txt");
-      //      for (long timestmap = startTimestamp;
-      //          timestmap < endTimestamp;
-      //          timestmap += 1000 * 60 * 60 * 24) {
-      //        long curStartBlock =
-      //            endBlockLastDay == 0 ? getBlockByTimestamp(timestmap) + 1 : endBlockLastDay + 1;
-      //        long curEndBlock = getBlockByTimestamp(timestmap + 1000 * 60 * 60 * 24);
-      //        endBlockLastDay = curEndBlock;
-      //
-      //        syncMevStat(
-      //            curStartBlock,
-      //            curEndBlock,
-      //            curEndBlock,
-      //            paddrs,
-      //            saddrs,
-      //            targetAddress,
-      //            dateFormat.format(timestmap));
-      //      }
+      SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+      dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+      // sync day stat
+      long startTimestamp = 1724284800000L;
+      long endTimestamp = 1727395200000L;
+      long endBlockLastDay = 0;
+      //      dayStatWriter = new PrintWriter("daystat.txt");
+      for (long timestmap = startTimestamp;
+          timestmap < endTimestamp;
+          timestmap += 1000 * 60 * 60 * 24) {
+        long curStartBlock =
+            endBlockLastDay == 0 ? getBlockByTimestamp(timestmap) + 1 : endBlockLastDay + 1;
+        long curEndBlock = getBlockByTimestamp(timestmap + 1000 * 60 * 60 * 24);
+        endBlockLastDay = curEndBlock;
+
+        syncMevStat(
+            curStartBlock,
+            curEndBlock,
+            curEndBlock,
+            paddrs,
+            saddrs,
+            targetAddress,
+            dateFormat.format(timestmap));
+      }
       //    dayStatWriter.close();
     } catch (Exception e) {
       logger.info("Total Error!!!!", e);
