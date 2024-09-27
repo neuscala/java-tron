@@ -1815,11 +1815,11 @@ public class FullNode {
         if (tokenBlockSuccess) {
           if (!buySellsLastBlocks.blockSuccess && !buySellsThisBlocks.blockSuccess) {
             tokenAllInfoRecord.addSuccessCount();
+            blockSuccess = tokenBlockSuccess;
+            addrBlockSuccess = tokenBlockSuccess;
           }
           buySellsLastBlocks.blockSuccess = true;
           buySellsThisBlocks.blockSuccess = true;
-          addrBlockSuccess = tokenBlockSuccess;
-          blockSuccess = tokenBlockSuccess;
         }
 
         if ((buySellsLastBlocks.buyCount + buySellsThisBlocks.buyCount > 0)
