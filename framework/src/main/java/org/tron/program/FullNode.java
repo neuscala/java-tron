@@ -199,18 +199,20 @@ public class FullNode {
       String targetAddress = "41987c0191a1A098Ffc9addC9C65d2c3d028B10CA3".toLowerCase();
       //      String targetAddress = "4135EF67a96a4f28900fe58D3c2e6703A542d119A1".toLowerCase();
 
-      //      BufferedReader reader = new BufferedReader(new FileReader("paddrs.txt"));
+      BufferedReader reader = new BufferedReader(new FileReader("paddrs.txt"));
       Set<String> paddrs = new HashSet<>();
-      //      String line;
-      //      while ((line = reader.readLine()) != null) {
-      //        paddrs.add(Hex.toHexString(Commons.decodeFromBase58Check(line)));
-      //      }
-      //      BufferedReader sreader = new BufferedReader(new FileReader("saddrs.txt"));
+      String line;
+      while ((line = reader.readLine()) != null) {
+        paddrs.add(Hex.toHexString(Commons.decodeFromBase58Check(line)));
+      }
+      BufferedReader sreader = new BufferedReader(new FileReader("saddrs.txt"));
       Set<String> saddrs = new HashSet<>();
-      saddrs.add(targetAddress);
-      //      while ((line = sreader.readLine()) != null) {
-      //        saddrs.add(Hex.toHexString(Commons.decodeFromBase58Check(line)));
-      //      }
+      //      saddrs.add(targetAddress);
+      while ((line = sreader.readLine()) != null) {
+        saddrs.add(Hex.toHexString(Commons.decodeFromBase58Check(line)));
+      }
+      // 交易数
+      syncMevStat(65565490, 65594282, 65594282, paddrs, saddrs, targetAddress, "null");
       long startBlock = 65121619;
       //      long startBlock = 64689819;
       long recentBlock = 65323160;
@@ -226,30 +228,30 @@ public class FullNode {
       //          paddrs,
       //          saddrs);
       //
-      SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-      dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
-      // sync day stat
-      long startTimestamp = 1724284800000L;
-      long endTimestamp = 1727395200000L;
-      long endBlockLastDay = 0;
-      //      dayStatWriter = new PrintWriter("daystat.txt");
-      for (long timestmap = startTimestamp;
-          timestmap < endTimestamp;
-          timestmap += 1000 * 60 * 60 * 24) {
-        long curStartBlock =
-            endBlockLastDay == 0 ? getBlockByTimestamp(timestmap) + 1 : endBlockLastDay + 1;
-        long curEndBlock = getBlockByTimestamp(timestmap + 1000 * 60 * 60 * 24);
-        endBlockLastDay = curEndBlock;
-
-        syncMevStat(
-            curStartBlock,
-            curEndBlock,
-            curEndBlock,
-            paddrs,
-            saddrs,
-            targetAddress,
-            dateFormat.format(timestmap));
-      }
+      //      SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+      //      dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+      //      // sync day stat
+      //      long startTimestamp = 1724284800000L;
+      //      long endTimestamp = 1727395200000L;
+      //      long endBlockLastDay = 0;
+      //      //      dayStatWriter = new PrintWriter("daystat.txt");
+      //      for (long timestmap = startTimestamp;
+      //          timestmap < endTimestamp;
+      //          timestmap += 1000 * 60 * 60 * 24) {
+      //        long curStartBlock =
+      //            endBlockLastDay == 0 ? getBlockByTimestamp(timestmap) + 1 : endBlockLastDay + 1;
+      //        long curEndBlock = getBlockByTimestamp(timestmap + 1000 * 60 * 60 * 24);
+      //        endBlockLastDay = curEndBlock;
+      //
+      //        syncMevStat(
+      //            curStartBlock,
+      //            curEndBlock,
+      //            curEndBlock,
+      //            paddrs,
+      //            saddrs,
+      //            targetAddress,
+      //            dateFormat.format(timestmap));
+      //      }
       //    dayStatWriter.close();
     } catch (Exception e) {
       logger.info("Total Error!!!!", e);
@@ -349,6 +351,9 @@ public class FullNode {
       Map<String, Long> pumpSrMap = new HashMap<>();
       Map<String, Long> recentpumpSrMap = new HashMap<>();
 
+      Map<String, Long> pumpTxCount = new HashMap<>();
+      Map<String, Long> swapTxCount = new HashMap<>();
+
       Map<String, String> pairToTokenMap = populateMap();
       DBIterator retIterator =
           (DBIterator) ChainBaseManager.getInstance().getTransactionRetStore().getDb().iterator();
@@ -393,6 +398,18 @@ public class FullNode {
           byte[] txId = transactionInfo.getId().toByteArray();
           TransactionCapsule tx = txCallerMap.get(Hex.toHexString(txId));
           String caller = get41Addr(Hex.toHexString(tx.getOwnerAddress()));
+
+          if (paddrs.contains(caller)) {
+            pumpTxCount.put(caller, pumpTxCount.getOrDefault(caller, 0L) + 1);
+          }
+          if (saddrs.contains(caller)) {
+            swapTxCount.put(caller, swapTxCount.getOrDefault(caller, 0L) + 1);
+          }
+
+          if (true) {
+            continue;
+          }
+
           byte[] contractAddress = transactionInfo.getContractAddress().toByteArray();
           BigDecimal fee =
               new BigDecimal(transactionInfo.getFee())
@@ -1103,6 +1120,15 @@ public class FullNode {
               pSumTxCount,
               sSumTxCount);
         }
+      }
+      if (true) {
+        PrintWriter pwriter = new PrintWriter("txCount.txt");
+        pwriter.println("SWAP");
+        swapTxCount.forEach((k, v) -> pwriter.println(k + " " + v));
+        pwriter.println("PUMP");
+        pumpTxCount.forEach((k, v) -> pwriter.println(k + " " + v));
+        pwriter.close();
+        return;
       }
       //      if (true) {
       // 跑地址
