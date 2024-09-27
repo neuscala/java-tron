@@ -1467,7 +1467,7 @@ public class FullNode {
             } else {
               buySellsThisBlocks.addSellCount();
               // 卖，最近两块匹配
-              tokenBlockSuccess =
+              boolean curTokenBlockSuccess =
                   matchBuySell(
                       buySell,
                       buySellsLastBlocks.records,
@@ -1476,8 +1476,9 @@ public class FullNode {
                       buySellsLastBlocks.records.size(),
                       true,
                       tokenBlockSuccess);
+              tokenBlockSuccess = tokenBlockSuccess || curTokenBlockSuccess;
               if (!buySell.matched) {
-                tokenBlockSuccess =
+                curTokenBlockSuccess =
                     matchBuySell(
                         buySell,
                         buySellsThisBlocks.records,
@@ -1486,6 +1487,7 @@ public class FullNode {
                         buySellsThisBlocks.records.size(),
                         false,
                         tokenBlockSuccess);
+                tokenBlockSuccess = tokenBlockSuccess || curTokenBlockSuccess;
               }
             }
           } else {
