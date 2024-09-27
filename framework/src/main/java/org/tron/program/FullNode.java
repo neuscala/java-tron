@@ -1560,24 +1560,6 @@ public class FullNode {
             BigDecimal profit = actualGetTrxAmount.subtract(actualOutTrxAmount);
             if (profit.compareTo(BigDecimal.ZERO) > 0) {
               addrBlockSuccess = true;
-              if (!tokenBlockSuccess) {
-                // 夹成功
-                SingleBuySellRecord user = null;
-                for (SingleBuySellRecord otherBuy : buysLastBlock) {
-                  if (!otherBuy.isMatched()
-                      && otherBuy.index > buy.index
-                      && otherBuy.index < sell.index
-                      && otherBuy.isSuccess()
-                      && otherBuy.isBuy
-                      && otherBuy.token.equalsIgnoreCase(token)) {
-                    otherBuy.match();
-                    user = otherBuy;
-                    break;
-                  }
-                }
-                writeToFile(buy, sell, user);
-                tokenBlockSuccess = true;
-              }
             }
             addrAllInfoRecord.addTokenRecord(token, profit, true);
 
@@ -1646,41 +1628,6 @@ public class FullNode {
               BigDecimal profit = actualGetTrxAmount.subtract(actualOutTrxAmount);
               if (profit.compareTo(BigDecimal.ZERO) > 0) {
                 addrBlockSuccess = true;
-                if (!tokenBlockSuccess) {
-                  // 夹成功
-                  SingleBuySellRecord user = null;
-                  boolean flag = false;
-                  // 夹成功
-                  for (SingleBuySellRecord otherBuy : buysLastBlock) {
-                    if (!otherBuy.isMatched()
-                        && otherBuy.index > buy.index
-                        //                  && buy.index < sellRecord.index
-                        && otherBuy.isSuccess()
-                        && otherBuy.isBuy
-                        && otherBuy.token.equalsIgnoreCase(token)) {
-                      otherBuy.match();
-                      user = otherBuy;
-                      flag = true;
-                      break;
-                    }
-                  }
-                  if (!flag) {
-                    for (SingleBuySellRecord otherBuy : buysThisBlock) {
-                      if (!otherBuy.isMatched()
-                          //                && buy.index > toMatch.index
-                          && otherBuy.index < sell.index
-                          && otherBuy.isSuccess()
-                          && otherBuy.isBuy
-                          && otherBuy.token.equalsIgnoreCase(token)) {
-                        otherBuy.match();
-                        user = otherBuy;
-                        break;
-                      }
-                    }
-                  }
-                  writeToFile(buy, sell, user);
-                  tokenBlockSuccess = true;
-                }
               }
               addrAllInfoRecord.addTokenRecord(token, profit, true);
 
@@ -1913,24 +1860,6 @@ public class FullNode {
               BigDecimal profit = actualGetTrxAmount.subtract(actualOutTrxAmount);
               if (profit.compareTo(BigDecimal.ZERO) > 0) {
                 addrBlockSuccess = true;
-                if (!tokenBlockSuccess) {
-                  // 夹成功
-                  SingleBuySellRecord user = null;
-                  for (SingleBuySellRecord otherBuy : buysLastBlock) {
-                    if (!otherBuy.isMatched()
-                        && otherBuy.index > buy.index
-                        && otherBuy.index < sell.index
-                        && otherBuy.isSuccess()
-                        && otherBuy.isBuy
-                        && otherBuy.token.equalsIgnoreCase(entry.getKey())) {
-                      otherBuy.match();
-                      user = otherBuy;
-                      break;
-                    }
-                  }
-                  writeToFile(buy, sell, user);
-                  tokenBlockSuccess = true;
-                }
               }
               addrAllInfoRecord.addTokenRecord(tokenEntry.getKey(), profit, true);
 
