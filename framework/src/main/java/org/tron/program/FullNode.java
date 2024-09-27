@@ -250,6 +250,7 @@ public class FullNode {
             targetAddress,
             dateFormat.format(timestmap));
       }
+//    dayStatWriter.close();
     } catch (Exception e) {
       logger.info("Total Error!!!!", e);
     }
@@ -1429,7 +1430,6 @@ public class FullNode {
 
 //    mevWriter.close();
 //    userWriter.close();
-//    dayStatWriter.close();
 
     logger.info("END");
   }
