@@ -198,6 +198,32 @@ public class FullNode {
 
     try {
 
+      TransactionStore store = ChainBaseManager.getInstance().getTransactionStore();
+      BufferedReader leftreader = new BufferedReader(new FileReader("left.txt"));
+      PrintWriter leftWriter = new PrintWriter("leftblock.txt");
+      String txH;
+      while ((txH = leftreader.readLine()) != null) {
+        TransactionCapsule txCap = store.get(Hex.decode(txH));
+        leftWriter.println(txH + " " + txCap.getBlockNum() + " " + txCap.getTimestamp());
+      }
+      leftWriter.close();
+//
+//      BufferedReader rightreader = new BufferedReader(new FileReader("right.txt"));
+//      PrintWriter rightWriter = new PrintWriter("rightblock.txt");
+//      while ((txH = rightreader.readLine()) != null) {
+//        TransactionCapsule txCap = store.get(Hex.decode(txH));
+//        rightWriter.println(txH + " " + txCap.getBlockNum() + " " + txCap.getTimestamp());
+//      }
+//      rightWriter.close();
+      logger.info("End!!!!");
+      if (true) {
+        return;
+      }
+
+
+
+
+
       String targetAddress = "41987c0191a1A098Ffc9addC9C65d2c3d028B10CA3".toLowerCase();
       //      String targetAddress = "4135EF67a96a4f28900fe58D3c2e6703A542d119A1".toLowerCase();
 
