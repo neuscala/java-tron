@@ -2757,7 +2757,7 @@ public class Manager {
                   buySellsLastBlocks.availableAttackSellCount());
           targetAddr.addPairAttackCount(attackCountLastBlock);
           if (buySellsLastBlocks.attackTargetCount == 0 && buySellsLastBlocks.isAttacking()) {
-//            targetAddr.addAttemptAttackCount(1);
+            targetAddr.addAttemptAttackCount(1);
             buySellsLastBlocks.attackTargetCount++;
           }
 
