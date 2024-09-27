@@ -399,17 +399,6 @@ public class FullNode {
           TransactionCapsule tx = txCallerMap.get(Hex.toHexString(txId));
           String caller = get41Addr(Hex.toHexString(tx.getOwnerAddress()));
 
-          if (paddrs.contains(caller)) {
-            pumpTxCount.put(caller, pumpTxCount.getOrDefault(caller, 0L) + 1);
-          }
-          if (saddrs.contains(caller)) {
-            swapTxCount.put(caller, swapTxCount.getOrDefault(caller, 0L) + 1);
-          }
-
-          if (true) {
-            continue;
-          }
-
           byte[] contractAddress = transactionInfo.getContractAddress().toByteArray();
           BigDecimal fee =
               new BigDecimal(transactionInfo.getFee())
@@ -417,6 +406,12 @@ public class FullNode {
 
           String txHash = Hex.toHexString(txId);
           if (Arrays.equals(contractAddress, SWAP_ROUTER)) {
+            if (saddrs.contains(caller)) {
+              swapTxCount.put(caller, swapTxCount.getOrDefault(caller, 0L) + 1);
+            }
+            if(true) {
+              continue;
+            }
 
             AddrAllInfoRecord addrAllInfoRecord =
                 swapAddrInfoRecordMap.getOrDefault(caller, new AddrAllInfoRecord(caller));
@@ -822,6 +817,14 @@ public class FullNode {
             //            }
 
           } else if (Arrays.equals(contractAddress, SUNPUMP_LAUNCH)) {
+
+
+            if (paddrs.contains(caller)) {
+              pumpTxCount.put(caller, pumpTxCount.getOrDefault(caller, 0L) + 1);
+            }
+            if (true) {
+              continue;
+            }
 
             if (!tx.getInstance()
                 .getRawData()
