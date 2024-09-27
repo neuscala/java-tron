@@ -1931,10 +1931,10 @@ public class FullNode {
           if (buySellsLastBlocks.attackTargetCount == 0 && buySellsLastBlocks.isAttacking()) {
             tokenAllInfoRecord.addAttackTarget(1);
             buySellsLastBlocks.attackTargetCount++;
-//            if (!buySellsLastBlocks.blockSuccess && tokenBlockSuccess) {
-//              tokenAllInfoRecord.addSuccessCount();
-//              buySellsLastBlocks.blockSuccess = true;
-//            }
+            //            if (!buySellsLastBlocks.blockSuccess && tokenBlockSuccess) {
+            //              tokenAllInfoRecord.addSuccessCount();
+            //              buySellsLastBlocks.blockSuccess = true;
+            //            }
           }
 
           // fee
@@ -2054,7 +2054,7 @@ public class FullNode {
         return getTrx.compareTo(BigDecimal.ZERO) > 0;
       }
     }
-    return false;
+    return blockSuccess;
   }
 
   private static void writeToFile(
