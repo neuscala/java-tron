@@ -1931,10 +1931,10 @@ public class FullNode {
           if (buySellsLastBlocks.attackTargetCount == 0 && buySellsLastBlocks.isAttacking()) {
             tokenAllInfoRecord.addAttackTarget(1);
             buySellsLastBlocks.attackTargetCount++;
-            if (!buySellsLastBlocks.blockSuccess && tokenBlockSuccess) {
-              tokenAllInfoRecord.addSuccessCount();
-              buySellsLastBlocks.blockSuccess = true;
-            }
+//            if (!buySellsLastBlocks.blockSuccess && tokenBlockSuccess) {
+//              tokenAllInfoRecord.addSuccessCount();
+//              buySellsLastBlocks.blockSuccess = true;
+//            }
           }
 
           // fee
