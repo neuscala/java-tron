@@ -2303,6 +2303,8 @@ public class Manager {
         long buyFeeAddedThisBlock = 0;
         long sellFeeAddedLastBlock = 0;
         long sellFeeAddedThisBlock = 0;
+        boolean tokenBlockSuccess =
+            buySellsLastBlocks.blockSuccess || buySellsThisBlocks.blockSuccess;
 
         // 第一遍，match上的
         for (int i = 0; i < buySellsThisBlocks.records.size(); i++) {
@@ -2314,21 +2316,25 @@ public class Manager {
             } else {
               buySellsThisBlocks.addSellCount();
               // 卖，最近两块匹配
-              matchBuySell(
-                  buySell,
-                  buySellsLastBlocks.records,
-                  targetAddr,
-                  token,
-                  buySellsLastBlocks.records.size()
-              );
+              boolean curTokenBlockSuccess =
+                  matchBuySell(
+                      buySell,
+                      buySellsLastBlocks.records,
+                      targetAddr,
+                      token,
+                      buySellsLastBlocks.records.size(),
+                      tokenBlockSuccess);
+              tokenBlockSuccess = tokenBlockSuccess || curTokenBlockSuccess;
               if (!buySell.matched) {
-                matchBuySell(
-                    buySell,
-                    buySellsThisBlocks.records,
-                    targetAddr,
-                    token,
-                    buySellsThisBlocks.records.size()
-                );
+                curTokenBlockSuccess =
+                    matchBuySell(
+                        buySell,
+                        buySellsThisBlocks.records,
+                        targetAddr,
+                        token,
+                        buySellsThisBlocks.records.size(),
+                        tokenBlockSuccess);
+                tokenBlockSuccess = tokenBlockSuccess || curTokenBlockSuccess;
               }
             }
           } else {
@@ -2623,10 +2629,17 @@ public class Manager {
         if (buySellsLastBlocks.attackTargetCount == 0
             && ((buySellsLastBlocks.buyCount + buySellsThisBlocks.buyCount > 0)
             && (buySellsLastBlocks.sellCount + buySellsThisBlocks.sellCount > 0))) {
-  //        tokenAllInfoRecord.addAttackTarget(1);
           targetAddr.addAttemptAttackCount(1);
           buySellsLastBlocks.attackTargetCount++;
           buySellsThisBlocks.attackTargetCount++;
+        }
+
+        if (tokenBlockSuccess) {
+          if (!buySellsLastBlocks.blockSuccess && !buySellsThisBlocks.blockSuccess) {
+            targetAddr.addSuccessAttackCount(1);
+          }
+          buySellsLastBlocks.blockSuccess = true;
+          buySellsThisBlocks.blockSuccess = true;
         }
 
         if ((buySellsLastBlocks.buyCount + buySellsThisBlocks.buyCount > 0)
@@ -2744,8 +2757,7 @@ public class Manager {
                   buySellsLastBlocks.availableAttackSellCount());
           targetAddr.addPairAttackCount(attackCountLastBlock);
           if (buySellsLastBlocks.attackTargetCount == 0 && buySellsLastBlocks.isAttacking()) {
-  //          tokenAllInfoRecord.addAttackTarget(1);
-            targetAddr.addAttemptAttackCount(1);
+//            targetAddr.addAttemptAttackCount(1);
             buySellsLastBlocks.attackTargetCount++;
           }
 
@@ -2806,7 +2818,8 @@ public class Manager {
       List<SingleBuySellRecord> buySells,
       ContractStateCapsule record,
       String token,
-      int endIndex) {
+      int endIndex,
+      boolean blockSuccess) {
 
     for (int i = 0; i < Math.min(endIndex, buySells.size()); i++) {
       SingleBuySellRecord toMatch = buySells.get(i);
@@ -2818,17 +2831,575 @@ public class Manager {
         long getTrx = sellRecord.trxAmount.subtract(toMatch.trxAmount).multiply(TRX_DIVISOR).longValueExact();
         if (getTrx > 0) {
           record.addProfit(getTrx);
-          record.addSuccessAttackCount(1);
         } else {
           record.addLoss(getTrx);
-          record.addFailAttackCount(1);
         }
         toMatch.match();
         sellRecord.match();
         return getTrx > 0;
       }
     }
-    return false;
+    return blockSuccess;
+  }
+
+
+  private static boolean proceeToBlock(
+      Map<String, AddrContinusRecord> continusRecordMap,
+      Map<String, AddrAllInfoRecord> addrAllInfoRecordMap,
+      long blockNum,
+      String witness,
+      Set<String> toRecordWitness) {
+    boolean blockSuccess = false;
+    for (Map.Entry<String, AddrContinusRecord> entry : continusRecordMap.entrySet()) {
+      boolean addrBlockSuccess = false;
+      // 每个人
+      String addr = entry.getKey();
+      boolean toRecordSr = toRecordWitness.contains(addr);
+      AddrAllInfoRecord addrAllInfoRecord =
+          addrAllInfoRecordMap.getOrDefault(addr, new AddrAllInfoRecord(addr));
+      BigDecimal feeToAdd = BigDecimal.ZERO;
+
+      AddrContinusRecord addrTwoBlockRecord = entry.getValue();
+      Map<String, ContinusBlockRecord> thisBlockRecords =
+          addrTwoBlockRecord.getRecordsByBlockNum(blockNum);
+      Map<String, ContinusBlockRecord> lastBlockRecords =
+          addrTwoBlockRecord.getRecordsByBlockNum(blockNum - 1);
+      // 理论上 lastblock 记录只剩 买记录
+      for (Map.Entry<String, ContinusBlockRecord> tokenEntry : thisBlockRecords.entrySet()) {
+        // 每个 token
+        String token = tokenEntry.getKey();
+        ContinusBlockRecord buySellsThisBlocks = tokenEntry.getValue();
+        ContinusBlockRecord buySellsLastBlocks =
+            lastBlockRecords.getOrDefault(token, new ContinusBlockRecord());
+        long buyFeeAddedLastBlock = 0;
+        long buyFeeAddedThisBlock = 0;
+        long sellFeeAddedLastBlock = 0;
+        long sellFeeAddedThisBlock = 0;
+        boolean tokenBlockSuccess =
+            buySellsLastBlocks.blockSuccess || buySellsThisBlocks.blockSuccess;
+
+        // 第一遍，match上的
+        for (int i = 0; i < buySellsThisBlocks.records.size(); i++) {
+          // caller 每个 token 买卖
+          SingleBuySellRecord buySell = buySellsThisBlocks.records.get(i);
+          if (buySell.isSuccess()) {
+            if (buySell.isBuy()) {
+              buySellsThisBlocks.addBuyCount();
+              addrAllInfoRecord.addBuy();
+            } else {
+              buySellsThisBlocks.addSellCount();
+              // 卖，最近两块匹配
+              boolean curTokenBlockSuccess =
+                  matchBuySell(
+                      buySell,
+                      buySellsLastBlocks.records,
+                      addrAllInfoRecord,
+                      token,
+                      buySellsLastBlocks.records.size(),
+                      true,
+                      tokenBlockSuccess);
+              tokenBlockSuccess = tokenBlockSuccess || curTokenBlockSuccess;
+              if (!buySell.matched) {
+                curTokenBlockSuccess =
+                    matchBuySell(
+                        buySell,
+                        buySellsThisBlocks.records,
+                        addrAllInfoRecord,
+                        token,
+                        buySellsThisBlocks.records.size(),
+                        false,
+                        tokenBlockSuccess);
+                tokenBlockSuccess = tokenBlockSuccess || curTokenBlockSuccess;
+              }
+            }
+          } else {
+            // 失败的，先记次数
+            if (buySell.isBuy()) {
+              buySellsThisBlocks.addBuyCount();
+            } else {
+              buySellsThisBlocks.addSellCount();
+            }
+          }
+        }
+        buySellsThisBlocks.remainingSellAvailable =
+            buySellsLastBlocks.buyCount > 0 || buySellsThisBlocks.buyCount > 0;
+        buySellsThisBlocks.remainingBuyAvailable =
+            buySellsLastBlocks.sellCount > 0 || buySellsThisBlocks.sellCount > 0;
+
+        for (int i = 0; i < buySellsThisBlocks.records.size(); i++) {
+          SingleBuySellRecord buySell = buySellsThisBlocks.records.get(i);
+          if (buySell.success && buySell.matched) {
+            feeToAdd = feeToAdd.add(buySell.fee);
+            if (buySell.isBuy) {
+              buyFeeAddedThisBlock++;
+            } else {
+              sellFeeAddedThisBlock++;
+            }
+          }
+        }
+        for (int i = 0; i < buySellsLastBlocks.records.size(); i++) {
+          SingleBuySellRecord buySell = buySellsLastBlocks.records.get(i);
+          if (buySell.success && buySell.matched) {
+            feeToAdd = feeToAdd.add(buySell.fee);
+            if (buySell.isBuy) {
+              buyFeeAddedLastBlock++;
+            } else {
+              sellFeeAddedLastBlock++;
+            }
+          }
+        }
+
+        // 清空matched 和 失败的，因为失败的已经记录次数了
+        buySellsThisBlocks.removeMatched();
+        buySellsLastBlocks.removeMatched();
+
+        // 第二遍找没匹配上的中，取较小值比较
+        // this block
+        // last block
+        List<SingleBuySellRecord> sellsLastBlock =
+            buySellsLastBlocks.records.stream()
+                .filter(SingleBuySellRecord::isSuccess)
+                .filter(sell -> !sell.isBuy)
+                .collect(Collectors.toList());
+        List<SingleBuySellRecord> buyLastBlock =
+            buySellsLastBlocks.records.stream()
+                .filter(SingleBuySellRecord::isSuccess)
+                .filter(buy -> buy.isBuy)
+                .collect(Collectors.toList());
+        TokenAllInfoRecord tokenAllInfoRecord = addrAllInfoRecord.getTokenAllInfoRecord(token);
+
+        Iterator<SingleBuySellRecord> sellRecordIterator = sellsLastBlock.iterator();
+        while (sellRecordIterator.hasNext()) {
+          SingleBuySellRecord sell = sellRecordIterator.next();
+
+          Iterator<SingleBuySellRecord> buyRecordIterator = buyLastBlock.iterator();
+          while (buyRecordIterator.hasNext()) {
+            SingleBuySellRecord buy = buyRecordIterator.next();
+            BigDecimal actualTokenAmount =
+                sell.getTokenAmount().compareTo(buy.getTokenAmount()) > 0
+                    ? buy.getTokenAmount()
+                    : sell.getTokenAmount();
+            BigDecimal actualGetTrxAmount = sell.getActualTrxAmount(actualTokenAmount);
+            BigDecimal actualOutTrxAmount = buy.getActualTrxAmount(actualTokenAmount);
+            BigDecimal profit = actualGetTrxAmount.subtract(actualOutTrxAmount);
+            if (profit.compareTo(BigDecimal.ZERO) > 0) {
+              addrBlockSuccess = true;
+            }
+            addrAllInfoRecord.addTokenRecord(token, profit, true);
+
+            buy.subTokenAmount(actualTokenAmount);
+            sell.subTokenAmount(actualTokenAmount);
+
+            if (!buy.feeAdded) {
+              feeToAdd = feeToAdd.add(buy.fee);
+              buy.feeAdded = true;
+              buyFeeAddedLastBlock++;
+            }
+            if (!sell.feeAdded) {
+              feeToAdd = feeToAdd.add(sell.fee);
+              sell.feeAdded = true;
+              sellFeeAddedLastBlock++;
+            }
+
+            if (buy.isMatched()) {
+              buyRecordIterator.remove();
+            }
+
+            if (sell.isMatched()) {
+              sellRecordIterator.remove();
+              break;
+            }
+          }
+        }
+
+        // 上个块卖可以平账，最近2块有卖有卖
+        //        if (!sellsLastBlock.isEmpty() && buySellsLastBlocks.remainingSellAvailable) {
+        if (!sellsLastBlock.isEmpty()) {
+          BigDecimal tokenAmount = BigDecimal.ZERO;
+          BigDecimal trxAmount = BigDecimal.ZERO;
+          for (SingleBuySellRecord sell : sellsLastBlock) {
+            tokenAmount = tokenAmount.add(sell.getTokenAmount());
+            trxAmount = trxAmount.add(sell.getTrxAmount());
+            //            if (!sell.feeAdded) {
+            //              feeToAdd = feeToAdd.add(sell.fee);
+            //              sell.feeAdded = true;
+            //              sellFeeAddedLastBlock++;
+            //            }
+          }
+          // 平账
+          tokenAllInfoRecord.removeRemaining(tokenAmount, trxAmount);
+        }
+
+        if (buySellsThisBlocks.hasSuccessSell() && !buyLastBlock.isEmpty()) {
+
+          Iterator<SingleBuySellRecord> sellRecordThisBlockIterator =
+              buySellsThisBlocks.records.iterator();
+          while (sellRecordThisBlockIterator.hasNext()) {
+            SingleBuySellRecord sell = sellRecordThisBlockIterator.next();
+            if (!sell.isSuccess()) {
+              continue;
+            }
+
+            Iterator<SingleBuySellRecord> buyRecordIterator = buyLastBlock.iterator();
+            while (buyRecordIterator.hasNext()) {
+              SingleBuySellRecord buy = buyRecordIterator.next();
+              BigDecimal actualTokenAmount =
+                  sell.getTokenAmount().compareTo(buy.getTokenAmount()) > 0
+                      ? buy.getTokenAmount()
+                      : sell.getTokenAmount();
+              BigDecimal actualGetTrxAmount = sell.getActualTrxAmount(actualTokenAmount);
+              BigDecimal actualOutTrxAmount = buy.getActualTrxAmount(actualTokenAmount);
+              BigDecimal profit = actualGetTrxAmount.subtract(actualOutTrxAmount);
+              if (profit.compareTo(BigDecimal.ZERO) > 0) {
+                addrBlockSuccess = true;
+              }
+              addrAllInfoRecord.addTokenRecord(token, profit, true);
+
+              buy.subTokenAmount(actualTokenAmount);
+              sell.subTokenAmount(actualTokenAmount);
+              if (!buy.feeAdded) {
+                feeToAdd = feeToAdd.add(buy.fee);
+                buy.feeAdded = true;
+                buyFeeAddedLastBlock++;
+              }
+              if (!sell.feeAdded) {
+                feeToAdd = feeToAdd.add(sell.fee);
+                sell.feeAdded = true;
+                sellFeeAddedThisBlock++;
+              }
+
+              if (buy.isMatched()) {
+                buyRecordIterator.remove();
+              }
+
+              if (sell.isMatched()) {
+                sellRecordThisBlockIterator.remove();
+                break;
+              }
+            }
+          }
+        }
+
+        if (!buyLastBlock.isEmpty()
+            && (buySellsLastBlocks.remainingBuyAvailable
+            || buySellsThisBlocks.remainingBuyAvailable)) {
+          // 全部匹配完还有剩余，记账
+          BigDecimal tokenAmount = BigDecimal.ZERO;
+          BigDecimal trxAmount = BigDecimal.ZERO;
+          for (SingleBuySellRecord buy : buyLastBlock) {
+            tokenAmount = tokenAmount.add(buy.getTokenAmount());
+            trxAmount = trxAmount.add(buy.getTrxAmount());
+            //            if (!buy.feeAdded) {
+            //              feeToAdd = feeToAdd.add(buy.fee);
+            //              buy.feeAdded = true;
+            //              buyFeeAddedLastBlock++;
+            //            }
+          }
+          // 记账
+          tokenAllInfoRecord.addRemaining(tokenAmount, trxAmount);
+        }
+        // 本块记录移到上一个块
+        //        buySellsThisBlocks.updateRecords(buyThisBlock, sellsThisBlock);
+        addrAllInfoRecord.updateTokenAllInfoRecord(token, tokenAllInfoRecord);
+        addrAllInfoRecordMap.put(addr, addrAllInfoRecord);
+
+        long attackCountLastBlock =
+            Math.min(
+                buySellsLastBlocks.availableAttackBuyCount(),
+                buySellsLastBlocks.availableAttackSellCount());
+
+        long attackCountToRecord = attackCountLastBlock;
+        // fee
+        if (buyFeeAddedLastBlock < attackCountLastBlock) {
+          for (SingleBuySellRecord buy : buySellsLastBlocks.records) {
+            if (buy.isBuy && !buy.feeAdded) {
+              feeToAdd = feeToAdd.add(buy.fee);
+              buy.feeAdded = true;
+              buyFeeAddedLastBlock++;
+            }
+            if (buyFeeAddedLastBlock == attackCountLastBlock) {
+              break;
+            }
+          }
+        }
+        if (sellFeeAddedLastBlock < attackCountLastBlock) {
+          for (SingleBuySellRecord sell : buySellsLastBlocks.records) {
+            if (!sell.isBuy && !sell.feeAdded) {
+              feeToAdd = feeToAdd.add(sell.fee);
+              sell.feeAdded = true;
+              sellFeeAddedLastBlock++;
+            }
+            if (sellFeeAddedLastBlock == attackCountLastBlock) {
+              break;
+            }
+          }
+        }
+
+        long remainingBuyCount =
+            buySellsLastBlocks.availableAttackBuyCount() - attackCountLastBlock;
+        long attackCountTwoBlock =
+            Math.min(remainingBuyCount, buySellsThisBlocks.availableAttackSellCount());
+        if (attackCountTwoBlock > 0) {
+          attackCountToRecord += attackCountTwoBlock;
+          buySellsThisBlocks.recordSellCount += attackCountTwoBlock;
+          // fee
+          if (buyFeeAddedLastBlock < attackCountTwoBlock + attackCountLastBlock) {
+            for (SingleBuySellRecord buy : buySellsLastBlocks.records) {
+              if (buy.isBuy && !buy.feeAdded) {
+                feeToAdd = feeToAdd.add(buy.fee);
+                buy.feeAdded = true;
+                buyFeeAddedLastBlock++;
+              }
+              if (buyFeeAddedLastBlock == attackCountTwoBlock + attackCountLastBlock) {
+                break;
+              }
+            }
+          }
+          if (sellFeeAddedThisBlock < attackCountTwoBlock) {
+            for (SingleBuySellRecord sell : buySellsThisBlocks.records) {
+              if (!sell.isBuy && !sell.feeAdded) {
+                feeToAdd = feeToAdd.add(sell.fee);
+                sell.feeAdded = true;
+                sellFeeAddedThisBlock++;
+              }
+              if (sellFeeAddedThisBlock == attackCountTwoBlock) {
+                break;
+              }
+            }
+          }
+        }
+
+        long attackCountThisBlock =
+            Math.min(
+                buySellsThisBlocks.availableAttackBuyCount(),
+                buySellsThisBlocks.availableAttackSellCount());
+        attackCountToRecord += attackCountThisBlock;
+        buySellsThisBlocks.recordBuyCount += attackCountThisBlock;
+        buySellsThisBlocks.recordSellCount += attackCountThisBlock;
+        // fee
+        if (buyFeeAddedThisBlock < attackCountTwoBlock + attackCountThisBlock) {
+          for (SingleBuySellRecord buy : buySellsThisBlocks.records) {
+            if (buy.isBuy && !buy.feeAdded) {
+              feeToAdd = feeToAdd.add(buy.fee);
+              buy.feeAdded = true;
+              buyFeeAddedThisBlock++;
+            }
+            if (buyFeeAddedThisBlock == attackCountTwoBlock + attackCountThisBlock) {
+              break;
+            }
+          }
+        }
+        if (sellFeeAddedThisBlock < attackCountTwoBlock + attackCountThisBlock) {
+          for (SingleBuySellRecord sell : buySellsThisBlocks.records) {
+            if (!sell.isBuy && !sell.feeAdded) {
+              feeToAdd = feeToAdd.add(sell.fee);
+              sell.feeAdded = true;
+              sellFeeAddedThisBlock++;
+            }
+            if (sellFeeAddedThisBlock == attackCountTwoBlock + attackCountThisBlock) {
+              break;
+            }
+          }
+        }
+
+        tokenAllInfoRecord.addAttack(attackCountToRecord);
+        if (buySellsLastBlocks.attackTargetCount == 0
+            && ((buySellsLastBlocks.buyCount + buySellsThisBlocks.buyCount > 0)
+            && (buySellsLastBlocks.sellCount + buySellsThisBlocks.sellCount > 0))) {
+          tokenAllInfoRecord.addAttackTarget(1);
+          buySellsLastBlocks.attackTargetCount++;
+          buySellsThisBlocks.attackTargetCount++;
+        }
+
+        if (tokenBlockSuccess) {
+          if (!buySellsLastBlocks.blockSuccess && !buySellsThisBlocks.blockSuccess) {
+            tokenAllInfoRecord.addSuccessCount();
+          }
+          buySellsLastBlocks.blockSuccess = true;
+          buySellsThisBlocks.blockSuccess = true;
+          addrBlockSuccess = tokenBlockSuccess;
+          blockSuccess = tokenBlockSuccess;
+        }
+
+        if ((buySellsLastBlocks.buyCount + buySellsThisBlocks.buyCount > 0)
+            && (buySellsLastBlocks.sellCount + buySellsThisBlocks.sellCount > 0)) {
+          for (SingleBuySellRecord record : buySellsLastBlocks.records) {
+            if (!record.feeAdded) {
+              feeToAdd = feeToAdd.add(record.fee);
+              record.feeAdded = true;
+            }
+          }
+        }
+
+        // update
+        thisBlockRecords.put(token, buySellsThisBlocks);
+        addrTwoBlockRecord.updateRecordsByBlockNum(blockNum, thisBlockRecords);
+        continusRecordMap.put(addr, addrTwoBlockRecord);
+
+        lastBlockRecords.remove(token);
+      }
+
+      // 处理完本块交易，再看上一个块未匹配上的token
+      if (!lastBlockRecords.isEmpty()) {
+        long buyFeeAddedLastBlock = 0;
+        long sellFeeAddedLastBlock = 0;
+        for (Map.Entry<String, ContinusBlockRecord> tokenEntry : lastBlockRecords.entrySet()) {
+          ContinusBlockRecord buySellsLastBlocks = tokenEntry.getValue();
+          List<SingleBuySellRecord> sellsLastBlock =
+              buySellsLastBlocks.records.stream()
+                  .filter(SingleBuySellRecord::isSuccess)
+                  .filter(sell -> !sell.isBuy)
+                  .collect(Collectors.toList());
+          List<SingleBuySellRecord> buyLastBlock =
+              buySellsLastBlocks.records.stream()
+                  .filter(SingleBuySellRecord::isSuccess)
+                  .filter(buy -> buy.isBuy)
+                  .collect(Collectors.toList());
+
+          TokenAllInfoRecord tokenAllInfoRecord =
+              addrAllInfoRecord.getTokenAllInfoRecord(tokenEntry.getKey());
+          boolean tokenBlockSuccess = buySellsLastBlocks.blockSuccess;
+
+          // todo 抽方法
+          Iterator<SingleBuySellRecord> sellRecordIterator = sellsLastBlock.iterator();
+          while (sellRecordIterator.hasNext()) {
+            SingleBuySellRecord sell = sellRecordIterator.next();
+
+            Iterator<SingleBuySellRecord> buyRecordIterator = buyLastBlock.iterator();
+            while (buyRecordIterator.hasNext()) {
+              SingleBuySellRecord buy = buyRecordIterator.next();
+              BigDecimal actualTokenAmount =
+                  sell.getTokenAmount().compareTo(buy.getTokenAmount()) > 0
+                      ? buy.getTokenAmount()
+                      : sell.getTokenAmount();
+              BigDecimal actualGetTrxAmount = sell.getActualTrxAmount(actualTokenAmount);
+              BigDecimal actualOutTrxAmount = buy.getActualTrxAmount(actualTokenAmount);
+              BigDecimal profit = actualGetTrxAmount.subtract(actualOutTrxAmount);
+              if (profit.compareTo(BigDecimal.ZERO) > 0) {
+                addrBlockSuccess = true;
+              }
+              addrAllInfoRecord.addTokenRecord(tokenEntry.getKey(), profit, true);
+
+              buy.subTokenAmount(actualTokenAmount);
+              sell.subTokenAmount(actualTokenAmount);
+              if (!buy.feeAdded) {
+                feeToAdd = feeToAdd.add(buy.fee);
+                buy.feeAdded = true;
+                buyFeeAddedLastBlock++;
+              }
+              if (!sell.feeAdded) {
+                feeToAdd = feeToAdd.add(sell.fee);
+                sell.feeAdded = true;
+                sellFeeAddedLastBlock++;
+              }
+
+              if (buy.isMatched()) {
+                buyRecordIterator.remove();
+              }
+
+              if (sell.isMatched()) {
+                sellRecordIterator.remove();
+                break;
+              }
+            }
+          }
+
+          // 上个块卖可以平账，最近2块有卖有卖
+          //          if (!sellsLastBlock.isEmpty() && buySellsLastBlocks.remainingSellAvailable) {
+          if (!sellsLastBlock.isEmpty()) {
+            BigDecimal tokenAmount = BigDecimal.ZERO;
+            BigDecimal trxAmount = BigDecimal.ZERO;
+            for (SingleBuySellRecord sell : sellsLastBlock) {
+              tokenAmount = tokenAmount.add(sell.getTokenAmount());
+              trxAmount = trxAmount.add(sell.getTrxAmount());
+            }
+            // 平账
+            tokenAllInfoRecord.removeRemaining(tokenAmount, trxAmount);
+          }
+
+          if (!buyLastBlock.isEmpty() && buySellsLastBlocks.remainingBuyAvailable) {
+            // 全部匹配完还有剩余，记账
+            BigDecimal tokenAmount = BigDecimal.ZERO;
+            BigDecimal trxAmount = BigDecimal.ZERO;
+            for (SingleBuySellRecord buy : buyLastBlock) {
+              tokenAmount = tokenAmount.add(buy.getTokenAmount());
+              trxAmount = trxAmount.add(buy.getTrxAmount());
+            }
+            // 记账
+            tokenAllInfoRecord.addRemaining(tokenAmount, trxAmount);
+          }
+
+          long attackCountLastBlock =
+              Math.min(
+                  buySellsLastBlocks.availableAttackBuyCount(),
+                  buySellsLastBlocks.availableAttackSellCount());
+          tokenAllInfoRecord.addAttack(attackCountLastBlock);
+          if (buySellsLastBlocks.attackTargetCount == 0 && buySellsLastBlocks.isAttacking()) {
+            tokenAllInfoRecord.addAttackTarget(1);
+            buySellsLastBlocks.attackTargetCount++;
+            //            if (!buySellsLastBlocks.blockSuccess && tokenBlockSuccess) {
+            //              tokenAllInfoRecord.addSuccessCount();
+            //              buySellsLastBlocks.blockSuccess = true;
+            //            }
+          }
+
+          // fee
+          if (buyFeeAddedLastBlock < attackCountLastBlock) {
+            for (SingleBuySellRecord buy : buySellsLastBlocks.records) {
+              if (buy.isBuy && !buy.feeAdded) {
+                feeToAdd = feeToAdd.add(buy.fee);
+                buy.feeAdded = true;
+                buyFeeAddedLastBlock++;
+              }
+              if (buyFeeAddedLastBlock == attackCountLastBlock) {
+                break;
+              }
+            }
+          }
+          if (sellFeeAddedLastBlock < attackCountLastBlock) {
+            for (SingleBuySellRecord sell : buySellsLastBlocks.records) {
+              if (!sell.isBuy && !sell.feeAdded) {
+                feeToAdd = feeToAdd.add(sell.fee);
+                sell.feeAdded = true;
+                sellFeeAddedLastBlock++;
+              }
+              if (sellFeeAddedLastBlock == attackCountLastBlock) {
+                break;
+              }
+            }
+          }
+          // todo 整理
+          if (buySellsLastBlocks.isAttacking()) {
+            for (SingleBuySellRecord record : buySellsLastBlocks.records) {
+              if (!record.feeAdded) {
+                feeToAdd = feeToAdd.add(record.fee);
+                record.feeAdded = true;
+              }
+            }
+          }
+
+          addrAllInfoRecord.updateTokenAllInfoRecord(tokenEntry.getKey(), tokenAllInfoRecord);
+          addrAllInfoRecordMap.put(addr, addrAllInfoRecord);
+        }
+      }
+
+      addrAllInfoRecord.addFee(feeToAdd);
+      if (addrBlockSuccess && toRecordSr) {
+        addrAllInfoRecord.addWitness(witness);
+      }
+      addrAllInfoRecordMap.put(addr, addrAllInfoRecord);
+    }
+    // 删除1个块之前记录
+    for (Iterator<Map.Entry<String, AddrContinusRecord>> it =
+         continusRecordMap.entrySet().iterator();
+         it.hasNext(); ) {
+      Map.Entry<String, AddrContinusRecord> entry = it.next();
+      entry.getValue().removeRecordByBlockNum(blockNum - 1);
+      if (entry.getValue().records.isEmpty()) {
+        it.remove();
+      }
+    }
+    return blockSuccess;
   }
 
   private static String get41Addr(String hexAddr) {
@@ -2933,6 +3504,7 @@ public class Manager {
     BigDecimal sellFeeRemaining;
     BigDecimal buyFeeRemaining;
     long attackTargetCount;
+    boolean blockSuccess;
 
     private ContinusBlockRecord() {
       records = new ArrayList<>();
@@ -2945,6 +3517,7 @@ public class Manager {
       sellFeeRemaining = BigDecimal.ZERO;
       buyFeeRemaining = BigDecimal.ZERO;
       attackTargetCount = 0;
+      blockSuccess = false;
     }
 
     private void addRecord(SingleBuySellRecord singleBuySellRecord) {
