@@ -198,32 +198,6 @@ public class FullNode {
 
     try {
 
-      TransactionStore store = ChainBaseManager.getInstance().getTransactionStore();
-      BufferedReader leftreader = new BufferedReader(new FileReader("left.txt"));
-      PrintWriter leftWriter = new PrintWriter("leftblock.txt");
-      String txH;
-      while ((txH = leftreader.readLine()) != null) {
-        TransactionCapsule txCap = store.get(Hex.decode(txH));
-        leftWriter.println(txH + " " + txCap.getBlockNum() + " " + txCap.getTimestamp());
-      }
-      leftWriter.close();
-
-      BufferedReader rightreader = new BufferedReader(new FileReader("right.txt"));
-      PrintWriter rightWriter = new PrintWriter("rightblock.txt");
-      while ((txH = rightreader.readLine()) != null) {
-        TransactionCapsule txCap = store.get(Hex.decode(txH));
-        rightWriter.println(txH + " " + txCap.getBlockNum() + " " + txCap.getTimestamp());
-      }
-      rightWriter.close();
-      logger.info("End!!!!");
-      if (true) {
-        return;
-      }
-
-
-
-
-
       String targetAddress = "41987c0191a1A098Ffc9addC9C65d2c3d028B10CA3".toLowerCase();
       //      String targetAddress = "4135EF67a96a4f28900fe58D3c2e6703A542d119A1".toLowerCase();
 
@@ -379,9 +353,6 @@ public class FullNode {
       Map<String, Long> pumpSrMap = new HashMap<>();
       Map<String, Long> recentpumpSrMap = new HashMap<>();
 
-      Map<String, Long> pumpTxCount = new HashMap<>();
-      Map<String, Long> swapTxCount = new HashMap<>();
-
       Map<String, String> pairToTokenMap = populateMap();
       DBIterator retIterator =
           (DBIterator) ChainBaseManager.getInstance().getTransactionRetStore().getDb().iterator();
@@ -434,12 +405,6 @@ public class FullNode {
 
           String txHash = Hex.toHexString(txId);
           if (Arrays.equals(contractAddress, SWAP_ROUTER)) {
-            if (saddrs.contains(caller)) {
-              swapTxCount.put(caller, swapTxCount.getOrDefault(caller, 0L) + 1);
-            }
-            if(true) {
-              continue;
-            }
 
             AddrAllInfoRecord addrAllInfoRecord =
                 swapAddrInfoRecordMap.getOrDefault(caller, new AddrAllInfoRecord(caller));
@@ -846,14 +811,6 @@ public class FullNode {
 
           } else if (Arrays.equals(contractAddress, SUNPUMP_LAUNCH)) {
 
-
-            if (paddrs.contains(caller)) {
-              pumpTxCount.put(caller, pumpTxCount.getOrDefault(caller, 0L) + 1);
-            }
-            if (true) {
-              continue;
-            }
-
             if (!tx.getInstance()
                 .getRawData()
                 .getContract(0)
@@ -1151,15 +1108,6 @@ public class FullNode {
               pSumTxCount,
               sSumTxCount);
         }
-      }
-      if (true) {
-        PrintWriter pwriter = new PrintWriter("txCount.txt");
-        pwriter.println("SWAP");
-        swapTxCount.forEach((k, v) -> pwriter.println(k + " " + v));
-        pwriter.println("PUMP");
-        pumpTxCount.forEach((k, v) -> pwriter.println(k + " " + v));
-        pwriter.close();
-        return;
       }
       //      if (true) {
       // 跑地址
