@@ -232,7 +232,7 @@ public class FullNode {
       long startTimestamp = 1724284800000L;
       long endTimestamp = 1727395200000L;
       long endBlockLastDay = 0;
-      dayStatWriter = new PrintWriter("daystat.txt");
+//      dayStatWriter = new PrintWriter("daystat.txt");
       for (long timestmap = startTimestamp;
           timestmap < endTimestamp;
           timestmap += 1000 * 60 * 60 * 24) {
@@ -1154,7 +1154,7 @@ public class FullNode {
               + record.getFailSell();
       logger.info("End syncing from {} to {}, \n {}", startBlock, endBlock, msg);
       System.out.println(msg);
-      dayStatWriter.println(msg);
+//      dayStatWriter.println(msg);
       //        return;
       //      }
 
@@ -1429,7 +1429,7 @@ public class FullNode {
 
 //    mevWriter.close();
 //    userWriter.close();
-    dayStatWriter.close();
+//    dayStatWriter.close();
 
     logger.info("END");
   }
