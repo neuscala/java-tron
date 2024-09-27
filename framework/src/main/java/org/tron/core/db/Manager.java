@@ -3150,16 +3150,16 @@ public class Manager {
     private void addTrxDiff(BigDecimal trxDiff, boolean mzzz) {
       if (trxDiff.compareTo(BigDecimal.ZERO) > 0) {
         profit = profit.add(trxDiff);
-        successCount++;
-        if (mzzz) {
-          mzsuccessCount++;
-        }
+//        successCount++;
+//        if (mzzz) {
+//          mzsuccessCount++;
+//        }
       } else {
         lack = lack.add(trxDiff);
-        lackCount++;
-        if (mzzz) {
-          mzlackCount++;
-        }
+//        lackCount++;
+//        if (mzzz) {
+//          mzlackCount++;
+//        }
       }
     }
 
