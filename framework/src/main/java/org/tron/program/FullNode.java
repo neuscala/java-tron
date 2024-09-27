@@ -216,7 +216,9 @@ public class FullNode {
       long recentBlock = 65323160;
       long endBlock = 65524702;
       //       2024-09-19 11:00:00 ~ 2024-09-25 21:00:00
-      syncMevStat(65355548, 65553494, 65553494, paddrs, saddrs, targetAddress, "null");
+//      syncMevStat(65355548, 65553494, 65553494, paddrs, saddrs, targetAddress, "null");
+      // 2024-09-19 8:00:00 ~ 2024-09-27 8:00:00
+      syncMevStat(65351950, 65582286, 65582286, paddrs, saddrs, targetAddress, "null");
       //      syncMevStat(
       //          ChainBaseManager.getInstance().getHeadBlockNum() - 10000,
       //          65540296,
@@ -1101,45 +1103,46 @@ public class FullNode {
 
       //      if (true) {
       //
-      //        AddrAllInfoRecord record = swapAddrInfoRecordMap.get(targetAddr);
-      //        if (record == null) {
-      //          record = new AddrAllInfoRecord(targetAddr);
-      //        }
-      //        String msg =
-      //            date
-      //                + " "
-      //                + StringUtil.encode58Check(Hex.decode(targetAddr))
-      //                + " "
-      //                + record.getSuccessCount()
-      //                + " "
-      //                + record.getAllProfit()
-      //                + " "
-      //                + record.getLackCount()
-      //                + " "
-      //                + record.getAllLack()
-      //                + " "
-      //                + record.getAllAttack()
-      //                + " "
-      //                + record.getAllAttackTarget()
-      //                + " "
-      //                + record.getTrxOutAmount()
-      //                + " "
-      //                + record.getMzSucCount()
-      //                + " "
-      //                + record.getMzLackCount()
-      //                + " "
-      //                + record.getFee()
-      //                + " "
-      //                + record.getAllfee()
-      //                + " "
-      //                + record.getSuccessBuy()
-      //                + " "
-      //                + record.getSuccessSell()
-      //                + " "
-      //                + record.getFailBuy()
-      //                + " "
-      //                + record.getFailSell();
-      //        logger.info("End syncing from {} to {}, \n {}", startBlock, endBlock, msg);
+      AddrAllInfoRecord record = swapAddrInfoRecordMap.get(targetAddr);
+      if (record == null) {
+        record = new AddrAllInfoRecord(targetAddr);
+      }
+      String msg =
+          date
+              + " "
+              + StringUtil.encode58Check(Hex.decode(targetAddr))
+              + " "
+              + record.getSuccessCount()
+              + " "
+              + record.getAllProfit()
+              + " "
+              + record.getLackCount()
+              + " "
+              + record.getAllLack()
+              + " "
+              + record.getAllAttack()
+              + " "
+              + record.getAllAttackTarget()
+              + " "
+              + record.getTrxOutAmount()
+              + " "
+              + record.getMzSucCount()
+              + " "
+              + record.getMzLackCount()
+              + " "
+              + record.getFee()
+              + " "
+              + record.getAllfee()
+              + " "
+              + record.getSuccessBuy()
+              + " "
+              + record.getSuccessSell()
+              + " "
+              + record.getFailBuy()
+              + " "
+              + record.getFailSell();
+      logger.info("End syncing from {} to {}, \n {}", startBlock, endBlock, msg);
+      System.out.println(msg);
       //        return;
       //      }
 
@@ -1450,6 +1453,8 @@ public class FullNode {
         long buyFeeAddedThisBlock = 0;
         long sellFeeAddedLastBlock = 0;
         long sellFeeAddedThisBlock = 0;
+        boolean tokenBlockSuccess =
+            buySellsLastBlocks.blockSuccess || buySellsThisBlocks.blockSuccess;
 
         // 第一遍，match上的
         for (int i = 0; i < buySellsThisBlocks.records.size(); i++) {
@@ -1462,25 +1467,26 @@ public class FullNode {
             } else {
               buySellsThisBlocks.addSellCount();
               // 卖，最近两块匹配
-              blockSuccess =
+              tokenBlockSuccess =
                   matchBuySell(
                       buySell,
                       buySellsLastBlocks.records,
                       addrAllInfoRecord,
                       token,
                       buySellsLastBlocks.records.size(),
-                      true);
+                      true,
+                      tokenBlockSuccess);
               if (!buySell.matched) {
-                blockSuccess =
+                tokenBlockSuccess =
                     matchBuySell(
                         buySell,
                         buySellsThisBlocks.records,
                         addrAllInfoRecord,
                         token,
                         buySellsThisBlocks.records.size(),
-                        false);
+                        false,
+                        tokenBlockSuccess);
               }
-              addrBlockSuccess = blockSuccess;
             }
           } else {
             // 失败的，先记次数
@@ -1554,21 +1560,24 @@ public class FullNode {
             BigDecimal profit = actualGetTrxAmount.subtract(actualOutTrxAmount);
             if (profit.compareTo(BigDecimal.ZERO) > 0) {
               addrBlockSuccess = true;
-              SingleBuySellRecord user = null;
-              // 夹成功
-//              for (SingleBuySellRecord otherBuy : buysLastBlock) {
-//                if (!otherBuy.isMatched()
-//                    && otherBuy.index > buy.index
-//                    && otherBuy.index < sell.index
-//                    && otherBuy.isSuccess()
-//                    && otherBuy.isBuy
-//                    && otherBuy.token.equalsIgnoreCase(token)) {
-//                  otherBuy.match();
-//                  user = otherBuy;
-//                  break;
-//                }
-//              }
-//              writeToFile(buy, sell, user);
+              if (!tokenBlockSuccess) {
+                // 夹成功
+                SingleBuySellRecord user = null;
+                for (SingleBuySellRecord otherBuy : buysLastBlock) {
+                  if (!otherBuy.isMatched()
+                      && otherBuy.index > buy.index
+                      && otherBuy.index < sell.index
+                      && otherBuy.isSuccess()
+                      && otherBuy.isBuy
+                      && otherBuy.token.equalsIgnoreCase(token)) {
+                    otherBuy.match();
+                    user = otherBuy;
+                    break;
+                  }
+                }
+                writeToFile(buy, sell, user);
+                tokenBlockSuccess = true;
+              }
             }
             addrAllInfoRecord.addTokenRecord(token, profit, true);
 
@@ -1637,21 +1646,24 @@ public class FullNode {
               BigDecimal profit = actualGetTrxAmount.subtract(actualOutTrxAmount);
               if (profit.compareTo(BigDecimal.ZERO) > 0) {
                 addrBlockSuccess = true;
-                SingleBuySellRecord user = null;
-                // 夹成功
-//                for (SingleBuySellRecord otherBuy : buysLastBlock) {
-//                  if (!otherBuy.isMatched()
-//                      && otherBuy.index > buy.index
-//                      && otherBuy.index < sell.index
-//                      && otherBuy.isSuccess()
-//                      && otherBuy.isBuy
-//                      && otherBuy.token.equalsIgnoreCase(token)) {
-//                    otherBuy.match();
-//                    user = otherBuy;
-//                    break;
-//                  }
-//                }
-//                writeToFile(buy, sell, user);
+                if (!tokenBlockSuccess) {
+                  // 夹成功
+                  SingleBuySellRecord user = null;
+                  for (SingleBuySellRecord otherBuy : buysLastBlock) {
+                    if (!otherBuy.isMatched()
+                        && otherBuy.index > buy.index
+                        && otherBuy.index < sell.index
+                        && otherBuy.isSuccess()
+                        && otherBuy.isBuy
+                        && otherBuy.token.equalsIgnoreCase(token)) {
+                      otherBuy.match();
+                      user = otherBuy;
+                      break;
+                    }
+                  }
+                  writeToFile(buy, sell, user);
+                  tokenBlockSuccess = true;
+                }
               }
               addrAllInfoRecord.addTokenRecord(token, profit, true);
 
@@ -1809,6 +1821,13 @@ public class FullNode {
           tokenAllInfoRecord.addAttackTarget(1);
           buySellsLastBlocks.attackTargetCount++;
           buySellsThisBlocks.attackTargetCount++;
+          if (!buySellsLastBlocks.blockSuccess
+              && !buySellsThisBlocks.blockSuccess
+              && tokenBlockSuccess) {
+            tokenAllInfoRecord.addSuccessCount();
+            buySellsLastBlocks.blockSuccess = true;
+            buySellsThisBlocks.blockSuccess = true;
+          }
         }
 
         if ((buySellsLastBlocks.buyCount + buySellsThisBlocks.buyCount > 0)
@@ -1827,6 +1846,11 @@ public class FullNode {
         continusRecordMap.put(addr, addrTwoBlockRecord);
 
         lastBlockRecords.remove(token);
+
+        if (tokenBlockSuccess) {
+          addrBlockSuccess = tokenBlockSuccess;
+          blockSuccess = tokenBlockSuccess;
+        }
       }
 
       // 处理完本块交易，再看上一个块未匹配上的token
@@ -1848,6 +1872,7 @@ public class FullNode {
 
           TokenAllInfoRecord tokenAllInfoRecord =
               addrAllInfoRecord.getTokenAllInfoRecord(tokenEntry.getKey());
+          boolean tokenBlockSuccess = buySellsLastBlocks.blockSuccess;
 
           // todo 抽方法
           Iterator<SingleBuySellRecord> sellRecordIterator = sellsLastBlock.iterator();
@@ -1866,21 +1891,24 @@ public class FullNode {
               BigDecimal profit = actualGetTrxAmount.subtract(actualOutTrxAmount);
               if (profit.compareTo(BigDecimal.ZERO) > 0) {
                 addrBlockSuccess = true;
-                SingleBuySellRecord user = null;
-                // 夹成功
-//                for (SingleBuySellRecord otherBuy : buysLastBlock) {
-//                  if (!otherBuy.isMatched()
-//                      && otherBuy.index > buy.index
-//                      && otherBuy.index < sell.index
-//                      && otherBuy.isSuccess()
-//                      && otherBuy.isBuy
-//                      && otherBuy.token.equalsIgnoreCase(tokenEntry.getKey())) {
-//                    otherBuy.match();
-//                    user = otherBuy;
-//                    break;
-//                  }
-//                }
-//                writeToFile(buy, sell, user);
+                if (!tokenBlockSuccess) {
+                  // 夹成功
+                  SingleBuySellRecord user = null;
+                  for (SingleBuySellRecord otherBuy : buysLastBlock) {
+                    if (!otherBuy.isMatched()
+                        && otherBuy.index > buy.index
+                        && otherBuy.index < sell.index
+                        && otherBuy.isSuccess()
+                        && otherBuy.isBuy
+                        && otherBuy.token.equalsIgnoreCase(entry.getKey())) {
+                      otherBuy.match();
+                      user = otherBuy;
+                      break;
+                    }
+                  }
+                  writeToFile(buy, sell, user);
+                  tokenBlockSuccess = true;
+                }
               }
               addrAllInfoRecord.addTokenRecord(tokenEntry.getKey(), profit, true);
 
@@ -1941,6 +1969,10 @@ public class FullNode {
           if (buySellsLastBlocks.attackTargetCount == 0 && buySellsLastBlocks.isAttacking()) {
             tokenAllInfoRecord.addAttackTarget(1);
             buySellsLastBlocks.attackTargetCount++;
+            if (!buySellsLastBlocks.blockSuccess && tokenBlockSuccess) {
+              tokenAllInfoRecord.addSuccessCount();
+              buySellsLastBlocks.blockSuccess = true;
+            }
           }
 
           // fee
@@ -2008,7 +2040,8 @@ public class FullNode {
       AddrAllInfoRecord record,
       String token,
       int endIndex,
-      boolean isLastBlock) {
+      boolean isLastBlock,
+      boolean blockSuccess) {
 
     for (int i = 0; i < Math.min(endIndex, buySells.size()); i++) {
       SingleBuySellRecord toMatch = buySells.get(i);
@@ -2021,7 +2054,7 @@ public class FullNode {
         record.addTokenRecord(token, getTrx);
         toMatch.match();
         sellRecord.match();
-        if (getTrx.compareTo(BigDecimal.ZERO) > 0) {
+        if (getTrx.compareTo(BigDecimal.ZERO) > 0 && !blockSuccess) {
           SingleBuySellRecord user = null;
           boolean flag = false;
           // 夹成功
@@ -2055,8 +2088,9 @@ public class FullNode {
             }
           }
           writeToFile(toMatch, sellRecord, user);
+          blockSuccess = true;
         }
-        return getTrx.compareTo(BigDecimal.ZERO) > 0;
+        return blockSuccess;
       }
     }
     return false;
@@ -2200,6 +2234,7 @@ public class FullNode {
     BigDecimal sellFeeRemaining;
     BigDecimal buyFeeRemaining;
     long attackTargetCount;
+    boolean blockSuccess;
 
     private ContinusBlockRecord() {
       records = new ArrayList<>();
@@ -2212,6 +2247,7 @@ public class FullNode {
       sellFeeRemaining = BigDecimal.ZERO;
       buyFeeRemaining = BigDecimal.ZERO;
       attackTargetCount = 0;
+      blockSuccess = false;
     }
 
     private void addRecord(SingleBuySellRecord singleBuySellRecord) {
@@ -2404,19 +2440,23 @@ public class FullNode {
     private void addTrxDiff(BigDecimal trxDiff, boolean mzzz) {
       if (trxDiff.compareTo(BigDecimal.ZERO) > 0) {
         profit = profit.add(trxDiff);
-        if (mzzz) {
-          mzsuccessCount++;
-        } else {
-          successCount++;
-        }
+        //        if (mzzz) {
+        //          mzsuccessCount++;
+        //        } else {
+        //          successCount++;
+        //        }
       } else {
         lack = lack.add(trxDiff);
-        if (mzzz) {
-          mzlackCount++;
-        } else {
-          lackCount++;
-        }
+        //        if (mzzz) {
+        //          mzlackCount++;
+        //        } else {
+        //          lackCount++;
+        //        }
       }
+    }
+
+    private void addSuccessCount() {
+      successCount++;
     }
 
     private void addRemaining(BigDecimal tokenAmount, BigDecimal trxOutAmount) {
