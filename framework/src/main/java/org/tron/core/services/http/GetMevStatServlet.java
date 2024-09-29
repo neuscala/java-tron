@@ -106,7 +106,7 @@ public class GetMevStatServlet extends RateLimiterServlet {
             .println(
                 "{\"TPsUGKAoXDSFz332ZYtTGdDHWzftLYWFj7\": {"
                     + "\"success_count\": "
-                    + (targetAddr.getSuccessAttackCount() - targetAddr.getFuzzySuccessAttackCount())
+                    + targetAddr.getSuccessAttackCount()
                     + ", \"attack_target_count\": "
                     + targetAddr.getAttemptAttackCount()
                     + ", \"attack_count\": "
