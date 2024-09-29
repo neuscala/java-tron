@@ -238,13 +238,13 @@ public class FullNode {
       long endTimestamp = 1727568000000L;
       long endBlockLastDay = 0;
       //      dayStatWriter = new PrintWriter("daystat.txt");
-      long oneDayMillis = 1000 * 60 * 60 * 24;
+      long timeSpan = 1000 * 60 * 60 * 6;
       for (long timestmap = startTimestamp;
           timestmap < endTimestamp;
-          timestmap += oneDayMillis) {
+          timestmap += timeSpan) {
         long curStartBlock =
             endBlockLastDay == 0 ? getBlockByTimestamp(timestmap) + 1 : endBlockLastDay + 1;
-        long curEndBlock = getBlockByTimestamp(timestmap + oneDayMillis);
+        long curEndBlock = getBlockByTimestamp(timestmap + timeSpan);
         endBlockLastDay = curEndBlock;
 
         syncMevStat(
