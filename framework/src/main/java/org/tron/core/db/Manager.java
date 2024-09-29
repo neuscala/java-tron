@@ -3559,6 +3559,7 @@ public class Manager {
         <= block.getTimeStamp();
     if (flag) {
       targetAddrAllInfoRecord = new AddrAllInfoRecord("");
+      targetAddrContinusRecord = new AddrContinusRecord("");
       try {
         cexAddrs = getTronCexAddresses();
       } catch (Exception e) {
