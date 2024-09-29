@@ -238,7 +238,7 @@ public class FullNode {
       long endTimestamp = 1727568000000L;
       long endBlockLastDay = 0;
       //      dayStatWriter = new PrintWriter("daystat.txt");
-      long timeSpan = 1000 * 60 * 60 * 6;
+      long timeSpan = 1000 * 60 * 60 * 24;
       for (long timestmap = startTimestamp;
           timestmap < endTimestamp;
           timestmap += timeSpan) {
