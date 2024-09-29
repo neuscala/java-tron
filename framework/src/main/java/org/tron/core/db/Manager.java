@@ -24,6 +24,9 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -3558,8 +3561,19 @@ public class Manager {
     boolean flag = chainBaseManager.getDynamicPropertiesStore().getNextMaintenanceTime()
         <= block.getTimeStamp();
     if (flag) {
-      targetAddrAllInfoRecord = new AddrAllInfoRecord("");
-      targetAddrContinusRecord = new AddrContinusRecord("");
+      Instant instant =
+          Instant.ofEpochMilli(
+              chainBaseManager.getDynamicPropertiesStore().getNextMaintenanceTime());
+      ZonedDateTime utcDateTime = instant.atZone(ZoneOffset.UTC);
+      // 检查是否是 UTC0 时间的 0 点 0 分 0 秒
+      boolean isZeroTime =
+          utcDateTime.getHour() == 0
+              && utcDateTime.getMinute() == 0
+              && utcDateTime.getSecond() == 0;
+      if (isZeroTime) {
+        targetAddrAllInfoRecord = new AddrAllInfoRecord("");
+        targetAddrContinusRecord = new AddrContinusRecord("");
+      }
       try {
         cexAddrs = getTronCexAddresses();
       } catch (Exception e) {
