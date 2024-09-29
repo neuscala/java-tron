@@ -234,16 +234,16 @@ public class FullNode {
       SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
       dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
       // sync day stat
-      long startTimestamp = 1727395200000L;
+      long startTimestamp = 1727481600000L;
       long endTimestamp = 1727568000000L;
       long endBlockLastDay = 0;
       //      dayStatWriter = new PrintWriter("daystat.txt");
       for (long timestmap = startTimestamp;
           timestmap < endTimestamp;
-          timestmap += 1000 * 60 * 60 * 24) {
+          timestmap += 1000 * 60 * 60 * 6) {
         long curStartBlock =
             endBlockLastDay == 0 ? getBlockByTimestamp(timestmap) + 1 : endBlockLastDay + 1;
-        long curEndBlock = getBlockByTimestamp(timestmap + 1000 * 60 * 60 * 24);
+        long curEndBlock = getBlockByTimestamp(timestmap + 1000 * 60 * 60 * 6);
         endBlockLastDay = curEndBlock;
 
         syncMevStat(
