@@ -100,9 +100,7 @@ public class GetMevStatServlet extends RateLimiterServlet {
       } else {
         //	地址	成功次数（连续块）	攻击目标次数	攻击次数	成功交易获利	成本(亏损+剩余Token+攻击手续费)	实际获利	成功买交易	成功卖交易	失败买交易	失败卖交易
         long cost =
-            targetAddr.getLoss()
-                + Math.max(0, targetAddr.getRemainingTokenValue())
-                + targetAddr.getAttackFee();
+            -targetAddr.getLoss() + targetAddr.getRemainingTokenValue() + targetAddr.getAttackFee();
         response
             .getWriter()
             .println(
