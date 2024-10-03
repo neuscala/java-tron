@@ -192,10 +192,10 @@ public class FullNode {
     //                appT.startup();
     //                appT.blockUntilShutdown();
 
-    //    if (true) {
-    //      syncEnergy();
-    //      return;
-    //    }
+    if (true) {
+      syncEnergy();
+      return;
+    }
 
     try {
 
@@ -239,9 +239,7 @@ public class FullNode {
       long endBlockLastDay = 0;
       //      dayStatWriter = new PrintWriter("daystat.txt");
       long timeSpan = 1000 * 60 * 60 * 24;
-      for (long timestmap = startTimestamp;
-          timestmap < endTimestamp;
-          timestmap += timeSpan) {
+      for (long timestmap = startTimestamp; timestmap < endTimestamp; timestmap += timeSpan) {
         long curStartBlock =
             endBlockLastDay == 0 ? getBlockByTimestamp(timestmap) + 1 : endBlockLastDay + 1;
         long curEndBlock = getBlockByTimestamp(timestmap + timeSpan);
@@ -643,24 +641,24 @@ public class FullNode {
               }
 
               if (!saddrs.contains(caller)) {
-//                if (isBuy) {
-//                  buysThisBlock.add(
-//                      new SingleBuySellRecord(
-//                          txHash,
-//                          caller,
-//                          index,
-//                          token,
-//                          isBuy,
-//                          tokenAmount,
-//                          BigDecimal.ZERO,
-//                          blockNum,
-//                          timestamp,
-//                          witness,
-//                          false,
-//                          true,
-//                          fee,
-//                          false));
-//                }
+                //                if (isBuy) {
+                //                  buysThisBlock.add(
+                //                      new SingleBuySellRecord(
+                //                          txHash,
+                //                          caller,
+                //                          index,
+                //                          token,
+                //                          isBuy,
+                //                          tokenAmount,
+                //                          BigDecimal.ZERO,
+                //                          blockNum,
+                //                          timestamp,
+                //                          witness,
+                //                          false,
+                //                          true,
+                //                          fee,
+                //                          false));
+                //                }
                 continue;
               }
               // 这里只记录
@@ -2607,22 +2605,6 @@ public class FullNode {
       //      Set<String> allCexAddrs =
       //          cexAddrs.values().stream().flatMap(Set::stream).collect(Collectors.toSet());
       //      cexAddrs.remove("Others");
-      // todo
-      long firstDayStartBlock = 65337555;
-      long secondDayStartBlock = 65366347;
-      long thirdDayStartBlock = 65395139;
-      long thirdDayEndBlock = 0;
-
-      //      long latestBlockNum = ChainBaseManager.getInstance().getHeadBlockNum();
-      //      long lowestBlockNum = ChainBaseManager.getInstance().getLowestBlockNum();
-      // 08-16 08:00
-      //      firstDayStartBlock = 64366247;
-      //      // 08-16 14:00
-      //      secondDayStartBlock = 64373445;
-      //      // 08-16 20:00
-      //      thirdDayStartBlock = 64380643;
-      //      // 08-16 20:00
-      //      thirdDayEndBlock = 64387840;
       // 总的充币地址
       Map<String, Set<String>> chargeAddrs =
           getChargeAddrsV2(
@@ -2631,8 +2613,8 @@ public class FullNode {
               cexAddrs.get("Okex"),
               cexAddrs.get("Bybit"),
               cexAddrs,
-              thirdDayStartBlock,
-              thirdDayEndBlock);
+              65755037,
+              65769432);
       //      for (Map.Entry<String, Set<String>> entry : cexAddrs.entrySet()) {
       //        if (!entry.getKey().equalsIgnoreCase("Others")) {
       //          chargeAddrs.put(
@@ -2717,24 +2699,34 @@ public class FullNode {
 
       Map<String, Set<String>> originCexAddrs = new HashMap<>(cexAddrs);
       cexAddrs.remove("Others");
-      //      if (secondDayStartBlock > 0) {
-      //        EnergyRecord firstDay =
-      //            syncOneDayEnergy(
-      //                cexAddrs, chargeAddrs, originCexAddrs, firstDayStartBlock,
-      // secondDayStartBlock - 1);
-      //        res.append("\n").append(getRecordMsg(firstDay));
-      //      }
-      //      if (thirdDayStartBlock > 0) {
-      EnergyRecord secondDay =
-          syncOneDayEnergy(cexAddrs, chargeAddrs, originCexAddrs, 65467119, 65481514);
-      res.append("\n").append(getRecordMsg(secondDay));
-      //      }
-      //      if (thirdDayEndBlock > 0) {
-      EnergyRecord thirdDay =
-          syncOneDayEnergy(cexAddrs, chargeAddrs, originCexAddrs, 65452723, 65481514);
-      res.append("\n").append(getRecordMsg(thirdDay));
-      //      }
 
+      SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+      dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+      // sync day stat
+      long startTimestamp = 1726920000000L;
+      long endTimestamp = 1727956800000L;
+      long endBlockLastDay = 0;
+      long timeSpan = 1000 * 60 * 60 * 24;
+      for (long timestmap = startTimestamp; timestmap < endTimestamp; timestmap += timeSpan) {
+        long curStartBlock =
+            endBlockLastDay == 0 ? getBlockByTimestamp(timestmap) + 1 : endBlockLastDay + 1;
+        long curEndBlock = getBlockByTimestamp(timestmap + timeSpan);
+        endBlockLastDay = curEndBlock;
+
+        EnergyRecord dayRecord =
+            syncOneDayEnergy(
+                dateFormat.format(timestmap),
+                cexAddrs,
+                chargeAddrs,
+                originCexAddrs,
+                curStartBlock,
+                curEndBlock);
+        String msg = getRecordMsg(dayRecord);
+        logger.info(msg);
+        res.append("\n").append(msg);
+      }
+
+      logger.info("End sync all dates data");
       logger.info(res.toString());
       System.out.println(res);
       logger.info("Energy task end!!!");
@@ -2744,13 +2736,14 @@ public class FullNode {
   }
 
   private static EnergyRecord syncOneDayEnergy(
+      String date,
       Map<String, Set<String>> cexAddrs,
       Map<String, Set<String>> chargeAddrs,
       Map<String, Set<String>> originCexAddrs,
       long startBlockNum,
       long endBlockNum)
       throws BadItemException {
-    logger.info("Start syncing one day energy from {} to {}", startBlockNum, endBlockNum);
+    logger.info("Start syncing {} day energy from {} to {}", date, startBlockNum, endBlockNum);
     Set<String> allCexAddrs =
         originCexAddrs.values().stream().flatMap(Set::stream).collect(Collectors.toSet());
     // get energy record
@@ -2761,7 +2754,7 @@ public class FullNode {
         (DBIterator) ChainBaseManager.getInstance().getBlockStore().getDb().iterator();
     blockIterator.seek(ByteArray.fromLong(startBlockNum));
 
-    EnergyRecord record = new EnergyRecord();
+    EnergyRecord record = new EnergyRecord(date);
     while (retIterator.hasNext() && blockIterator.hasNext()) {
       Map.Entry<byte[], byte[]> retEntry = retIterator.next();
       Map.Entry<byte[], byte[]> blockEntry = blockIterator.next();
@@ -2855,52 +2848,11 @@ public class FullNode {
                   //                  }
                 }
 
-                //                cexAddrs.forEach(
-                //                    (k, v) -> {
-                //                      Set<String> curChargeAddrs = chargeAddrs.get(k);
-                //                      if (curChargeAddrs.contains(toAddress)) {
-                //                        // 充币
-                //                        if (k.equalsIgnoreCase("Binance")) {
-                //                          record.addBinanceChargeRecord(energyCost, burnEnergy,
-                // fee);
-                //                        } else if (k.equalsIgnoreCase("Bybit")) {
-                //                          record.addBybitChargeRecord(energyCost, burnEnergy,
-                // fee);
-                //                        } else if (k.equalsIgnoreCase("Okex")) {
-                //                          record.addOkChargeRecord(energyCost, burnEnergy, fee);
-                //                        }
-                //                      } else if (v.contains(toAddress)) {
-                //                        // 归集
-                //                        if (k.equalsIgnoreCase("Binance")) {
-                //                          record.addBinanceCollectRecord(energyCost, burnEnergy,
-                // fee);
-                //                        } else if (k.equalsIgnoreCase("Bybit")) {
-                //                          record.addBybitCollectRecord(energyCost, burnEnergy,
-                // fee);
-                //                        } else if (k.equalsIgnoreCase("Okex")) {
-                //                          record.addOkCollectRecord(energyCost, burnEnergy, fee);
-                //                        }
-                //                      } else if (v.contains(fromAddress)) {
-                //                        // 提币
-                //                        if (k.equalsIgnoreCase("Binance")) {
-                //                          record.addBinanceWithdrawRecord(energyCost, burnEnergy,
-                // fee);
-                //                        } else if (k.equalsIgnoreCase("Bybit")) {
-                //                          record.addBybitWithdrawRecord(energyCost, burnEnergy,
-                // fee);
-                //                        } else if (k.equalsIgnoreCase("Okex")) {
-                //                          record.addOkWithdrawRecord(energyCost, burnEnergy, fee);
-                //                        }
-                //                      }
-                //                    });
-
                 for (Map.Entry<String, Set<String>> entry : cexAddrs.entrySet()) {
                   String cexName = entry.getKey();
                   Set<String> curCexAddrs = entry.getValue();
                   Set<String> curChargeAddrs = chargeAddrs.get(cexName);
                   if (!curCexAddrs.contains(fromAddress) && curChargeAddrs.contains(toAddress)) {
-                    //                  amount.compareTo(new BigInteger("500000")) > 0;
-                    // todo amount > 0.5
                     // 充币
                     if (cexName.equalsIgnoreCase("Binance")) {
                       record.addBinanceChargeRecord(energyCost, burnEnergy, fee);
@@ -2949,7 +2901,7 @@ public class FullNode {
       }
     }
 
-    logger.info("End syncing one day energy from {} to {} !!!", startBlockNum, endBlockNum);
+    logger.info("End syncing {} day energy from {} to {} !!!", date, startBlockNum, endBlockNum);
     return record;
   }
 
@@ -3411,6 +3363,7 @@ public class FullNode {
   @AllArgsConstructor
   @Getter
   private static class EnergyRecord {
+    String date;
     private SingleEnergyRecord mainnetRecord;
     private SingleEnergyRecord pumpRecord;
     private SingleEnergyRecord swapRecord;
@@ -3418,7 +3371,8 @@ public class FullNode {
     private CexRecord bybitRecord;
     private CexRecord okRecord;
 
-    private EnergyRecord() {
+    private EnergyRecord(String date) {
+      this.date = date;
       this.mainnetRecord = new SingleEnergyRecord();
       this.pumpRecord = new SingleEnergyRecord();
       this.swapRecord = new SingleEnergyRecord();
@@ -3551,7 +3505,9 @@ public class FullNode {
   }
 
   private static String getRecordMsg(EnergyRecord record) {
-    return getCexRecordString(record.getBinanceRecord())
+    return record.getDate()
+        + " "
+        + getCexRecordString(record.getBinanceRecord())
         + " "
         + getCexRecordString(record.getOkRecord())
         + " "
@@ -3646,7 +3602,7 @@ public class FullNode {
         (DBIterator) ChainBaseManager.getInstance().getBlockStore().getDb().iterator();
     blockIterator.seek(ByteArray.fromLong(65366347));
 
-    EnergyRecord record = new EnergyRecord();
+    EnergyRecord record = new EnergyRecord("");
     while (retIterator.hasNext() && blockIterator.hasNext()) {
       Map.Entry<byte[], byte[]> retEntry = retIterator.next();
       Map.Entry<byte[], byte[]> blockEntry = blockIterator.next();
