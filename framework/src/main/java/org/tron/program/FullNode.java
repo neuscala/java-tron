@@ -2606,6 +2606,9 @@ public class FullNode {
       //          cexAddrs.values().stream().flatMap(Set::stream).collect(Collectors.toSet());
       //      cexAddrs.remove("Others");
       // 总的充币地址
+      long startTimestamp = 1727956800000L;
+      long endTimestamp = 1728043200000L;
+      long endBlockNum = getBlockByTimestamp(endTimestamp);
       Map<String, Set<String>> chargeAddrs =
           getChargeAddrsV2(
               "All",
@@ -2614,7 +2617,7 @@ public class FullNode {
               cexAddrs.get("Bybit"),
               cexAddrs,
               65755037,
-              65769432);
+              endBlockNum);
       //      for (Map.Entry<String, Set<String>> entry : cexAddrs.entrySet()) {
       //        if (!entry.getKey().equalsIgnoreCase("Others")) {
       //          chargeAddrs.put(
@@ -2703,8 +2706,6 @@ public class FullNode {
       SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
       dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
       // sync day stat
-      long startTimestamp = 1726920000000L;
-      long endTimestamp = 1727956800000L;
       long endBlockLastDay = 0;
       long timeSpan = 1000 * 60 * 60 * 24;
       for (long timestmap = startTimestamp; timestmap < endTimestamp; timestmap += timeSpan) {
