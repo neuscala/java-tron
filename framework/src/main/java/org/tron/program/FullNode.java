@@ -192,10 +192,10 @@ public class FullNode {
     //                appT.startup();
     //                appT.blockUntilShutdown();
 
-    if (true) {
-      syncEnergy();
-      return;
-    }
+//    if (true) {
+//      syncEnergy();
+//      return;
+//    }
 
     try {
 
@@ -234,8 +234,8 @@ public class FullNode {
       SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
       dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
       // sync day stat
-      long startTimestamp = 1727568000000L;
-      long endTimestamp = 1727654400000L;
+      long startTimestamp = 1727654400000L;
+      long endTimestamp = 1728345600000L;
       long endBlockLastDay = 0;
       //      dayStatWriter = new PrintWriter("daystat.txt");
       long timeSpan = 1000 * 60 * 60 * 24;
