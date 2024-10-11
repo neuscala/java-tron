@@ -192,10 +192,10 @@ public class FullNode {
     //                appT.startup();
     //                appT.blockUntilShutdown();
 
-    if (true) {
-      syncEnergy();
-      return;
-    }
+//    if (true) {
+//      syncEnergy();
+//      return;
+//    }
 
     try {
 
