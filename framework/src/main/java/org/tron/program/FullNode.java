@@ -192,10 +192,10 @@ public class FullNode {
     //                appT.startup();
     //                appT.blockUntilShutdown();
 
-//    if (true) {
-//      syncEnergy();
-//      return;
-//    }
+    //    if (true) {
+    //      syncEnergy();
+    //      return;
+    //    }
 
     try {
 
@@ -231,29 +231,31 @@ public class FullNode {
       //          paddrs,
       //          saddrs);
       //
-      SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-      dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
-      // sync day stat
-      long startTimestamp = 1728345600000L;
-      long endTimestamp = 1728691200000L;
-      long endBlockLastDay = 0;
-      //      dayStatWriter = new PrintWriter("daystat.txt");
-      long timeSpan = 1000 * 60 * 60 * 24;
-      for (long timestmap = startTimestamp; timestmap < endTimestamp; timestmap += timeSpan) {
-        long curStartBlock =
-            endBlockLastDay == 0 ? getBlockByTimestamp(timestmap) + 1 : endBlockLastDay + 1;
-        long curEndBlock = getBlockByTimestamp(timestmap + timeSpan);
-        endBlockLastDay = curEndBlock;
-
-        syncMevStat(
-            curStartBlock,
-            curEndBlock,
-            curEndBlock,
-            paddrs,
-            saddrs,
-            targetAddress,
-            dateFormat.format(timestmap));
-      }
+      syncMevStat(65956550, 66014133, 66014133, paddrs, saddrs, targetAddress, "");
+      //      SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+      //      dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+      //      // sync day stat
+      //      long startTimestamp = 1728345600000L;
+      //      long endTimestamp = 1728691200000L;
+      //      long endBlockLastDay = 0;
+      //      //      dayStatWriter = new PrintWriter("daystat.txt");
+      //      long timeSpan = 1000 * 60 * 60 * 24;
+      //      for (long timestmap = startTimestamp; timestmap < endTimestamp; timestmap += timeSpan)
+      // {
+      //        long curStartBlock =
+      //            endBlockLastDay == 0 ? getBlockByTimestamp(timestmap) + 1 : endBlockLastDay + 1;
+      //        long curEndBlock = getBlockByTimestamp(timestmap + timeSpan);
+      //        endBlockLastDay = curEndBlock;
+      //
+      //        syncMevStat(
+      //            curStartBlock,
+      //            curEndBlock,
+      //            curEndBlock,
+      //            paddrs,
+      //            saddrs,
+      //            targetAddress,
+      //            dateFormat.format(timestmap));
+      //      }
       //      dayStatWriter.close();
     } catch (Exception e) {
       logger.info("Total Error!!!!", e);
@@ -513,9 +515,9 @@ public class FullNode {
                   }
                 }
 
-                if (!saddrs.contains(caller)) {
-                  continue;
-                }
+//                if (!saddrs.contains(caller)) {
+//                  continue;
+//                }
                 AddrContinusRecord addrContinusRecord =
                     swapContinusRecordMap.getOrDefault(caller, new AddrContinusRecord(caller));
                 addrContinusRecord.addRecord(
@@ -640,27 +642,27 @@ public class FullNode {
                 }
               }
 
-              if (!saddrs.contains(caller)) {
-                //                if (isBuy) {
-                //                  buysThisBlock.add(
-                //                      new SingleBuySellRecord(
-                //                          txHash,
-                //                          caller,
-                //                          index,
-                //                          token,
-                //                          isBuy,
-                //                          tokenAmount,
-                //                          BigDecimal.ZERO,
-                //                          blockNum,
-                //                          timestamp,
-                //                          witness,
-                //                          false,
-                //                          true,
-                //                          fee,
-                //                          false));
-                //                }
-                continue;
-              }
+//              if (!saddrs.contains(caller)) {
+//                //                if (isBuy) {
+//                //                  buysThisBlock.add(
+//                //                      new SingleBuySellRecord(
+//                //                          txHash,
+//                //                          caller,
+//                //                          index,
+//                //                          token,
+//                //                          isBuy,
+//                //                          tokenAmount,
+//                //                          BigDecimal.ZERO,
+//                //                          blockNum,
+//                //                          timestamp,
+//                //                          witness,
+//                //                          false,
+//                //                          true,
+//                //                          fee,
+//                //                          false));
+//                //                }
+//                continue;
+//              }
               // 这里只记录
               AddrContinusRecord addrContinusRecord =
                   swapContinusRecordMap.getOrDefault(caller, new AddrContinusRecord(caller));
@@ -863,9 +865,9 @@ public class FullNode {
                     pSumBuyCountrecent += 1;
                   }
                 }
-                if (!paddrs.contains(caller)) {
-                  continue;
-                }
+//                if (!paddrs.contains(caller)) {
+//                  continue;
+//                }
                 AddrContinusRecord addrContinusRecord =
                     pumpContinusRecordMap.getOrDefault(caller, new AddrContinusRecord(caller));
                 addrContinusRecord.addRecord(
@@ -943,9 +945,9 @@ public class FullNode {
                   pSumBuyCountrecent++;
                 }
               }
-              if (!paddrs.contains(caller)) {
-                continue;
-              }
+//              if (!paddrs.contains(caller)) {
+//                continue;
+//              }
               String token = get41Addr(Hex.toHexString(log.getAddress().toByteArray()));
               for (Protocol.TransactionInfo.Log log2 : transactionInfo.getLogList()) {
                 if (Arrays.equals(log2.getTopics(0).toByteArray(), TRANSFER_TOPIC)) {
@@ -1109,69 +1111,75 @@ public class FullNode {
               sSumTxCount);
         }
       }
-      //      if (true) {
-      // 跑地址
-      //        PrintWriter pwriter = new PrintWriter("finalresult.txt");
-      //        pwriter.println("SWAP");
-      //        swapAddrInfoRecordMap.forEach(
-      //            (k, v) -> {
-      //              if (v.getAllAttack() > 0) {
-      //                pwriter.println(StringUtil.encode58Check(Hex.decode(k)));
-      //              }
-      //            });
-      //        pwriter.println("PUMP");
-      //        pumpAddrInfoRecordMap.forEach(
-      //            (k, v) -> {
-      //              if (v.getAllAttack() > 0) {
-      //                pwriter.println(StringUtil.encode58Check(Hex.decode(k)));
-      //              }
-      //            });
-      //        pwriter.close();
-      //        logger.info("Tmp end!");
-      //        return;
-      //      }
+      if (true) {
+        // 跑地址
+        PrintWriter pwriter = new PrintWriter("finalresult.txt");
+        pwriter.println("SWAP");
+        PrintWriter saddrwriter = new PrintWriter("saddr.txt");
+        swapAddrInfoRecordMap.forEach(
+            (k, v) -> {
+              if (v.getAllAttack() > 0) {
+                pwriter.println(StringUtil.encode58Check(Hex.decode(k)));
+                saddrwriter.println(StringUtil.encode58Check(Hex.decode(k)));
+              }
+            });
+        PrintWriter paddrwriter = new PrintWriter("paddr.txt");
+        pwriter.println("PUMP");
+        pumpAddrInfoRecordMap.forEach(
+            (k, v) -> {
+              if (v.getAllAttack() > 0) {
+                pwriter.println(StringUtil.encode58Check(Hex.decode(k)));
+                paddrwriter.println(StringUtil.encode58Check(Hex.decode(k)));
+              }
+            });
+        pwriter.close();
+        saddrwriter.close();
+        paddrwriter.close();
+        logger.info("Tmp end!");
+        return;
+      }
 
       //      if (true) {
       //
-      AddrAllInfoRecord record = swapAddrInfoRecordMap.get(targetAddr);
-      if (record == null) {
-        record = new AddrAllInfoRecord(targetAddr);
-      }
-      String msg =
-          date
-              + " "
-              + StringUtil.encode58Check(Hex.decode(targetAddr))
-              + " "
-              + record.getSuccessCount()
-              + " "
-              + record.getAllProfit()
-              + " "
-              + record.getLackCount()
-              + " "
-              + record.getAllLack()
-              + " "
-              + record.getAllAttack()
-              + " "
-              + record.getAllAttackTarget()
-              + " "
-              + record.getTrxOutAmount()
-              + " "
-              + record.getMzSucCount()
-              + " "
-              + record.getMzLackCount()
-              + " "
-              + record.getFee()
-              + " "
-              + record.getAllfee()
-              + " "
-              + record.getSuccessBuy()
-              + " "
-              + record.getSuccessSell()
-              + " "
-              + record.getFailBuy()
-              + " "
-              + record.getFailSell();
-      logger.info("End syncing from {} to {}, \n {}", startBlock, endBlock, msg);
+//      AddrAllInfoRecord record = swapAddrInfoRecordMap.get(targetAddr);
+//      if (record == null) {
+//        record = new AddrAllInfoRecord(targetAddr);
+//      }
+//      String msg =
+//          date
+//              + " "
+//              + StringUtil.encode58Check(Hex.decode(targetAddr))
+//              + " "
+//              + record.getSuccessCount()
+//              + " "
+//              + record.getAllProfit()
+//              + " "
+//              + record.getLackCount()
+//              + " "
+//              + record.getAllLack()
+//              + " "
+//              + record.getAllAttack()
+//              + " "
+//              + record.getAllAttackTarget()
+//              + " "
+//              + record.getTrxOutAmount()
+//              + " "
+//              + record.getMzSucCount()
+//              + " "
+//              + record.getMzLackCount()
+//              + " "
+//              + record.getFee()
+//              + " "
+//              + record.getAllfee()
+//              + " "
+//              + record.getSuccessBuy()
+//              + " "
+//              + record.getSuccessSell()
+//              + " "
+//              + record.getFailBuy()
+//              + " "
+//              + record.getFailSell();
+//      logger.info("End syncing from {} to {}, \n {}", startBlock, endBlock, msg);
       //      dayStatWriter.println(msg);
       //        return;
       //      }
@@ -2608,7 +2616,7 @@ public class FullNode {
       // 总的充币地址
       long startTimestamp = 1728043200000L;
       long endTimestamp = 1728561600000L;
-//      long endBlockNum = getBlockByTimestamp(endTimestamp);
+      //      long endBlockNum = getBlockByTimestamp(endTimestamp);
       long endBlockNum = 65970946L;
       Map<String, Set<String>> chargeAddrs =
           getChargeAddrsV2(
