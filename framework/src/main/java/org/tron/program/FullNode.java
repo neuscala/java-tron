@@ -235,7 +235,7 @@ public class FullNode {
       dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
       // sync day stat
       long startTimestamp = 1728345600000L;
-      long endTimestamp = 1728604800000L;
+      long endTimestamp = 1728691200000L;
       long endBlockLastDay = 0;
       //      dayStatWriter = new PrintWriter("daystat.txt");
       long timeSpan = 1000 * 60 * 60 * 24;
