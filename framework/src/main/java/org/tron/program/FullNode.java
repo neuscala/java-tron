@@ -514,9 +514,9 @@ public class FullNode {
                   }
                 }
 
-                //                if (!saddrs.contains(caller)) {
-                //                  continue;
-                //                }
+                if (!saddrs.contains(caller)) {
+                  continue;
+                }
                 AddrContinusRecord addrContinusRecord =
                     swapContinusRecordMap.getOrDefault(caller, new AddrContinusRecord(caller));
                 addrContinusRecord.addRecord(
@@ -641,27 +641,27 @@ public class FullNode {
                 }
               }
 
-              //              if (!saddrs.contains(caller)) {
-              //                //                if (isBuy) {
-              //                //                  buysThisBlock.add(
-              //                //                      new SingleBuySellRecord(
-              //                //                          txHash,
-              //                //                          caller,
-              //                //                          index,
-              //                //                          token,
-              //                //                          isBuy,
-              //                //                          tokenAmount,
-              //                //                          BigDecimal.ZERO,
-              //                //                          blockNum,
-              //                //                          timestamp,
-              //                //                          witness,
-              //                //                          false,
-              //                //                          true,
-              //                //                          fee,
-              //                //                          false));
-              //                //                }
-              //                continue;
-              //              }
+              if (!saddrs.contains(caller)) {
+                //                if (isBuy) {
+                //                  buysThisBlock.add(
+                //                      new SingleBuySellRecord(
+                //                          txHash,
+                //                          caller,
+                //                          index,
+                //                          token,
+                //                          isBuy,
+                //                          tokenAmount,
+                //                          BigDecimal.ZERO,
+                //                          blockNum,
+                //                          timestamp,
+                //                          witness,
+                //                          false,
+                //                          true,
+                //                          fee,
+                //                          false));
+                //                }
+                continue;
+              }
               // 这里只记录
               AddrContinusRecord addrContinusRecord =
                   swapContinusRecordMap.getOrDefault(caller, new AddrContinusRecord(caller));
@@ -864,9 +864,9 @@ public class FullNode {
                     pSumBuyCountrecent += 1;
                   }
                 }
-                //                if (!paddrs.contains(caller)) {
-                //                  continue;
-                //                }
+                if (!paddrs.contains(caller)) {
+                  continue;
+                }
                 AddrContinusRecord addrContinusRecord =
                     pumpContinusRecordMap.getOrDefault(caller, new AddrContinusRecord(caller));
                 addrContinusRecord.addRecord(
@@ -944,9 +944,9 @@ public class FullNode {
                   pSumBuyCountrecent++;
                 }
               }
-              //              if (!paddrs.contains(caller)) {
-              //                continue;
-              //              }
+              if (!paddrs.contains(caller)) {
+                continue;
+              }
               String token = get41Addr(Hex.toHexString(log.getAddress().toByteArray()));
               for (Protocol.TransactionInfo.Log log2 : transactionInfo.getLogList()) {
                 if (Arrays.equals(log2.getTopics(0).toByteArray(), TRANSFER_TOPIC)) {
