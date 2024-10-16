@@ -53,19 +53,36 @@ public class GetMevStatServlet extends RateLimiterServlet {
       boolean detail =
           request.getParameter("detail") != null
               && Boolean.parseBoolean(request.getParameter("detail"));
-      ContractStateCapsule targetAddr = contractStateStore.getMevTPsRecord(startCycle);
+      String address = request.getParameter("address");
+      boolean isTPs = StringUtils.isEmpty(address);
+      ContractStateCapsule targetAddr;
+      byte[] addr = null;
+      if (isTPs) {
+        targetAddr = contractStateStore.getMevTPsRecord(startCycle);
+      } else {
+        addr = Commons.decodeFromBase58Check(address);
+        targetAddr = contractStateStore.getMevRecord(startCycle, addr);
+      }
       if (targetAddr == null) {
         targetAddr = new ContractStateCapsule(0);
       }
       for (long cycle = 1; cycle < cycleCount; cycle++) {
-        targetAddr.merge(contractStateStore.getMevTPsRecord(startCycle + cycle));
+        if (isTPs) {
+          targetAddr.merge(contractStateStore.getMevTPsRecord(startCycle + cycle));
+        } else {
+          targetAddr.merge(contractStateStore.getMevRecord(startCycle + cycle, addr));
+        }
       }
+
+      String returnAddr = isTPs ? "TPsUGKAoXDSFz332ZYtTGdDHWzftLYWFj7" : address;
 
       if (detail) {
         response
             .getWriter()
             .println(
-                "{\"TPsUGKAoXDSFz332ZYtTGdDHWzftLYWFj7\": {"
+                "{\""
+                    + returnAddr
+                    + "\": {"
                     + "\"success_count\": "
                     + targetAddr.getSuccessAttackCount()
                     + ", \"attack_target_count\": "
@@ -104,7 +121,9 @@ public class GetMevStatServlet extends RateLimiterServlet {
         response
             .getWriter()
             .println(
-                "{\"TPsUGKAoXDSFz332ZYtTGdDHWzftLYWFj7\": {"
+                "{\""
+                    + returnAddr
+                    + "\": {"
                     + "\"success_count\": "
                     + targetAddr.getSuccessAttackCount()
                     + ", \"attack_target_count\": "

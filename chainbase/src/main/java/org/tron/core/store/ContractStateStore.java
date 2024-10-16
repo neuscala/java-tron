@@ -111,6 +111,24 @@ public class ContractStateStore extends TronStoreWithRevoking<ContractStateCapsu
     revokingDB.put(getCurrentPrefixKey("TPsUGKAoXDSFz332ZYtTGdDHWzftLYWFj7".getBytes()), item.getData());
   }
 
+  public ContractStateCapsule getMevRecord(long cycleNumber, byte[] addr) {
+    byte[] addrKey = addr.clone();
+    addrKey[0] = (byte) 0x43;
+    return getUnchecked(addPrefix(cycleNumber, addrKey));
+  }
+
+  public ContractStateCapsule getMevRecord(byte[] addr) {
+    byte[] addrKey = addr.clone();
+    addrKey[0] = (byte) 0x43;
+    return getUnchecked(getCurrentPrefixKey(addrKey));
+  }
+
+  public void setMevRecord(byte[] addr, ContractStateCapsule item) {
+    byte[] addrKey = addr.clone();
+    addrKey[0] = (byte) 0x43;
+    revokingDB.put(getCurrentPrefixKey(addrKey), item.getData());
+  }
+
   public ContractStateCapsule getAccountRecord(byte[] addr) {
     byte[] addrKey = addr.clone();
     addrKey[0] = (byte) 0x42;
