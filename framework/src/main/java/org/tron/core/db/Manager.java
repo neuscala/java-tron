@@ -302,8 +302,8 @@ public class Manager {
       Arrays.asList(
           Hex.decode("41987c0191a1A098Ffc9addC9C65d2c3d028B10CA3"),
           Hex.decode("4135EF67a96a4f28900fe58D3c2e6703A542d119A1"));
-  private static AddrContinusRecord targetAddrContinusRecord = new AddrContinusRecord("");
-  private static AddrAllInfoRecord targetAddrAllInfoRecord = new AddrAllInfoRecord("");
+  private static final Map<byte[], AddrContinusRecord> continusRecordMap = new HashMap<>();
+  private static final Map<byte[], AddrAllInfoRecord> allInfoRecordMap = new HashMap<>();
   private static final BigDecimal TRX_DIVISOR = new BigDecimal("1000000");
   private static final BigDecimal TOKEN_DIVISOR = new BigDecimal("1000000000000000000");
   private static final String SWAP_BUY_METHOD_1 = "fb3bdb41"; // swapETHForExactTokens
@@ -2124,6 +2124,10 @@ public class Manager {
     if (targetAddr == null) {
       targetAddr = new ContractStateCapsule(getDynamicPropertiesStore().getCurrentCycleNumber());
     }
+
+    AddrContinusRecord addrContinusRecord =
+        continusRecordMap.getOrDefault(addr, new AddrContinusRecord(""));
+
     BigDecimal fee =
         new BigDecimal(transactionInfo.getFee())
             .divide(TRX_DIVISOR, 6, RoundingMode.HALF_EVEN);
@@ -2196,7 +2200,7 @@ public class Manager {
         // 其他方法
         return;
       }
-      targetAddrContinusRecord.addRecord(
+      addrContinusRecord.addRecord(
           txId,
           index,
           blockNum,
@@ -2275,7 +2279,7 @@ public class Manager {
         }
 
         // 这里只记录
-        targetAddrContinusRecord.addRecord(
+        addrContinusRecord.addRecord(
             txId,
             index,
             blockNum,
@@ -2301,6 +2305,7 @@ public class Manager {
     } else {
       chainBaseManager.getContractStateStore().setMevRecord(addr, targetAddr);
     }
+    continusRecordMap.put(addr, addrContinusRecord);
   }
 
   private void proceeToBlock(long blockNum) {
@@ -2316,12 +2321,17 @@ public class Manager {
           targetAddr =
               new ContractStateCapsule(getDynamicPropertiesStore().getCurrentCycleNumber());
         }
+        AddrContinusRecord addrContinusRecord =
+            continusRecordMap.getOrDefault(addr, new AddrContinusRecord(""));
+        AddrAllInfoRecord addrAllInfoRecord =
+            allInfoRecordMap.getOrDefault(addr, new AddrAllInfoRecord(""));
+
         // todo remove
         BigDecimal feeToAdd = BigDecimal.ZERO;
         Map<String, ContinusBlockRecord> thisBlockRecords =
-            targetAddrContinusRecord.getRecordsByBlockNum(blockNum);
+            addrContinusRecord.getRecordsByBlockNum(blockNum);
         Map<String, ContinusBlockRecord> lastBlockRecords =
-            targetAddrContinusRecord.getRecordsByBlockNum(blockNum - 1);
+            addrContinusRecord.getRecordsByBlockNum(blockNum - 1);
         // 理论上 lastblock 记录只剩 买记录
         for (Map.Entry<String, ContinusBlockRecord> tokenEntry : thisBlockRecords.entrySet()) {
           // 每个 token
@@ -2423,7 +2433,7 @@ public class Manager {
                   .filter(buy -> buy.isBuy)
                   .collect(Collectors.toList());
           TokenAllInfoRecord tokenAllInfoRecord =
-              targetAddrAllInfoRecord.getTokenAllInfoRecord(token);
+              addrAllInfoRecord.getTokenAllInfoRecord(token);
 
           Iterator<SingleBuySellRecord> sellRecordIterator = sellsLastBlock.iterator();
           while (sellRecordIterator.hasNext()) {
@@ -2563,7 +2573,7 @@ public class Manager {
             tokenAllInfoRecord.addRemaining(tokenAmount, trxAmount);
           }
           // 本块记录移到上一个块
-          targetAddrAllInfoRecord.updateTokenAllInfoRecord(token, tokenAllInfoRecord);
+          addrAllInfoRecord.updateTokenAllInfoRecord(token, tokenAllInfoRecord);
 
           long attackCountLastBlock =
               Math.min(
@@ -2693,7 +2703,7 @@ public class Manager {
 
           // update
           thisBlockRecords.put(token, buySellsThisBlocks);
-          targetAddrContinusRecord.updateRecordsByBlockNum(blockNum, thisBlockRecords);
+          addrContinusRecord.updateRecordsByBlockNum(blockNum, thisBlockRecords);
           lastBlockRecords.remove(token);
         }
 
@@ -2715,7 +2725,7 @@ public class Manager {
                     .collect(Collectors.toList());
 
             TokenAllInfoRecord tokenAllInfoRecord =
-                targetAddrAllInfoRecord.getTokenAllInfoRecord(tokenEntry.getKey());
+                addrAllInfoRecord.getTokenAllInfoRecord(tokenEntry.getKey());
 
             // todo 抽方法
             Iterator<SingleBuySellRecord> sellRecordIterator = sellsLastBlock.iterator();
@@ -2839,7 +2849,7 @@ public class Manager {
               }
             }
 
-            targetAddrAllInfoRecord.updateTokenAllInfoRecord(
+            addrAllInfoRecord.updateTokenAllInfoRecord(
                 tokenEntry.getKey(), tokenAllInfoRecord);
           }
         }
@@ -2849,7 +2859,7 @@ public class Manager {
         //        addrAllInfoRecord.addWitness(witness);
         //      }
         targetAddr.setRemainingTokenValue(
-            targetAddrAllInfoRecord.getTrxOutAmount().multiply(TRX_DIVISOR).longValueExact());
+            addrAllInfoRecord.getTrxOutAmount().multiply(TRX_DIVISOR).longValueExact());
 
         if (Arrays.equals(addr, targetMevAddress)) {
           chainBaseManager.getContractStateStore().setMevTPsRecord(targetAddr);
@@ -2857,7 +2867,10 @@ public class Manager {
           chainBaseManager.getContractStateStore().setMevRecord(addr, targetAddr);
         }
         // 删除1个块之前记录
-        targetAddrContinusRecord.removeRecordByBlockNum(blockNum - 1);
+        addrContinusRecord.removeRecordByBlockNum(blockNum - 1);
+
+        continusRecordMap.put(addr, addrContinusRecord);
+        allInfoRecordMap.put(addr, addrAllInfoRecord);
       } catch (Exception e) {
         logger.error("Mev stat proccess block error", e);
       }
@@ -3618,8 +3631,8 @@ public class Manager {
     boolean flag = chainBaseManager.getDynamicPropertiesStore().getNextMaintenanceTime()
         <= block.getTimeStamp();
     if (flag) {
-      targetAddrAllInfoRecord = new AddrAllInfoRecord("");
-      targetAddrContinusRecord = new AddrContinusRecord("");
+      continusRecordMap.clear();
+      allInfoRecordMap.clear();
 //      Instant instant =
 //          Instant.ofEpochMilli(
 //              chainBaseManager.getDynamicPropertiesStore().getNextMaintenanceTime());
