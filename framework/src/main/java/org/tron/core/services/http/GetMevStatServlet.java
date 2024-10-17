@@ -54,7 +54,7 @@ public class GetMevStatServlet extends RateLimiterServlet {
           request.getParameter("detail") != null
               && Boolean.parseBoolean(request.getParameter("detail"));
       String address = request.getParameter("address");
-      boolean isTPs = StringUtils.isEmpty(address);
+      boolean isTPs = StringUtils.isEmpty(address) || address.equals("TPsUGKAoXDSFz332ZYtTGdDHWzftLYWFj7");
       ContractStateCapsule targetAddr;
       byte[] addr = null;
       if (isTPs) {
