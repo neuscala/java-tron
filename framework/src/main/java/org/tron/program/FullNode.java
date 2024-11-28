@@ -175,9 +175,10 @@ public class FullNode {
           ChainBaseManager.getInstance().getDynamicPropertiesStore().getLatestBlockHeaderNumber();
       long timeSpan = 1000 * 60 * 60 * 24;
       // todo remove test
-//      endTimestamp =
-//          ChainBaseManager.getInstance().getDynamicPropertiesStore().getLatestBlockHeaderTimestamp()
-//              - timeSpan;
+      //      endTimestamp =
+      //
+      // ChainBaseManager.getInstance().getDynamicPropertiesStore().getLatestBlockHeaderTimestamp()
+      //              - timeSpan;
       for (long timestmap = endTimestamp; timestmap >= startTimestamp; timestmap -= timeSpan) {
         long curStartBlock = getBlockByTimestamp(timestmap) + 1;
         long curEndBlock = endBlockLastDay;
@@ -249,9 +250,9 @@ public class FullNode {
       if (count.incrementAndGet() % 1_000_000 == 0) {
         logger.info("Init stake info, processed " + count.get());
         // todo remove test
-//        if (count.get() >= 5_000_000) {
-//          break;
-//        }
+        //        if (count.get() >= 5_000_000) {
+        //          break;
+        //        }
       }
     }
     logger.info(
@@ -331,20 +332,20 @@ public class FullNode {
               for (Protocol.InternalTransaction it :
                   transactionInfo.getInternalTransactionsList()) {
                 String note = new String(it.getNote().toByteArray());
-                if (note.contains("freezeBalanceV2For")) {
-                  long balance = it.getCallValueInfo(0).getCallValue();
-                  if (note.contains("Energy")) {
-                    newStakeV2Energy += balance;
-                  } else if (note.contains("Bandwidth")) {
-                    newStakeV2Bandwidth += balance;
-                  }
-
-                } else if (note.contains("unfreezeBalanceV2For")) {
+                if (note.contains("unfreezeBalanceV2For")) {
                   long balance = it.getCallValueInfo(0).getCallValue();
                   if (note.contains("Energy")) {
                     newStakeV2Energy -= balance;
                   } else if (note.contains("Bandwidth")) {
                     newStakeV2Bandwidth -= balance;
+                  }
+
+                } else if (note.contains("freezeBalanceV2For")) {
+                  long balance = it.getCallValueInfo(0).getCallValue();
+                  if (note.contains("Energy")) {
+                    newStakeV2Energy += balance;
+                  } else if (note.contains("Bandwidth")) {
+                    newStakeV2Bandwidth += balance;
                   }
 
                 } else if (note.equals("cancelAllUnfreezeV2")) {
