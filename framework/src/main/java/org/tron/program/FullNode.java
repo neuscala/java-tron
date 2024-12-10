@@ -164,41 +164,69 @@ public class FullNode {
     //        appT.blockUntilShutdown();
 
     try {
-      StakeInfo stakeInfo = initStakeInfo();
-
-      SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-      dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
-      // sync day stat
-      long startTimestamp = 1682899200000L;
-      long endTimestamp = 1732752000000L;
-      long endBlockLastDay =
-          ChainBaseManager.getInstance().getDynamicPropertiesStore().getLatestBlockHeaderNumber();
-      long timeSpan = 1000 * 60 * 60 * 24;
-      // todo remove test
-      //      endTimestamp =
-      //
-      // ChainBaseManager.getInstance().getDynamicPropertiesStore().getLatestBlockHeaderTimestamp()
-      //              - timeSpan;
-      for (long timestmap = endTimestamp; timestmap >= startTimestamp; timestmap -= timeSpan) {
-        long curStartBlock = getBlockByTimestamp(timestmap) + 1;
-        long curEndBlock = endBlockLastDay;
-        endBlockLastDay = curStartBlock - 1;
-
-        String date = dateFormat.format(timestmap);
-        syncMevStat(curStartBlock, curEndBlock, dateFormat.format(timestmap), stakeInfo);
-        String msg =
-            date
-                + " "
-                + stakeInfo.v1energy
-                + " "
-                + stakeInfo.v1bandwidth
-                + " "
-                + stakeInfo.v2energy
-                + " "
-                + stakeInfo.v2bandwidth;
-        logger.info(msg);
-        System.out.println(msg);
+      long txCount = 0;
+      long maxTxCount = 0;
+      long start = 66791495;
+      long end = 67655211;
+      long printCount = start;
+      DBIterator blockIterator =
+          (DBIterator) ChainBaseManager.getInstance().getBlockStore().getDb().iterator();
+      blockIterator.seek(ByteArray.fromLong(start));
+      while (blockIterator.hasNext()) {
+        Map.Entry<byte[], byte[]> blockEntry = blockIterator.next();
+        BlockCapsule blockCapsule = new BlockCapsule(blockEntry.getValue());
+        if (blockCapsule.getNum() > end) {
+          break;
+        }
+        long curTxCount = blockCapsule.getTransactions().size();
+        txCount += curTxCount;
+        if (curTxCount > maxTxCount) {
+          maxTxCount = curTxCount;
+        }
+        if (curTxCount - printCount >= 10000) {
+          System.out.println("Total: " + txCount + ", max " + maxTxCount);
+          printCount = curTxCount;
+        }
       }
+      System.out.println("Final Total: " + txCount + ", max " + maxTxCount);
+      //      StakeInfo stakeInfo = initStakeInfo();
+      //
+      //      SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+      //      dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+      //      // sync day stat
+      //      long startTimestamp = 1682899200000L;
+      //      long endTimestamp = 1732752000000L;
+      //      long endBlockLastDay =
+      //
+      // ChainBaseManager.getInstance().getDynamicPropertiesStore().getLatestBlockHeaderNumber();
+      //      long timeSpan = 1000 * 60 * 60 * 24;
+      //      // todo remove test
+      //      //      endTimestamp =
+      //      //
+      //      //
+      // ChainBaseManager.getInstance().getDynamicPropertiesStore().getLatestBlockHeaderTimestamp()
+      //      //              - timeSpan;
+      //      for (long timestmap = endTimestamp; timestmap >= startTimestamp; timestmap -=
+      // timeSpan) {
+      //        long curStartBlock = getBlockByTimestamp(timestmap) + 1;
+      //        long curEndBlock = endBlockLastDay;
+      //        endBlockLastDay = curStartBlock - 1;
+      //
+      //        String date = dateFormat.format(timestmap);
+      //        syncMevStat(curStartBlock, curEndBlock, dateFormat.format(timestmap), stakeInfo);
+      //        String msg =
+      //            date
+      //                + " "
+      //                + stakeInfo.v1energy
+      //                + " "
+      //                + stakeInfo.v1bandwidth
+      //                + " "
+      //                + stakeInfo.v2energy
+      //                + " "
+      //                + stakeInfo.v2bandwidth;
+      //        logger.info(msg);
+      //        System.out.println(msg);
+      //      }
     } catch (Exception e) {
       logger.info("Sync Error!!!!", e);
     }
