@@ -183,9 +183,9 @@ public class FullNode {
         if (curTxCount > maxTxCount) {
           maxTxCount = curTxCount;
         }
-        if (curTxCount - printCount >= 10000) {
+        if (blockCapsule.getNum() - printCount >= 10000) {
           System.out.println("Total: " + txCount + ", max " + maxTxCount);
-          printCount = curTxCount;
+          printCount = blockCapsule.getNum();
         }
       }
       System.out.println("Final Total: " + txCount + ", max " + maxTxCount);
