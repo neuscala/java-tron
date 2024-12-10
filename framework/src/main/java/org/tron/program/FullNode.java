@@ -169,6 +169,7 @@ public class FullNode {
       long start = 66791495;
       long end = 67655211;
       long printCount = start;
+      long maxBlockNum = 0;
       DBIterator blockIterator =
           (DBIterator) ChainBaseManager.getInstance().getBlockStore().getDb().iterator();
       blockIterator.seek(ByteArray.fromLong(start));
@@ -182,13 +183,16 @@ public class FullNode {
         txCount += curTxCount;
         if (curTxCount > maxTxCount) {
           maxTxCount = curTxCount;
+          maxBlockNum = blockCapsule.getNum();
         }
         if (blockCapsule.getNum() - printCount >= 10000) {
-          System.out.println("Total: " + txCount + ", max " + maxTxCount);
+          System.out.println(
+              "Total: " + txCount + ", max " + maxTxCount + ", block " + maxBlockNum);
           printCount = blockCapsule.getNum();
         }
       }
-      System.out.println("Final Total: " + txCount + ", max " + maxTxCount);
+      System.out.println(
+          "Final Total: " + txCount + ", max " + maxTxCount + ", block " + maxBlockNum);
       //      StakeInfo stakeInfo = initStakeInfo();
       //
       //      SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
