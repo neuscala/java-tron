@@ -1421,23 +1421,17 @@ public class Manager {
 
               return;
             }
+            long oldSolidNum = getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
             try (ISession tmpSession = revokingStore.buildSession()) {
-
-              long oldSolidNum =
-                      chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
-
               applyBlock(newBlock, txs);
               tmpSession.commit();
-              // if event subscribe is enabled, post block trigger to queue
-              postBlockTrigger(newBlock);
-              // if event subscribe is enabled, post solidity trigger to queue
-              postSolidityTrigger(oldSolidNum,
-                      getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
             } catch (Throwable throwable) {
               logger.error(throwable.getMessage(), throwable);
               khaosDb.removeBlk(block.getBlockId());
               throw throwable;
             }
+            long newSolidNum = getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
+            blockTrigger(newBlock, oldSolidNum, newSolidNum);
           }
           logger.info(SAVE_BLOCK, newBlock);
         }
@@ -1464,6 +1458,19 @@ public class Manager {
       }
     } finally {
       setBlockWaitLock(false);
+    }
+  }
+
+  void blockTrigger(final BlockCapsule block, long oldSolid, long newSolid) {
+    try {
+      // if event subscribe is enabled, post block trigger to queue
+      postBlockTrigger(block);
+      // if event subscribe is enabled, post solidity trigger to queue
+      postSolidityTrigger(oldSolid, newSolid);
+    } catch (Exception e) {
+      logger.error("Block trigger failed. head: {}, oldSolid: {}, newSolid: {}",
+          block.getNum(), oldSolid, newSolid, e);
+      System.exit(1);
     }
   }
 
@@ -4102,7 +4109,7 @@ public class Manager {
     }
   }
 
-  private void postBlockTrigger(final BlockCapsule blockCapsule) {
+  void postBlockTrigger(final BlockCapsule blockCapsule) {
     // post block and logs for jsonrpc
     if (CommonParameter.getInstance().isJsonRpcHttpFullNodeEnable()) {
       postBlockFilter(blockCapsule, false);
