@@ -13,6 +13,8 @@ import org.tron.common.prometheus.Metrics;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.TronError;
+import org.tron.core.vm.Op;
 
 @Slf4j(topic = "app")
 public class FullNode {
@@ -52,6 +54,9 @@ public class FullNode {
     context.refresh();
     Application appT = ApplicationFactory.create(context);
     context.registerShutdownHook();
+    DBTools.doScanSpecialOpCodeV2(appT.getChainBaseManager().getCodeStore(), Op.SUICIDE);
+    System.out.println("End ...");
+//    throw new TronError("exit", TronError.ErrCode.DB_FLUSH);
     appT.startup();
     appT.blockUntilShutdown();
   }

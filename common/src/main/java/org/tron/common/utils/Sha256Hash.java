@@ -169,6 +169,10 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
     return hash(isSha256, input, 0, input.length);
   }
 
+  public static byte[] hash(byte[] input) {
+    return hash(true, input, 0, input.length);
+  }
+
   /**
    * Calculates the SHA-256 hash of the given byte range.
    *
@@ -200,6 +204,10 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
    */
   public static byte[] hashTwice(boolean isSha256, byte[] input) {
     return hashTwice(isSha256, input, 0, input.length);
+  }
+
+  public static byte[] hashTwice(byte[] input) {
+    return hashTwice(true, input, 0, input.length);
   }
 
   /**
