@@ -56,8 +56,8 @@ public class FullNode {
     context.registerShutdownHook();
     DBTools.doScanSpecialOpCodeV2(appT.getChainBaseManager().getCodeStore(), Op.SUICIDE);
     System.out.println("End ...");
-//    throw new TronError("exit", TronError.ErrCode.DB_FLUSH);
-    appT.startup();
-    appT.blockUntilShutdown();
+    throw new TronError("exit", TronError.ErrCode.DB_FLUSH);
+//    appT.startup();
+//    appT.blockUntilShutdown();
   }
 }
