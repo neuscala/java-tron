@@ -610,7 +610,7 @@ public class DBTools {
         break;
       }
 
-      if (op.equals(Op.CODECOPY)) {
+      if (op.equals(Op.CODECOPY) && opRDs.size() >= 4) {
         int size = opRDs.size();
         OpRD op3 = opRDs.get(size - 1);
         OpRD op2 = opRDs.get(size - 2);
