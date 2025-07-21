@@ -11,7 +11,9 @@ import org.bouncycastle.util.encoders.Hex;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
+import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.store.AccountStore;
 import org.tron.core.store.CodeStore;
 import org.tron.core.vm.Op;
 import org.tron.protos.Protocol;
@@ -268,7 +270,8 @@ public class DBTools {
     printRecords(gasCounts, "GAS");
   }
 
-  public static void doScanSpecialOpCodeV2(CodeStore codeStore, int targetCode) {
+  public static void doScanSpecialOpCodeV2(
+      AccountStore accountStore, CodeStore codeStore, int targetCode) {
     AtomicLong count = new AtomicLong();
     codeStore
         .iterator()
@@ -279,7 +282,8 @@ public class DBTools {
                 String address = StringUtil.encode58Check(e.getKey());
                 List<OpRD> opRDs = compile(code, null);
                 if (opRDs.stream().anyMatch(op -> op.is(targetCode))) {
-                  System.out.println(address);
+                  AccountCapsule accountCapsule = accountStore.get(e.getKey());
+                  System.out.println(address + " " + accountCapsule.getBalance());
                 }
                 //                System.out.println(address);
                 //                opRDs.forEach(System.out::println);
